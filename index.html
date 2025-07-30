@@ -132,6 +132,7 @@
         <h1 class="text-xl font-bold">Prince Alex Store POS</h1>
         <div class="flex items-center space-x-4">
             <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Prince Alex</span></span>
+            <button id="adminPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Admin Panel</button>
             <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
         </div>
     </header>
@@ -348,6 +349,7 @@
         const toastContainer = document.getElementById('toast-container');
         const cashierNameDisplay = document.getElementById('cashierNameDisplay');
         const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
+        const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
 
         // Manager Approval Modal Elements
         const managerApprovalModal = document.getElementById('managerApprovalModal');
@@ -902,7 +904,7 @@
 
         /**
          * Displays the manager approval modal.
-         * The action to be performed upon approval is stored in `pendingApprovalAction`.
+         * @param {Function} actionOnApproval - The function to execute if manager approval is successful.
          */
         function showManagerApprovalModal() {
             managerCardIdInput.value = '';
@@ -1265,6 +1267,14 @@
                 event.preventDefault(); // Prevent form submission
                 validateManagerApproval();
             }
+        });
+
+        // Admin Panel Button
+        adminPanelBtn.addEventListener('click', () => {
+            // In this environment, direct file navigation to 'admin-panel.html' is not supported.
+            // Instead, we will show a toast message. In a real deployed application,
+            // you would typically use a routing library or server-side redirects for navigation.
+            showToast('In a full application, this would navigate to the Admin Panel.', 'info', 5000);
         });
 
 
