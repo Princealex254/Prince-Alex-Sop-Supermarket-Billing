@@ -84,6 +84,20 @@
         .toast.info { background-color: #3B82F6; /* Blue-500 */ }
         .toast.warning { background-color: #F59E0B; /* Yellow-500 */ }
 
+        /* Scanner message styling */
+        .scanner-message {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #4a5568;
+            font-weight: 600;
+            z-index: 10; /* Above the video feed */
+            border-radius: 0.5rem;
+        }
+
 
         @media print {
             body * {
@@ -154,7 +168,11 @@
                 </div>
 
                 <!-- Where the video scanner will appear -->
-                <div id="reader" style="width: 100%; margin-top: 10px;"></div>
+                <div id="reader" style="width: 100%; margin-top: 10px; position: relative;">
+                    <div id="productScannerMessage" class="scanner-message hidden">
+                        Initializing camera...
+                    </div>
+                </div>
                 <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md">
                     ❌ Close Scanner
                 </button>
@@ -267,7 +285,11 @@
             <button onclick="startManagerScanner()" id="startManagerScannerBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md mb-3">
                 📷 Scan Manager Card
             </button>
-            <div id="managerReader" style="width: 100%; margin-top: 10px;"></div>
+            <div id="managerReader" style="width: 100%; margin-top: 10px; position: relative;">
+                <div id="managerScannerMessage" class="scanner-message hidden">
+                    Initializing camera...
+                </div>
+            </div>
             <button onclick="stopManagerScanner()" id="stopManagerScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md mb-3">
                 ❌ Close Scanner
             </button>
@@ -374,6 +396,11 @@
         const startManagerScannerBtn = document.getElementById('startManagerScannerBtn'); // New: Start manager scanner button
         const stopManagerScannerBtn = document.getElementById('stopManagerScannerBtn'); // New: Stop manager scanner button
 
+        // Scanner messages
+        const productScannerMessage = document.getElementById('productScannerMessage');
+        const managerScannerMessage = document.getElementById('managerScannerMessage');
+
+
         // Digital Payment Status Elements
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
         const digitalPaymentMessage = document.getElementById('digitalPaymentMessage');
@@ -403,6 +430,30 @@
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove(), { once: true });
             }, duration);
+        }
+
+        /**
+         * Plays a simple beep sound.
+         */
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = 'sine'; // Sine wave for a clean beep
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A4 note
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume
+
+                oscillator.start(audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.1); // Short decay
+                oscillator.stop(audioContext.currentTime + 0.1); // Stop after 0.1 seconds
+            } catch (e) {
+                console.warn("AudioContext not supported or error playing sound:", e);
+            }
         }
 
         /**
@@ -1073,6 +1124,7 @@
             }
 
             isScanningProduct = true; // Set scanning flag
+            productScannerMessage.classList.remove('hidden'); // Show initializing message
             const qrCodeReaderElement = document.getElementById("reader");
             stopScannerBtn.classList.remove('hidden'); // Show the stop button
 
@@ -1081,6 +1133,7 @@
                 // Only process if not debouncing
                 if (isScanningProduct) { // Check the flag again
                     console.log(`Scanned code: ${decodedText}`);
+                    playBeep(); // Play beep sound on success
                     stopScanner(); // Stop scanning after first match
                     addToCart(decodedText); // Call your function to handle the product
                     productSearchInput.value = decodedText; // Populate search input with scanned code
@@ -1095,19 +1148,26 @@
 
             // Define the scanner
             html5QrcodeScanner = new Html5Qrcode("reader");
-            // Optimized config: Higher FPS, slightly larger QR box
-            const config = { fps: 15, qrbox: { width: 280, height: 280 } };
+            // Optimized config: Higher FPS, slightly larger QR box, disableFlip
+            const config = { 
+                fps: 15, 
+                qrbox: { width: 280, height: 280 },
+                disableFlip: true // Can improve performance on some devices
+            };
 
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, // Use back camera for better performance
                 config,
                 onScanSuccess,
                 onScanError // Pass error handler
-            ).catch(err => {
+            ).then(() => {
+                productScannerMessage.classList.add('hidden'); // Hide message once camera starts
+            }).catch(err => {
                 console.error("Error starting scanner:", err);
                 showToast("Error starting scanner. Please ensure camera access is granted.", "error");
                 stopScannerBtn.classList.add('hidden'); // Hide stop button if scanner fails to start
                 isScanningProduct = false; // Reset flag on error
+                productScannerMessage.classList.add('hidden'); // Hide message on error
             });
         }
 
@@ -1120,10 +1180,12 @@
                     stopScannerBtn.classList.add('hidden'); // Hide the stop button
                     showToast("Product scanner stopped.", "info");
                     isScanningProduct = false; // Reset scanning flag
+                    productScannerMessage.classList.add('hidden'); // Hide message
                 }).catch(err => {
                     console.error("Error stopping scanner:", err);
                     showToast("Error stopping scanner.", "error");
                     isScanningProduct = false; // Reset scanning flag even on stop error
+                    productScannerMessage.classList.add('hidden'); // Hide message
                 });
             } else if (html5QrcodeScanner) {
                  // If scanner object exists but isn't scanning, just clear it
@@ -1132,6 +1194,7 @@
                  html5QrcodeScanner = null;
                  stopScannerBtn.classList.add('hidden');
                  isScanningProduct = false; // Reset scanning flag
+                 productScannerMessage.classList.add('hidden'); // Hide message
             }
         }
 
@@ -1143,6 +1206,7 @@
             }
 
             isScanningManager = true; // Set scanning flag
+            managerScannerMessage.classList.remove('hidden'); // Show initializing message
             managerReaderDiv.classList.remove('hidden'); // Show manager scanner div
             stopManagerScannerBtn.classList.remove('hidden'); // Show stop button
             startManagerScannerBtn.classList.add('hidden'); // Hide start button
@@ -1151,6 +1215,7 @@
                 // Only process if not debouncing
                 if (isScanningManager) { // Check the flag again
                     console.log(`Manager Card Scanned: ${decodedText}`);
+                    playBeep(); // Play beep sound on success
                     managerCardIdInput.value = decodedText; // Populate input with scanned ID
                     stopManagerScanner(); // Stop scanner after successful scan
                     validateManagerApproval(); // Automatically try to approve
@@ -1162,21 +1227,28 @@
             }
 
             html5QrcodeManagerScanner = new Html5Qrcode("managerReader");
-            // Optimized config: Higher FPS, slightly larger QR box
-            const config = { fps: 15, qrbox: { width: 220, height: 220 } }; // Smaller QR box for manager card
+            // Optimized config: Higher FPS, slightly larger QR box, disableFlip
+            const config = { 
+                fps: 15, 
+                qrbox: { width: 220, height: 220 }, // Smaller QR box for manager card
+                disableFlip: true // Can improve performance on some devices
+            }; 
 
             html5QrcodeManagerScanner.start(
                 { facingMode: "environment" }, // Use back camera
                 config,
                 onScanSuccessManager,
                 onScanErrorManager
-            ).catch(err => {
+            ).then(() => {
+                managerScannerMessage.classList.add('hidden'); // Hide message once camera starts
+            }).catch(err => {
                 console.error("Error starting manager scanner:", err);
                 showToast("Error starting manager scanner. Please ensure camera access is granted.", "error");
                 managerReaderDiv.classList.add('hidden');
                 stopManagerScannerBtn.classList.add('hidden');
                 startManagerScannerBtn.classList.remove('hidden'); // Show start button again if failed
                 isScanningManager = false; // Reset flag on error
+                managerScannerMessage.classList.add('hidden'); // Hide message on error
             });
         }
 
@@ -1191,10 +1263,12 @@
                     startManagerScannerBtn.classList.remove('hidden'); // Show start button
                     showToast("Manager scanner stopped.", "info");
                     isScanningManager = false; // Reset scanning flag
+                    managerScannerMessage.classList.add('hidden'); // Hide message
                 }).catch(err => {
                     console.error("Error stopping manager scanner:", err);
                     showToast("Error stopping manager scanner.", "error");
                     isScanningManager = false; // Reset scanning flag even on stop error
+                    managerScannerMessage.classList.add('hidden'); // Hide message
                 });
             } else if (html5QrcodeManagerScanner) {
                 // If scanner object exists but isn't scanning, just clear it
@@ -1205,6 +1279,7 @@
                 stopManagerScannerBtn.classList.add('hidden');
                 startManagerScannerBtn.classList.remove('hidden'); // Show start button
                 isScanningManager = false; // Reset scanning flag
+                managerScannerMessage.classList.add('hidden'); // Hide message
             }
         }
 
