@@ -262,6 +262,16 @@
         <div class="manager-approval-content text-center">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Manager Approval Required</h3>
             <p class="text-gray-700 mb-4">Scan Manager Card or Enter Code to approve item cancellation.</p>
+
+            <!-- Manager Scanner UI -->
+            <button onclick="startManagerScanner()" id="startManagerScannerBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md mb-3">
+                📷 Scan Manager Card
+            </button>
+            <div id="managerReader" style="width: 100%; margin-top: 10px;"></div>
+            <button onclick="stopManagerScanner()" id="stopManagerScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md mb-3">
+                ❌ Close Scanner
+            </button>
+
             <input type="text" id="managerCardIdInput" placeholder="Scan Manager Card ID"
                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-3">
             <p class="text-gray-600 mb-3">- OR -</p>
@@ -317,11 +327,12 @@
         let transactionIdCounter = 1000; // Simple counter for transaction IDs
         let pendingApprovalAction = null; // Stores the function to execute after manager approval
         let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
-        let html5QrcodeScanner; // Declare scanner variable globally
+        let html5QrcodeScanner; // Declare product scanner variable globally
+        let html5QrcodeManagerScanner; // Declare manager scanner variable globally
 
         // --- Manager Credentials (Hardcoded for demo) ---
         const MANAGER_CREDENTIALS = {
-            cardId: 'MANAGER123',
+            cardId: 'MANAGER123', // Dummy manager card ID for scanning
             code: '0000'
         };
 
@@ -357,6 +368,9 @@
         const managerCodeInput = document.getElementById('managerCodeInput');
         const approveManagerBtn = document.getElementById('approveManagerBtn');
         const cancelManagerBtn = document.getElementById('cancelManagerBtn');
+        const managerReaderDiv = document.getElementById('managerReader'); // New: Manager scanner reader div
+        const startManagerScannerBtn = document.getElementById('startManagerScannerBtn'); // New: Start manager scanner button
+        const stopManagerScannerBtn = document.getElementById('stopManagerScannerBtn'); // New: Stop manager scanner button
 
         // Digital Payment Status Elements
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
@@ -904,12 +918,15 @@
 
         /**
          * Displays the manager approval modal.
-         * @param {Function} actionOnApproval - The function to execute if manager approval is successful.
          */
         function showManagerApprovalModal() {
             managerCardIdInput.value = '';
             managerCodeInput.value = '';
             managerApprovalModal.style.display = 'flex';
+            // Hide scanner elements by default when modal opens
+            managerReaderDiv.classList.add('hidden');
+            stopManagerScannerBtn.classList.add('hidden');
+            startManagerScannerBtn.classList.remove('hidden'); // Ensure start button is visible
             managerCardIdInput.focus(); // Focus on card ID input
         }
 
@@ -919,6 +936,7 @@
         function hideManagerApprovalModal() {
             managerApprovalModal.style.display = 'none';
             pendingApprovalAction = null; // Clear pending action
+            stopManagerScanner(); // Ensure manager scanner is stopped when modal closes
         }
 
         /**
@@ -1044,7 +1062,7 @@
             saveTransactionLocally(); // Clear current transaction state and save updated products
         }
 
-        // --- Barcode Scanner Functions ---
+        // --- Product Barcode Scanner Functions ---
         function startScanner() {
             // If scanner already exists, don't recreate it
             if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { // Check if scanner is active and scanning
@@ -1106,9 +1124,76 @@
             }
         }
 
+        // --- Manager Card Scanner Functions ---
+        function startManagerScanner() {
+            if (html5QrcodeManagerScanner && html5QrcodeManagerScanner.isScanning) {
+                showToast("Manager scanner is already running.", "info");
+                return;
+            }
+
+            managerReaderDiv.classList.remove('hidden'); // Show manager scanner div
+            stopManagerScannerBtn.classList.remove('hidden'); // Show stop button
+            startManagerScannerBtn.classList.add('hidden'); // Hide start button
+
+            function onScanSuccessManager(decodedText, decodedResult) {
+                console.log(`Manager Card Scanned: ${decodedText}`);
+                managerCardIdInput.value = decodedText; // Populate input with scanned ID
+                stopManagerScanner(); // Stop scanner after successful scan
+                validateManagerApproval(); // Automatically try to approve
+            }
+
+            function onScanErrorManager(errorMessage) {
+                // console.warn(`Manager Scan error: ${errorMessage}`);
+            }
+
+            html5QrcodeManagerScanner = new Html5Qrcode("managerReader");
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } }; // Smaller QR box for manager card
+
+            html5QrcodeManagerScanner.start(
+                { facingMode: "environment" }, // Use back camera
+                config,
+                onScanSuccessManager,
+                onScanErrorManager
+            ).catch(err => {
+                console.error("Error starting manager scanner:", err);
+                showToast("Error starting manager scanner. Please ensure camera access is granted.", "error");
+                managerReaderDiv.classList.add('hidden');
+                stopManagerScannerBtn.classList.add('hidden');
+                startManagerScannerBtn.classList.remove('hidden'); // Show start button again if failed
+            });
+        }
+
+        function stopManagerScanner() {
+            if (html5QrcodeManagerScanner && html5QrcodeManagerScanner.isScanning) {
+                html5QrcodeManagerScanner.stop().then(() => {
+                    html5QrcodeManagerScanner.clear();
+                    managerReaderDiv.innerHTML = '';
+                    html5QrcodeManagerScanner = null;
+                    managerReaderDiv.classList.add('hidden');
+                    stopManagerScannerBtn.classList.add('hidden');
+                    startManagerScannerBtn.classList.remove('hidden'); // Show start button
+                    showToast("Manager scanner stopped.", "info");
+                }).catch(err => {
+                    console.error("Error stopping manager scanner:", err);
+                    showToast("Error stopping manager scanner.", "error");
+                });
+            } else if (html5QrcodeManagerScanner) {
+                // If scanner object exists but isn't scanning, just clear it
+                html5QrcodeManagerScanner.clear();
+                managerReaderDiv.innerHTML = '';
+                html5QrcodeManagerScanner = null;
+                managerReaderDiv.classList.add('hidden');
+                stopManagerScannerBtn.classList.add('hidden');
+                startManagerScannerBtn.classList.remove('hidden'); // Show start button
+            }
+        }
+
+
         // Expose functions to the global scope for onclick attributes
         window.startScanner = startScanner;
         window.stopScanner = stopScanner;
+        window.startManagerScanner = startManagerScanner; // Expose new function
+        window.stopManagerScanner = stopManagerScanner;   // Expose new function
 
 
         // --- Event Listeners ---
@@ -1271,10 +1356,7 @@
 
         // Admin Panel Button
         adminPanelBtn.addEventListener('click', () => {
-            // In this environment, direct file navigation to 'admin-panel.html' is not supported.
-            // Instead, we will show a toast message. In a real deployed application,
-            // you would typically use a routing library or server-side redirects for navigation.
-            showToast('In a full application, this would navigate to the Admin Panel.', 'info', 5000);
+            window.location.href = 'admin.html'; // This will navigate to admin.html in a real browser
         });
 
 
