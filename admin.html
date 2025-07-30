@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Alex Store Admin Panel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .admin-layout {
+            display: flex;
+            min-height: calc(100vh - 4rem); /* Full height minus header */
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937; /* Gray-800 */
+            color: white;
+            padding: 1.5rem;
+            transition: width 0.3s ease-in-out;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 4rem); /* Stick to top, full height */
+            overflow-y: auto;
+        }
+        .sidebar.collapsed {
+            width: 64px; /* Tailwind w-16 */
+        }
+        .sidebar.collapsed .menu-text,
+        .sidebar.collapsed .sidebar-header h2 {
+            display: none;
+        }
+        .sidebar.collapsed .sidebar-header {
+            justify-content: center;
+        }
+        .sidebar.collapsed .menu-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 1.5rem;
+            background-color: #f3f4f6;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        .section-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .data-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .data-card .value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .data-card .label {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-top: 0.5rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table th {
+            background-color: #edf2f7;
+            font-weight: 600;
+            color: #2d3748;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+        .data-table tbody tr:hover {
+            background-color: #f0f4f8;
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        /* Hidden by default for sections */
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .edit-product-form {
+            display: none;
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 1.5rem;
+        }
+        .edit-product-form.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <!-- Top Bar -->
+    <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center">
+            <button id="sidebarToggle" class="mr-4 p-2 rounded-md hover:bg-blue-600 transition duration-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h1 class="text-xl font-bold">Prince Alex Store Admin Panel</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="text-lg">Admin User: <span id="adminUserName" class="font-semibold">Admin</span></span>
+            <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <!-- Sidebar Menu -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header flex items-center mb-6">
+                <h2 class="text-2xl font-bold menu-text">Admin Menu</h2>
+            </div>
+            <ul class="space-y-3">
+                <li>
+                    <a href="#" id="menuSalesOverview" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                        <span class="menu-text">Sales Overview</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="menuSalesHistory" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        <span class="menu-text">Sales History</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="menuCashierSales" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H2v-2a3 3 0 015.356-1.857M17 20v-9a2 2 0 00-2-2H7a2 2 0 00-2 2v9m4 0h6m-6 0h-2M9 13h6m-6 4h6"></path></svg>
+                        <span class="menu-text">Cashier Sales</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="menuProductManagement" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        <span class="menu-text">Product Management</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Sales Overview Section -->
+            <section id="salesOverviewSection" class="content-section active">
+                <h2 class="text-3xl font-bold text-gray-800 section-header">Sales Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="data-card">
+                        <div class="value" id="totalSalesValue">KSh 0.00</div>
+                        <div class="label">Total Sales (Grand Total)</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="value" id="totalVatValue">KSh 0.00</div>
+                        <div class="label">Total VAT Collected</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="value" id="totalTransactionsValue">0</div>
+                        <div class="label">Total Transactions</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sales History Section -->
+            <section id="salesHistorySection" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 section-header">Sales History</h2>
+                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+                    <table class="min-w-full bg-white data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice No</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Cashier</th>
+                                <th>Items</th>
+                                <th>Payment Method</th>
+                                <th>Grand Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-gray-500">No sales transactions found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Cashier Sales Summary Section -->
+            <section id="cashierSalesSection" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 section-header">Cashier Sales Summary</h2>
+                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+                    <table class="min-w-full bg-white data-table">
+                        <thead>
+                            <tr>
+                                <th>Cashier Name</th>
+                                <th>Total Sales</th>
+                                <th>Total VAT</th>
+                                <th>Total Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashierSalesTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-gray-500">No cashier sales data found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Product Management Section -->
+            <section id="productManagementSection" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800 section-header">Product Management</h2>
+
+                <!-- Add New Product Form -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Add New Product</h3>
+                    <form id="addProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="newProductId" class="block text-gray-700 text-sm font-bold mb-2">Product ID:</label>
+                            <input type="text" id="newProductId" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="newProductName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
+                            <input type="text" id="newProductName" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="newProductPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
+                            <input type="number" id="newProductPrice" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="newProductVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16):</label>
+                            <input type="number" id="newProductVatRate" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="newProductStock" class="block text-gray-700 text-sm font-bold mb-2">Stock:</label>
+                            <input type="number" id="newProductStock" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Add Product</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Product List Table -->
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Existing Products</h3>
+                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+                    <table class="min-w-full bg-white data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>VAT Rate</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-500">No products found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Edit Product Form (hidden by default) -->
+                <div id="editProductForm" class="edit-product-form">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Edit Product</h3>
+                    <form id="updateProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="hidden" id="editProductIdHidden">
+                        <div>
+                            <label for="editProductName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
+                            <input type="text" id="editProductName" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="editProductPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
+                            <input type="number" id="editProductPrice" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="editProductVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16):</label>
+                            <input type="number" id="editProductVatRate" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="editProductStock" class="block text-gray-700 text-sm font-bold mb-2">Stock:</label>
+                            <input type="number" id="editProductStock" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-2">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Update Product</button>
+                            <button type="button" id="cancelEditProductBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // --- Global Variables ---
+        const LOCAL_STORAGE_SALES_KEY = 'princeAlexPOS_sales_history';
+        const LOCAL_STORAGE_PRODUCTS_KEY = 'princeAlexPOS_products';
+
+        let products = []; // Will be loaded from localStorage
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const contentSections = document.querySelectorAll('.content-section');
+
+        const totalSalesValue = document.getElementById('totalSalesValue');
+        const totalVatValue = document.getElementById('totalVatValue');
+        const totalTransactionsValue = document.getElementById('totalTransactionsValue');
+        const salesTableBody = document.getElementById('salesTableBody');
+        const cashierSalesTableBody = document.getElementById('cashierSalesTableBody');
+
+        const addProductForm = document.getElementById('addProductForm');
+        const newProductIdInput = document.getElementById('newProductId');
+        const newProductNameInput = document.getElementById('newProductName');
+        const newProductPriceInput = document.getElementById('newProductPrice');
+        const newProductVatRateInput = document.getElementById('newProductVatRate');
+        const newProductStockInput = document.getElementById('newProductStock');
+        const productsTableBody = document.getElementById('productsTableBody');
+
+        const editProductForm = document.getElementById('editProductForm');
+        const updateProductForm = document.getElementById('updateProductForm');
+        const editProductIdHidden = document.getElementById('editProductIdHidden');
+        const editProductNameInput = document.getElementById('editProductName');
+        const editProductPriceInput = document.getElementById('editProductPrice');
+        const editProductVatRateInput = document.getElementById('editProductVatRate');
+        const editProductStockInput = document.getElementById('editProductStock');
+        const cancelEditProductBtn = document.getElementById('cancelEditProductBtn');
+
+        // --- Helper Functions ---
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) { // Create if not exists (for admin page)
+                const newToastContainer = document.createElement('div');
+                newToastContainer.id = 'toast-container';
+                document.body.appendChild(newToastContainer);
+            }
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.getElementById('toast-container').appendChild(toast);
+
+            void toast.offsetWidth; // Trigger reflow
+
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            }, duration);
+        }
+
+        function formatCurrency(amount) {
+            return `KSh ${parseFloat(amount).toFixed(2)}`;
+        }
+
+        /**
+         * Loads data from Local Storage.
+         * @returns {object} An object containing sales history and products.
+         */
+        function loadDataFromLocalStorage() {
+            const salesHistory = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SALES_KEY) || '[]');
+            const storedProducts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY) || '[]');
+            
+            // If no products are stored, use the initial hardcoded list from POS
+            if (storedProducts.length === 0) {
+                // This initial list should ideally be synced from a central source
+                // For this demo, we'll use a hardcoded list if localStorage is empty.
+                // In a real app, products would also be managed via a backend.
+                products = [
+                    { id: '12345', name: 'Milk (1L)', price: 120.00, vatRate: 0.16, stock: 50 },
+                    { id: '67890', name: 'Bread (500g)', price: 60.00, vatRate: 0.16, stock: 100 },
+                    { id: '11223', name: 'Sugar (1kg)', price: 180.00, vatRate: 0.16, stock: 75 },
+                    { id: '44556', name: 'Cooking Oil (2L)', price: 350.00, vatRate: 0.16, stock: 30 },
+                    { id: '77889', name: 'Rice (2kg)', price: 250.00, vatRate: 0.16, stock: 60 },
+                    { id: '99001', name: 'Eggs (Tray of 30)', price: 400.00, vatRate: 0.16, stock: 40 },
+                    { id: '23456', name: 'Tomatoes (1kg)', price: 80.00, vatRate: 0.16, stock: 20 },
+                    { id: '78901', name: 'Potatoes (1kg)', price: 70.00, vatRate: 0.16, stock: 35 },
+                    { id: '34567', name: 'Soap Bar', price: 50.00, vatRate: 0.16, stock: 120 },
+                    { id: '89012', name: 'Toothpaste', price: 110.00, vatRate: 0.16, stock: 90 },
+                    { id: '56789', name: 'Coffee (250g)', price: 220.00, vatRate: 0.16, stock: 55 },
+                    { id: '01234', name: 'Tea Leaves (200g)', price: 150.00, vatRate: 0.16, stock: 80 },
+                    { id: '54321', name: 'Juice (1L)', price: 130.00, vatRate: 0.16, stock: 45 },
+                    { id: '98765', name: 'Yogurt (500ml)', price: 90.00, vatRate: 0.16, stock: 70 },
+                    { id: '43210', name: 'Cereal (500g)', price: 280.00, vatRate: 0.16, stock: 25 },
+                ];
+                localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products)); // Save initial products
+            } else {
+                products = storedProducts;
+            }
+
+            return { salesHistory, products };
+        }
+
+        /**
+         * Saves products array to local storage.
+         */
+        function saveProductsToLocalStorage() {
+            localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products));
+            renderProductsTable(); // Re-render product table after changes
+        }
+
+        /**
+         * Displays the selected content section and hides others.
+         * @param {string} sectionId - The ID of the section to display.
+         */
+        function showSection(sectionId) {
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        /**
+         * Renders the Sales Overview summary cards.
+         * @param {Array<object>} salesHistory - The sales data.
+         */
+        function renderSalesOverview(salesHistory) {
+            let totalSales = 0;
+            let totalVat = 0;
+            let totalTransactions = salesHistory.length;
+
+            salesHistory.forEach(sale => {
+                totalSales += sale.grandTotal || 0;
+                totalVat += sale.vatAmount || 0;
+            });
+
+            totalSalesValue.textContent = formatCurrency(totalSales);
+            totalVatValue.textContent = formatCurrency(totalVat);
+            totalTransactionsValue.textContent = totalTransactions;
+        }
+
+        /**
+         * Renders the Sales History table.
+         * @param {Array<object>} salesHistory - The sales data.
+         */
+        function renderSalesHistory(salesHistory) {
+            salesTableBody.innerHTML = '';
+            if (salesHistory.length === 0) {
+                salesTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">No sales transactions found.</td></tr>';
+                return;
+            }
+
+            // Sort sales by timestamp descending
+            const sortedSales = [...salesHistory].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            sortedSales.forEach(sale => {
+                const saleDate = new Date(sale.timestamp);
+                const date = saleDate.toLocaleDateString();
+                const time = saleDate.toLocaleTimeString();
+                const itemsList = sale.cartItems ? sale.cartItems.map(item => `${item.name} (x${item.quantity})`).join(', ') : 'N/A';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sale.invoiceNo || 'N/A'}</td>
+                    <td>${date}</td>
+                    <td>${time}</td>
+                    <td>${sale.cashierName || 'N/A'}</td>
+                    <td>${itemsList}</td>
+                    <td>${sale.paymentMethod || 'N/A'}</td>
+                    <td class="font-semibold">${formatCurrency(sale.grandTotal || 0)}</td>
+                `;
+                salesTableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Renders the Cashier Sales Summary table.
+         * @param {Array<object>} salesHistory - The sales data.
+         */
+        function renderCashierSalesSummary(salesHistory) {
+            cashierSalesTableBody.innerHTML = '';
+            if (salesHistory.length === 0) {
+                cashierSalesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">No cashier sales data found.</td></tr>';
+                return;
+            }
+
+            const cashierSummary = {}; // { 'Cashier Name': { totalSales: 0, totalVat: 0, totalTransactions: 0 } }
+
+            salesHistory.forEach(sale => {
+                const cashier = sale.cashierName || 'Unknown Cashier';
+                if (!cashierSummary[cashier]) {
+                    cashierSummary[cashier] = { totalSales: 0, totalVat: 0, totalTransactions: 0 };
+                }
+                cashierSummary[cashier].totalSales += sale.grandTotal || 0;
+                cashierSummary[cashier].totalVat += sale.vatAmount || 0;
+                cashierSummary[cashier].totalTransactions++;
+            });
+
+            for (const cashierName in cashierSummary) {
+                const summary = cashierSummary[cashierName];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cashierName}</td>
+                    <td class="font-semibold">${formatCurrency(summary.totalSales)}</td>
+                    <td>${formatCurrency(summary.totalVat)}</td>
+                    <td>${summary.totalTransactions}</td>
+                `;
+                cashierSalesTableBody.appendChild(row);
+            }
+        }
+
+        /**
+         * Renders the Product Management table.
+         */
+        function renderProductsTable() {
+            productsTableBody.innerHTML = '';
+            if (products.length === 0) {
+                productsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No products found. Add some above!</td></tr>';
+                return;
+            }
+
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td>${formatCurrency(product.price)}</td>
+                    <td>${(product.vatRate * 100).toFixed(0)}%</td>
+                    <td>${product.stock}</td>
+                    <td class="flex space-x-2">
+                        <button data-product-id="${product.id}" class="edit-product-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm py-1 px-3 rounded-md shadow-sm">Edit</button>
+                        <button data-product-id="${product.id}" class="delete-product-btn bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-3 rounded-md shadow-sm">Delete</button>
+                    </td>
+                `;
+                productsTableBody.appendChild(row);
+            });
+
+            // Attach event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-product-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productId = event.target.dataset.productId;
+                    editProduct(productId);
+                });
+            });
+            document.querySelectorAll('.delete-product-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productId = event.target.dataset.productId;
+                    deleteProduct(productId);
+                });
+            });
+        }
+
+        /**
+         * Handles adding a new product.
+         */
+        addProductForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const newProduct = {
+                id: newProductIdInput.value.trim(),
+                name: newProductNameInput.value.trim(),
+                price: parseFloat(newProductPriceInput.value),
+                vatRate: parseFloat(newProductVatRateInput.value),
+                stock: parseInt(newProductStockInput.value)
+            };
+
+            if (products.some(p => p.id === newProduct.id)) {
+                showToast('Product with this ID already exists!', 'error');
+                return;
+            }
+            if (isNaN(newProduct.price) || isNaN(newProduct.vatRate) || isNaN(newProduct.stock)) {
+                showToast('Please enter valid numbers for price, VAT rate, and stock.', 'error');
+                return;
+            }
+
+            products.push(newProduct);
+            saveProductsToLocalStorage();
+            addProductForm.reset();
+            showToast('Product added successfully!', 'success');
+        });
+
+        /**
+         * Populates the edit form with product data.
+         * @param {string} productId - The ID of the product to edit.
+         */
+        function editProduct(productId) {
+            const productToEdit = products.find(p => p.id === productId);
+            if (productToEdit) {
+                editProductIdHidden.value = productToEdit.id;
+                editProductNameInput.value = productToEdit.name;
+                editProductPriceInput.value = productToEdit.price;
+                editProductVatRateInput.value = productToEdit.vatRate;
+                editProductStockInput.value = productToEdit.stock;
+                editProductForm.classList.add('active'); // Show the edit form
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); // Scroll to form
+            }
+        }
+
+        /**
+         * Handles updating an existing product.
+         */
+        updateProductForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const productId = editProductIdHidden.value;
+            const productIndex = products.findIndex(p => p.id === productId);
+
+            if (productIndex > -1) {
+                const updatedProduct = {
+                    id: productId,
+                    name: editProductNameInput.value.trim(),
+                    price: parseFloat(editProductPriceInput.value),
+                    vatRate: parseFloat(editProductVatRateInput.value),
+                    stock: parseInt(editProductStockInput.value)
+                };
+
+                if (isNaN(updatedProduct.price) || isNaN(updatedProduct.vatRate) || isNaN(updatedProduct.stock)) {
+                    showToast('Please enter valid numbers for price, VAT rate, and stock.', 'error');
+                    return;
+                }
+
+                products[productIndex] = updatedProduct;
+                saveProductsToLocalStorage();
+                editProductForm.classList.remove('active'); // Hide the edit form
+                showToast('Product updated successfully!', 'success');
+            } else {
+                showToast('Product not found for update.', 'error');
+            }
+        });
+
+        /**
+         * Handles deleting a product.
+         * @param {string} productId - The ID of the product to delete.
+         */
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product? This cannot be undone.')) {
+                products = products.filter(p => p.id !== productId);
+                saveProductsToLocalStorage();
+                showToast('Product deleted successfully!', 'success');
+                editProductForm.classList.remove('active'); // Hide edit form if the deleted product was being edited
+            }
+        }
+
+        // Cancel Edit Product
+        cancelEditProductBtn.addEventListener('click', () => {
+            editProductForm.classList.remove('active');
+        });
+
+
+        // --- Event Listeners ---
+
+        // Sidebar Toggle
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // Menu Item Navigation
+        document.getElementById('menuSalesOverview').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('salesOverviewSection');
+            renderSalesOverview(loadDataFromLocalStorage().salesHistory); // Re-render to ensure latest data
+        });
+        document.getElementById('menuSalesHistory').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('salesHistorySection');
+            renderSalesHistory(loadDataFromLocalStorage().salesHistory); // Re-render
+        });
+        document.getElementById('menuCashierSales').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('cashierSalesSection');
+            renderCashierSalesSummary(loadDataFromLocalStorage().salesHistory); // Re-render
+        });
+        document.getElementById('menuProductManagement').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('productManagementSection');
+            renderProductsTable(); // Re-render
+            editProductForm.classList.remove('active'); // Hide edit form initially
+        });
+
+        // Logout functionality (placeholder)
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            // In a real app, this would clear authentication tokens
+            alert("Logging out... (In a real app, this would clear session/tokens)");
+            window.location.reload(); // Simple reload for demo
+        });
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const { salesHistory, products: loadedProducts } = loadDataFromLocalStorage();
+            products = loadedProducts; // Ensure global products array is updated
+            renderSalesOverview(salesHistory); // Render initial section
+            showSection('salesOverviewSection'); // Show default section
+        });
+    </script>
+</body>
+</html>

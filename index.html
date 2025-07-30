@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Alex Store POS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html5-qrcode Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .pos-container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            flex: 1; /* Allows it to take up remaining space */
+        }
+        .receipt-modal, .manager-approval-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .receipt-content, .manager-approval-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+        .receipt-content hr {
+            border-top: 1px dashed #cbd5e0;
+            margin: 0.75rem 0;
+        }
+        .receipt-content table {
+            font-size: 0.7rem;
+        }
+
+        /* Toast Alert Styling */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { background-color: #10B981; /* Green-500 */ }
+        .toast.error { background-color: #EF4444; /* Red-500 */ }
+        .toast.info { background-color: #3B82F6; /* Blue-500 */ }
+        .toast.warning { background-color: #F59E0B; /* Yellow-500 */ }
+
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .receipt-modal, .receipt-modal * {
+                visibility: visible;
+            }
+            .receipt-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background-color: #fff;
+                box-shadow: none;
+            }
+            .receipt-content {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0.5rem;
+                box-shadow: none;
+                border-radius: 0;
+                font-size: 0.7rem;
+            }
+            .receipt-content hr {
+                margin: 0.5rem 0;
+            }
+            .receipt-content table {
+                font-size: 0.65rem;
+            }
+            .receipt-close-btn, #printReceiptFromModalBtn {
+                display: none;
+            }
+            /* Hide toast container and manager approval modal when printing */
+            #toast-container, .manager-approval-modal {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <!-- Top Bar -->
+    <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
+        <h1 class="text-xl font-bold">Prince Alex Store POS</h1>
+        <div class="flex items-center space-x-4">
+            <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Prince Alex</span></span>
+            <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Billing Panel (now full width) -->
+    <main class="flex-1 p-6 flex justify-center items-start">
+        <div class="pos-container flex flex-col lg:flex-row p-6 w-full max-w-5xl"> <!-- Added max-w for better centering -->
+            <!-- Left Section: Product Search & Cart -->
+            <div class="lg:w-2/3 p-4 bg-white rounded-l-xl lg:border-r border-gray-200">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center lg:text-left">Billing Panel</h1>
+
+                <!-- Search Bar and Scanner Controls -->
+                <div class="mb-6 flex flex-col sm:flex-row items-center gap-3">
+                    <input type="text" id="productSearch" placeholder="Scan or type product barcode/name..."
+                           class="w-full sm:w-2/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                    <button onclick="startScanner()" class="w-full sm:w-1/3 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">
+                        📷 Scan Barcode
+                    </button>
+                </div>
+
+                <!-- Where the video scanner will appear -->
+                <div id="reader" style="width: 100%; margin-top: 10px;"></div>
+                <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md">
+                    ❌ Close Scanner
+                </button>
+
+                <!-- Product Search Results (Hidden until search) -->
+                <div id="searchResults" class="mb-6 hidden">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Search Results</h2>
+                    <div id="productResultsList" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
+                        <!-- Products will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Cart Table -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Current Cart</h2>
+                    <div class="overflow-x-auto rounded-lg shadow-md">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-blue-600 text-white">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Item Name</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">Qty</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">Price</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">VAT</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartItems" class="divide-y divide-gray-200">
+                                <!-- Cart items will be dynamically inserted here -->
+                                <tr id="emptyCartMessage">
+                                    <td colspan="5" class="py-4 px-4 text-center text-gray-500">Cart is empty. Add items!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section: Cart Summary & Payment -->
+            <div class="lg:w-1/3 p-4 bg-gray-50 rounded-r-xl lg:rounded-l-none mt-6 lg:mt-0">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Order Summary</h2>
+
+                <!-- Cart Summary -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-medium text-gray-700">Total (Before VAT):</span>
+                        <span id="totalBeforeVat" class="text-lg font-semibold text-gray-900">KSh 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-medium text-gray-700">VAT Amount (16%):</span>
+                        <span id="vatAmount" class="text-lg font-semibold text-gray-900">KSh 0.00</span>
+                    </div>
+                    <hr class="my-4 border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold text-gray-800">Grand Total:</span>
+                        <span id="grandTotal" class="text-2xl font-extrabold text-blue-700">KSh 0.00</span>
+                        </div>
+                </div>
+
+                <!-- Payment Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Payment Options</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <button id="payCashBtn" class="payment-btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>Cash</button>
+                        <button id="payMpesaBtn" class="payment-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>M-PESA</button>
+                        <button id="payCardBtn" class="payment-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>Card</button>
+                    </div>
+
+                    <div id="cashPaymentSection" class="hidden">
+                        <label for="cashReceived" class="block text-gray-700 text-sm font-bold mb-2">Cash Received (KSh):</label>
+                        <input type="number" id="cashReceived" placeholder="Enter amount"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-lg font-medium text-gray-700">Balance:</span>
+                            <span id="balanceAmount" class="text-xl font-bold text-red-600">KSh 0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- M-Pesa/Card Payment Status Display -->
+                    <div id="digitalPaymentStatus" class="hidden text-center p-3 mt-4 rounded-lg bg-gray-100">
+                        <p id="digitalPaymentMessage" class="text-gray-700 font-semibold mb-2"></p>
+                        <p id="digitalPaymentDetails" class="text-sm text-gray-600"></p>
+                    </div>
+
+                    <button id="completeSaleBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 rounded-lg text-xl transition duration-200 shadow-lg mt-4" disabled>Complete Sale</button>
+                </div>
+
+                <button id="printReceiptBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">Print Receipt</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="receipt-modal">
+        <div class="receipt-content">
+            <button class="receipt-close-btn absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <div id="receiptContentBody">
+                <!-- Receipt details will be dynamically inserted here -->
+            </div>
+            <button id="printReceiptFromModalBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4">Print</button>
+        </div>
+    </div>
+
+    <!-- Manager Approval Modal -->
+    <div id="managerApprovalModal" class="manager-approval-modal">
+        <div class="manager-approval-content text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Manager Approval Required</h3>
+            <p class="text-gray-700 mb-4">Scan Manager Card or Enter Code to approve item cancellation.</p>
+            <input type="text" id="managerCardIdInput" placeholder="Scan Manager Card ID"
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-3">
+            <p class="text-gray-600 mb-3">- OR -</p>
+            <input type="password" id="managerCodeInput" placeholder="Enter Manager Code"
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-4">
+            <button id="approveManagerBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md mb-2">Approve</button>
+            <button id="cancelManagerBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <script type="module">
+        // --- Product Database (Initial Data) ---
+        // This will be loaded from localStorage if available, otherwise initialized
+        let products = [
+            { id: '1001', name: 'Safari Pure Milk (500ml)', price: 65.00, vatRate: 0.16, stock: 150 },
+            { id: '1002', name: 'Supa Loaf Bread (400g)', price: 60.00, vatRate: 0.16, stock: 200 },
+            { id: '1003', name: 'Mumias Sugar (1kg)', price: 185.00, vatRate: 0.16, stock: 120 },
+            { id: '1004', name: 'Elianto Cooking Oil (2L)', price: 380.00, vatRate: 0.16, stock: 80 },
+            { id: '1005', name: 'Pishori Rice (2kg)', price: 270.00, vatRate: 0.16, stock: 100 },
+            { id: '1006', name: 'Kienyeji Eggs (Tray of 30)', price: 420.00, vatRate: 0.16, stock: 60 },
+            { id: '1007', name: 'Fresh Tomatoes (1kg)', price: 90.00, vatRate: 0.16, stock: 40 },
+            { id: '1008', name: 'Irish Potatoes (1kg)', price: 75.00, vatRate: 0.16, stock: 70 },
+            { id: '1009', name: 'Lifebuoy Soap (175g)', price: 55.00, vatRate: 0.16, stock: 200 },
+            { id: '1010', name: 'Colgate Toothpaste (100ml)', price: 120.00, vatRate: 0.16, stock: 150 },
+            { id: '1011', name: 'Nescafe Classic Coffee (100g)', price: 250.00, vatRate: 0.16, stock: 90 },
+            { id: '1012', name: 'Ketepa Tea Bags (100pcs)', price: 160.00, vatRate: 0.16, stock: 130 },
+            { id: '1013', name: 'Del Monte Orange Juice (1L)', price: 140.00, vatRate: 0.16, stock: 110 },
+            { id: '1014', name: 'Brookside Yogurt (450g)', price: 95.00, vatRate: 0.16, stock: 100 },
+            { id: '1015', name: 'Weetabix Cereal (450g)', price: 300.00, vatRate: 0.16, stock: 75 },
+            { id: '1016', name: 'Kimbo Cooking Fat (500g)', price: 150.00, vatRate: 0.16, stock: 100 },
+            { id: '1017', name: 'Blue Band Margarine (250g)', price: 110.00, vatRate: 0.16, stock: 120 },
+            { id: '1018', name: 'Royco Mchuzi Mix (200g)', price: 80.00, vatRate: 0.16, stock: 180 },
+            { id: '1019', name: 'Omo Washing Powder (1kg)', price: 280.00, vatRate: 0.16, stock: 90 },
+            { id: '1020', name: 'Sunlight Dishwashing Liquid (500ml)', price: 130.00, vatRate: 0.16, stock: 140 },
+            { id: '1021', name: 'Coca-Cola (500ml)', price: 70.00, vatRate: 0.16, stock: 250 },
+            { id: '1022', name: 'Fanta Orange (500ml)', price: 70.00, vatRate: 0.16, stock: 230 },
+            { id: '1023', name: 'Keringet Water (1L)', price: 60.00, vatRate: 0.16, stock: 300 },
+            { id: '1024', name: 'Tusker Lager (500ml)', price: 200.00, vatRate: 0.16, stock: 100 },
+            { id: '1025', name: 'Guinness Stout (500ml)', price: 220.00, vatRate: 0.16, stock: 80 },
+            { id: '1026', name: 'Huggies Diapers (Size 4, 50pcs)', price: 1200.00, vatRate: 0.16, stock: 50 },
+            { id: '1027', name: 'Always Sanitary Pads (Normal, 10pcs)', price: 180.00, vatRate: 0.16, stock: 150 },
+            { id: '1028', name: 'Nivea Body Lotion (400ml)', price: 450.00, vatRate: 0.16, stock: 70 },
+            { id: '1029', name: 'Vaseline Petroleum Jelly (250g)', price: 280.00, vatRate: 0.16, stock: 110 },
+            { id: '1030', name: 'Bic Pens (Blue, 5pcs)', price: 100.00, vatRate: 0.16, stock: 300 },
+        ];
+
+        // --- Global Variables ---
+        let cart = []; // Stores items currently in the cart
+        let selectedPaymentMethod = null;
+        let transactionIdCounter = 1000; // Simple counter for transaction IDs
+        let pendingApprovalAction = null; // Stores the function to execute after manager approval
+        let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
+        let html5QrcodeScanner; // Declare scanner variable globally
+
+        // --- Manager Credentials (Hardcoded for demo) ---
+        const MANAGER_CREDENTIALS = {
+            cardId: 'MANAGER123',
+            code: '0000'
+        };
+
+        // --- DOM Elements ---
+        const productSearchInput = document.getElementById('productSearch');
+        const searchResultsDiv = document.getElementById('searchResults');
+        const productResultsList = document.getElementById('productResultsList');
+        const cartItemsTableBody = document.getElementById('cartItems');
+        const emptyCartMessage = document.getElementById('emptyCartMessage');
+        const totalBeforeVatSpan = document.getElementById('totalBeforeVat');
+        const vatAmountSpan = document.getElementById('vatAmount');
+        const grandTotalSpan = document.getElementById('grandTotal');
+        const payCashBtn = document.getElementById('payCashBtn');
+        const payMpesaBtn = document.getElementById('payMpesaBtn');
+        const payCardBtn = document.getElementById('payCardBtn');
+        const cashPaymentSection = document.getElementById('cashPaymentSection');
+        const cashReceivedInput = document.getElementById('cashReceived');
+        const balanceAmountSpan = document.getElementById('balanceAmount');
+        const completeSaleBtn = document.getElementById('completeSaleBtn');
+        const printReceiptBtn = document.getElementById('printReceiptBtn');
+        const receiptModal = document.getElementById('receiptModal');
+        const receiptContentBody = document.getElementById('receiptContentBody');
+        const receiptCloseBtn = document.querySelector('.receipt-close-btn');
+        const printReceiptFromModalBtn = document.getElementById('printReceiptFromModalBtn');
+        const toastContainer = document.getElementById('toast-container');
+        const cashierNameDisplay = document.getElementById('cashierNameDisplay');
+        const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
+
+        // Manager Approval Modal Elements
+        const managerApprovalModal = document.getElementById('managerApprovalModal');
+        const managerCardIdInput = document.getElementById('managerCardIdInput');
+        const managerCodeInput = document.getElementById('managerCodeInput');
+        const approveManagerBtn = document.getElementById('approveManagerBtn');
+        const cancelManagerBtn = document.getElementById('cancelManagerBtn');
+
+        // Digital Payment Status Elements
+        const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
+        const digitalPaymentMessage = document.getElementById('digitalPaymentMessage');
+        const digitalPaymentDetails = document.getElementById('digitalPaymentDetails');
+
+
+        // --- Helper Functions ---
+
+        /**
+         * Displays a toast notification.
+         * @param {string} message - The message to display.
+         * @param {'success'|'error'|'info'|'warning'} type - The type of toast (for styling).
+         * @param {number} duration - How long the toast should be visible in ms.
+         */
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            // Trigger reflow to ensure transition plays
+            void toast.offsetWidth;
+
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            }, duration);
+        }
+
+        /**
+         * Formats a number to currency string (KSh).
+         * @param {number} amount - The amount to format.
+         * @returns {string} Formatted currency string.
+         */
+        function formatCurrency(amount) {
+            return `KSh ${amount.toFixed(2)}`;
+        }
+
+        /**
+         * Calculates VAT for a single item.
+         * @param {object} product - The product object.
+         * @param {number} quantity - The quantity of the product.
+         * @returns {number} The calculated VAT amount.
+         */
+        function calculateItemVat(product, quantity) {
+            return product.price * quantity * product.vatRate;
+        }
+
+        /**
+         * Calculates the subtotal for a single item (price * quantity + item VAT).
+         * @param {object} product - The product object.
+         * @param {number} quantity - The quantity of the product.
+         * @returns {number} The calculated item subtotal.
+         */
+        function calculateItemSubtotal(product, quantity) {
+            return (product.price * quantity) + calculateItemVat(product, quantity);
+        }
+
+        /**
+         * Updates the cart summary (total before VAT, VAT amount, grand total).
+         * Also controls the complete sale button's disabled state.
+         */
+        function calculateTotals() {
+            let totalBeforeVat = 0;
+            let totalVatAmount = 0;
+
+            cart.forEach(item => {
+                totalBeforeVat += item.product.price * item.quantity;
+                totalVatAmount += calculateItemVat(item.product, item.quantity);
+            });
+
+            const grandTotal = totalBeforeVat + totalVatAmount;
+
+            totalBeforeVatSpan.textContent = formatCurrency(totalBeforeVat);
+            vatAmountSpan.textContent = formatCurrency(totalVatAmount);
+            grandTotalSpan.textContent = formatCurrency(grandTotal);
+
+            // Logic for enabling/disabling complete sale button
+            let enableCompleteSale = false;
+            if (cart.length > 0) {
+                if (selectedPaymentMethod === 'Cash') {
+                    const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+                    enableCompleteSale = cashReceived >= grandTotal;
+                } else if (selectedPaymentMethod === 'Mpesa' || selectedPaymentMethod === 'Card') {
+                    enableCompleteSale = paymentConfirmed;
+                }
+            }
+            completeSaleBtn.disabled = !enableCompleteSale;
+            printReceiptBtn.disabled = cart.length === 0;
+
+            // Disable payment buttons if cart is empty
+            const paymentButtons = [payCashBtn, payMpesaBtn, payCardBtn];
+            if (cart.length === 0) {
+                paymentButtons.forEach(btn => btn.disabled = true);
+                // Also reset selected payment method display if cart becomes empty
+                selectedPaymentMethod = null;
+                paymentConfirmed = false;
+                cashPaymentSection.classList.add('hidden');
+                digitalPaymentStatusDiv.classList.add('hidden');
+                document.querySelectorAll('.payment-btn').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+                });
+            } else {
+                paymentButtons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        /**
+         * Renders products in the search results list.
+         * @param {Array<object>} filteredProducts - Products to display.
+         */
+        function renderProducts(filteredProducts) {
+            productResultsList.innerHTML = ''; // Clear previous results
+            if (filteredProducts.length === 0) {
+                productResultsList.innerHTML = '<p class="p-4 text-gray-500">No products found.</p>';
+                return;
+            }
+
+            filteredProducts.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'flex justify-between items-center p-3 border-b border-gray-100 last:border-b-0 hover:bg-blue-50 cursor-pointer rounded-lg';
+                productDiv.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-gray-800">${product.name}</p>
+                        <p class="text-sm text-gray-500">ID: ${product.id}</p>
+                        <p class="text-xs text-gray-400">Stock: ${product.stock}</p>
+                    </div>
+                    <button data-product-id="${product.id}" class="add-to-cart-btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition duration-200">
+                        Add (KSh ${product.price.toFixed(2)})
+                    </button>
+                `;
+                productResultsList.appendChild(productDiv);
+            });
+
+            // Attach event listeners to new "Add" buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productId = event.target.dataset.productId;
+                    addToCart(productId);
+                    productSearchInput.value = ''; // Clear search bar
+                    searchResultsDiv.classList.add('hidden'); // Hide search results
+                });
+            });
+        }
+
+        /**
+         * Adds a product to the cart or increments its quantity.
+         * @param {string} productId - The ID of the product to add.
+         */
+        function addToCart(productId) {
+            const productToAdd = products.find(p => p.id === productId);
+            if (!productToAdd) {
+                showToast(`Product with ID ${productId} not found.`, 'error');
+                return;
+            }
+
+            const existingItemIndex = cart.findIndex(item => item.product.id === productId);
+
+            if (existingItemIndex > -1) {
+                if (cart[existingItemIndex].quantity < productToAdd.stock) {
+                    cart[existingItemIndex].quantity++;
+                    showToast(`${productToAdd.name} added to cart!`, 'success');
+                } else {
+                    showToast(`Not enough stock for ${productToAdd.name}.`, 'warning');
+                    return; // Prevent adding if stock is insufficient
+                }
+            } else {
+                if (productToAdd.stock > 0) {
+                    cart.push({ product: productToAdd, quantity: 1 });
+                    showToast(`${productToAdd.name} added to cart!`, 'success');
+                } else {
+                    showToast(`${productToAdd.name} is out of stock.`, 'error');
+                    return; // Prevent adding if out of stock
+                }
+            }
+            updateCartDisplay();
+            calculateTotals();
+            saveTransactionLocally(); // Save cart state
+        }
+
+        /**
+         * Updates the quantity of an item in the cart.
+         * @param {string} productId - The ID of the product.
+         * @param {number} change - The amount to change the quantity by (+1 or -1).
+         */
+        function updateCartItemQuantity(productId, change) {
+            const itemIndex = cart.findIndex(item => item.product.id === productId);
+            if (itemIndex > -1) {
+                const currentItem = cart[itemIndex];
+                const productInDb = products.find(p => p.id === productId);
+
+                // If quantity increases, check stock
+                if (change > 0 && currentItem.quantity + change > productInDb.stock) {
+                    showToast(`Cannot add more ${currentItem.product.name}. Max stock reached.`, 'warning');
+                    return;
+                }
+
+                // If quantity goes to 0 or less, require manager approval
+                if (currentItem.quantity + change <= 0) {
+                    pendingApprovalAction = () => {
+                        const removedItemName = currentItem.product.name;
+                        cart.splice(itemIndex, 1); // Remove item
+                        updateCartDisplay();
+                        calculateTotals();
+                        saveTransactionLocally();
+                        showToast(`${removedItemName} removed from cart.`, 'info');
+                    };
+                    showManagerApprovalModal();
+                } else {
+                    currentItem.quantity += change;
+                    updateCartDisplay();
+                    calculateTotals();
+                    saveTransactionLocally();
+                    showToast(`${currentItem.product.name} quantity updated.`, 'info');
+                }
+            }
+        }
+
+        /**
+         * Removes an item from the cart. Requires manager approval.
+         * @param {string} productId - The ID of the product to remove.
+         */
+        function removeItemFromCart(productId) {
+            const itemToRemove = cart.find(item => item.product.id === productId);
+            if (!itemToRemove) return;
+
+            pendingApprovalAction = () => {
+                cart = cart.filter(item => item.product.id !== productId);
+                updateCartDisplay();
+                calculateTotals();
+                saveTransactionLocally();
+                showToast(`${itemToRemove.product.name} removed from cart.`, 'info');
+            };
+            showManagerApprovalModal();
+        }
+
+        /**
+         * Renders the current items in the cart table.
+         */
+        function updateCartDisplay() {
+            cartItemsTableBody.innerHTML = ''; // Clear current cart display
+
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                cart.forEach(item => {
+                    const itemVat = calculateItemVat(item.product, item.quantity);
+                    const itemSubtotal = calculateItemSubtotal(item.product, item.quantity);
+
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="py-3 px-4 text-gray-800 font-medium">${item.product.name}</td>
+                        <td class="py-3 px-4 text-gray-700">
+                            <div class="flex items-center">
+                                <button data-product-id="${item.product.id}" data-change="-1" class="qty-btn bg-red-400 hover:bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm">-</button>
+                                <span class="mx-2 font-bold">${item.quantity}</span>
+                                <button data-product-id="${item.product.id}" data-change="1" class="qty-btn bg-green-400 hover:bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm">+</button>
+                                <button data-product-id="${item.product.id}" class="remove-item-btn ml-3 text-red-600 hover:text-red-800 text-lg">&times;</button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-700">KSh ${item.product.price.toFixed(2)}</td>
+                        <td class="py-3 px-4 text-gray-700">KSh ${itemVat.toFixed(2)}</td>
+                        <td class="py-3 px-4 text-gray-900 font-semibold">KSh ${itemSubtotal.toFixed(2)}</td>
+                    `;
+                    cartItemsTableBody.appendChild(row);
+                });
+
+                // Attach event listeners for quantity buttons and remove buttons
+                document.querySelectorAll('.qty-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const productId = event.target.dataset.productId;
+                        const change = parseInt(event.target.dataset.change);
+                        updateCartItemQuantity(productId, change);
+                    });
+                });
+
+                document.querySelectorAll('.remove-item-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const productId = event.target.dataset.productId;
+                        removeItemFromCart(productId);
+                    });
+                });
+            }
+        }
+
+        /**
+         * Generates the HTML content for the receipt.
+         * @returns {string} HTML string of the receipt.
+         */
+        function generateReceiptContent() {
+            const now = new Date();
+            const transactionId = `TXN-${transactionIdCounter}`;
+            transactionIdCounter++; // Increment for next transaction
+
+            const storeName = "Prince Alex Store";
+            const storeAddress = "123 Market Street, Nairobi, Kenya";
+            const storeEmail = "info@princealexstore.com";
+            const cashierName = cashierNameDisplay.textContent; // Get from display
+            const tillNumber = "001"; // Updated to "001"
+            const serialNumber = "SN-POS-2024-001"; // Placeholder
+            const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
+            const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
+            const printedDate = now.toLocaleString();
+
+            let itemsTableRows = '';
+            let grossSaleValue = 0; // Sum of price * qty (before VAT)
+
+            // Prepare cart items for saving (simplified structure)
+            const salesCartItems = cart.map(item => ({
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+                vatRate: item.product.vatRate,
+                amount: calculateItemSubtotal(item.product, item.quantity) // Amount includes VAT
+            }));
+
+
+            cart.forEach(item => {
+                const itemVat = calculateItemVat(item.product, item.quantity);
+                const itemPriceExclVat = item.product.price * item.quantity;
+                const itemAmountInclVat = itemPriceExclVat + itemVat;
+
+                grossSaleValue += itemPriceExclVat;
+
+                itemsTableRows += `
+                    <tr>
+                        <td class="py-1 px-2 text-left">${item.product.name}</td>
+                        <td class="py-1 px-2 text-center">${item.product.id}</td>
+                        <td class="py-1 px-2 text-center">${item.quantity}</td>
+                        <td class="py-1 px-2 text-right">${item.product.price.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right">${itemAmountInclVat.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            const totalBeforeVat = parseFloat(totalBeforeVatSpan.textContent.replace('KSh ', ''));
+            const vatAmount = parseFloat(vatAmountSpan.textContent.replace('KSh ', ''));
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            let cashReceived = parseFloat(cashReceivedInput.value) || 0;
+            let balance = parseFloat(balanceAmountSpan.textContent.replace('KSh ', ''));
+
+            // Adjust received and balance for digital payments on receipt
+            if (selectedPaymentMethod === 'Mpesa' || selectedPaymentMethod === 'Card') {
+                cashReceived = grandTotal;
+                balance = 0;
+            }
+
+            const totalSavings = 0.00; // Placeholder for total savings
+
+            // Construct the sale object to save
+            const saleData = {
+                invoiceNo: transactionId,
+                timestamp: now.toISOString(), // Use ISO string for localStorage
+                cashierName: cashierName,
+                tillNumber: tillNumber,
+                cartItems: salesCartItems, // Store the simplified cart items
+                paymentMethod: selectedPaymentMethod,
+                grossSaleValue: grossSaleValue,
+                totalBeforeVat: totalBeforeVat,
+                vatAmount: vatAmount,
+                grandTotal: grandTotal,
+                receivedAmount: cashReceived,
+                balancePaid: balance,
+                totalSavings: totalSavings,
+                serialNo: serialNumber,
+                cuInvoiceNo: cuInvoiceNumber,
+                cuDate: cuDate,
+                printedDate: printedDate
+            };
+            saveSaleToLocalStorage(saleData); // Save the completed sale
+
+            return `
+                <div class="text-center mb-4">
+                    <img src="https://placehold.co/80x80/000/fff?text=STORE+LOGO" alt="Store Logo" class="mx-auto mb-2 rounded-full">
+                    <h2 class="text-2xl font-bold text-gray-900">${storeName}</h2>
+                    <p class="text-sm text-gray-600">${storeAddress}</p>
+                    <p class="text-sm text-gray-600">Email: ${storeEmail}</p>
+                </div>
+                <hr>
+                <h3 class="text-xl font-bold text-center my-4">TAX INVOICE</h3>
+                <hr>
+                <div class="my-4 text-gray-700">
+                    <div class="flex justify-between mb-1"><span>Invoice No:</span><span>${transactionId}</span></div>
+                    <div class="flex justify-between mb-1"><span>Date:</span><span>${now.toLocaleDateString()}</span></div>
+                    <div class="flex justify-between mb-1"><span>Time:</span><span>${now.toLocaleTimeString()}</span></div>
+                    <div class="flex justify-between mb-1"><span>Cashier:</span><span>${cashierName}</span></div>
+                    <div class="flex justify-between mb-1"><span>Till No:</span><span>${tillNumber}</span></div>
+                </div>
+                <hr>
+                <div class="my-4">
+                    <h3 class="font-bold text-lg mb-2">Products Bought:</h3>
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-300">
+                                <th class="py-1 px-2 text-left">Item</th>
+                                <th class="py-1 px-2 text-center">Barcode</th>
+                                <th class="py-1 px-2 text-center">Qty</th>
+                                <th class="py-1 px-2 text-right">Price</th>
+                                <th class="py-1 px-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsTableRows}
+                        </tbody>
+                    </table>
+                </div>
+                <hr>
+                <div class="my-4 text-gray-800">
+                    <div class="flex justify-between mb-1">
+                        <span>Gross Sale Value:</span>
+                        <span>${formatCurrency(grossSaleValue)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Net Payable:</span>
+                        <span>${formatCurrency(totalBeforeVat)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Received Amount:</span>
+                        <span>${formatCurrency(cashReceived)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Balance Paid:</span>
+                        <span>${formatCurrency(balance)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-2">
+                        <span>Total Savings:</span>
+                        <span>${formatCurrency(totalSavings)}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="my-4 text-gray-800">
+                    <p>Payment Method: <span class="font-semibold">${selectedPaymentMethod || 'N/A'}</span></p>
+                    ${selectedPaymentMethod === 'Mpesa' ? `<p>M-PESA Code: MP${Math.random().toString(36).substring(2, 10).toUpperCase()}</p>` : ''}
+                </div>
+                <hr>
+                <div class="my-4 text-gray-800">
+                    <h3 class="font-bold text-lg mb-2">Tax Summary:</h3>
+                    <div class="flex justify-between mb-1">
+                        <span>VAT (16%):</span>
+                        <span>${formatCurrency(totalBeforeVat)}</span>
+                        <span>${formatCurrency(vatAmount)}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center mt-4">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`Transaction ID: ${transactionId}, Total: ${grandTotal}`)}" alt="QR Code for Verification" class="mx-auto mb-2">
+                    <p class="text-sm text-gray-600">Scan for Verification</p>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1 mt-2">
+                        <span>Serial No:</span>
+                        <span>${serialNumber}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>CU Invoice No:</span>
+                        <span>${cuInvoiceNumber}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>CU Date:</span>
+                        <span>${cuDate}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">Printed Date: ${printedDate}</p>
+                    <p class="text-sm text-gray-600 mt-4">Thank you for shopping with us!</p>
+                </div>
+            `;
+        }
+
+        /**
+         * Displays the receipt modal with generated content.
+         */
+        function showReceipt() {
+            receiptContentBody.innerHTML = generateReceiptContent();
+            receiptModal.style.display = 'flex'; // Show the modal
+        }
+
+        /**
+         * Hides the receipt modal.
+         */
+        function hideReceipt() {
+            receiptModal.style.display = 'none'; // Hide the modal
+        }
+
+        /**
+         * Handles the printing of the receipt.
+         */
+        function printReceipt() {
+            if (cart.length === 0) {
+                showToast('Cart is empty. Nothing to print.', 'warning');
+                return;
+            }
+            showReceipt(); // Show the receipt modal first
+            // Use a small delay to ensure modal is fully rendered before printing
+            setTimeout(() => {
+                const printContents = receiptContentBody.innerHTML;
+                const originalContents = document.body.innerHTML;
+
+                // Create a new window for printing
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write('<html><head><title>Receipt</title>');
+                // Include basic styles for printing
+                printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">');
+                printWindow.document.write('<style>');
+                printWindow.document.write(`
+                    body { font-family: 'Inter', sans-serif; margin: 0; padding: 1rem; }
+                    .receipt-content { width: 100%; max-width: 400px; margin: 0 auto; padding: 0; }
+                    .receipt-content hr { border-top: 1px dashed #cbd5e0; margin: 1rem 0; }
+                    .text-center { text-align: center; }
+                    .mb-4 { margin-bottom: 1rem; }
+                    .text-2xl { font-size: 1.5rem; }
+                    .font-bold { font-weight: 700; }
+                    .text-gray-900 { color: #1a202c; }
+                    .text-sm { font-size: 0.875rem; }
+                    .text-gray-600 { color: #4a5568; }
+                    .my-4 { margin-top: 1rem; margin-bottom: 1rem; }
+                    .text-gray-700 { color: #2d3748; }
+                    .font-semibold { font-weight: 600; }
+                    .text-lg { font-size: 1.125rem; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .text-xs { font-size: 0.75rem; }
+                    .ml-4 { margin-left: 1rem; }
+                    .mx-auto { margin-left: auto; margin-right: auto; }
+                    img { display: block; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #eee; }
+                    th { text-align: left; }
+                    td { text-align: right; }
+                    td:first-child { text-align: left; }
+                `);
+                printWindow.document.write('</style></head><body>');
+                printWindow.document.write('<div class="receipt-content">');
+                printWindow.document.write(printContents);
+                printWindow.document.write('</div></body></html>');
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+                hideReceipt(); // Hide modal after print command
+            }, 50); // Small delay
+        }
+
+        /**
+         * Displays the manager approval modal.
+         * The action to be performed upon approval is stored in `pendingApprovalAction`.
+         */
+        function showManagerApprovalModal() {
+            managerCardIdInput.value = '';
+            managerCodeInput.value = '';
+            managerApprovalModal.style.display = 'flex';
+            managerCardIdInput.focus(); // Focus on card ID input
+        }
+
+        /**
+         * Hides the manager approval modal.
+         */
+        function hideManagerApprovalModal() {
+            managerApprovalModal.style.display = 'none';
+            pendingApprovalAction = null; // Clear pending action
+        }
+
+        /**
+         * Validates manager credentials and executes the pending action if approved.
+         */
+        function validateManagerApproval() {
+            const cardId = managerCardIdInput.value.trim();
+            const code = managerCodeInput.value.trim();
+
+            if (cardId === MANAGER_CREDENTIALS.cardId || code === MANAGER_CREDENTIALS.code) {
+                hideManagerApprovalModal();
+                if (pendingApprovalAction) {
+                    pendingApprovalAction(); // Execute the stored action (remove item/update quantity)
+                    showToast('Manager approval successful!', 'success');
+                }
+            } else {
+                showToast('Invalid Manager Card ID or Code. Please try again.', 'error');
+                managerCardIdInput.value = '';
+                managerCodeInput.value = '';
+                managerCardIdInput.focus();
+            }
+        }
+
+        /**
+         * Saves the current cart and transaction details to local storage.
+         * This now also saves the completed sale to a sales history array.
+         */
+        function saveTransactionLocally() {
+            // Save current cart state (for persistence if page reloads mid-transaction)
+            const currentTransactionData = {
+                cart: cart,
+                lastTransactionId: transactionIdCounter,
+                selectedPaymentMethod: selectedPaymentMethod,
+                paymentConfirmed: paymentConfirmed
+            };
+            localStorage.setItem('princeAlexPOS_current_transaction', JSON.stringify(currentTransactionData));
+
+            // Also save the current products array (with updated stock)
+            localStorage.setItem('princeAlexPOS_products', JSON.stringify(products));
+        }
+
+        /**
+         * Loads the last saved transaction from local storage.
+         */
+        function loadTransactionLocally() {
+            // Load products first
+            const savedProducts = localStorage.getItem('princeAlexPOS_products');
+            if (savedProducts) {
+                products = JSON.parse(savedProducts);
+            }
+
+            // Load current transaction state
+            const savedCurrentTransactionData = localStorage.getItem('princeAlexPOS_current_transaction');
+            if (savedCurrentTransactionData) {
+                const transactionData = JSON.parse(savedCurrentTransactionData);
+                cart = transactionData.cart || [];
+                transactionIdCounter = transactionData.lastTransactionId || 1000;
+                selectedPaymentMethod = transactionData.selectedPaymentMethod || null;
+                paymentConfirmed = transactionData.paymentConfirmed || false;
+
+                // Re-apply payment method styling if any was selected
+                if (selectedPaymentMethod) {
+                    document.querySelectorAll('.payment-btn').forEach(btn => {
+                        if (btn.id === `pay${selectedPaymentMethod}Btn`) {
+                            btn.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+                        } else {
+                            btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+                        }
+                    });
+                    if (selectedPaymentMethod === 'Cash') {
+                        cashPaymentSection.classList.remove('hidden');
+                        digitalPaymentStatusDiv.classList.add('hidden');
+                    } else {
+                        cashPaymentSection.classList.add('hidden');
+                        digitalPaymentStatusDiv.classList.remove('hidden');
+                        digitalPaymentMessage.textContent = `${selectedPaymentMethod} Payment Confirmed!`;
+                        digitalPaymentDetails.textContent = ''; // Clear details on load, as they are dynamic
+                    }
+                }
+            }
+        }
+
+        /**
+         * Saves a completed sale transaction to local storage history.
+         * @param {object} saleData - The completed sale object.
+         */
+        function saveSaleToLocalStorage(saleData) {
+            let salesHistory = JSON.parse(localStorage.getItem('princeAlexPOS_sales_history') || '[]');
+            salesHistory.push(saleData);
+            localStorage.setItem('princeAlexPOS_sales_history', JSON.stringify(salesHistory));
+            console.log("Sale saved to local storage history:", saleData);
+
+            // Update product stock in localStorage
+            saleData.cartItems.forEach(soldItem => {
+                const productInDb = products.find(p => p.id === soldItem.id);
+                if (productInDb) {
+                    productInDb.stock -= soldItem.quantity;
+                    if (productInDb.stock < 0) productInDb.stock = 0; // Prevent negative stock
+                }
+            });
+            localStorage.setItem('princeAlexPOS_products', JSON.stringify(products));
+        }
+
+
+        /**
+         * Resets the POS system to a fresh state after a completed sale.
+         */
+        function resetPOS() {
+            cart = [];
+            selectedPaymentMethod = null;
+            paymentConfirmed = false; // Reset payment confirmation
+            cashReceivedInput.value = '';
+            balanceAmountSpan.textContent = formatCurrency(0);
+            document.querySelectorAll('.payment-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+            });
+            cashPaymentSection.classList.add('hidden');
+            digitalPaymentStatusDiv.classList.add('hidden'); // Hide digital payment status
+            digitalPaymentMessage.textContent = '';
+            digitalPaymentDetails.textContent = '';
+            updateCartDisplay();
+            calculateTotals();
+            saveTransactionLocally(); // Clear current transaction state and save updated products
+        }
+
+        // --- Barcode Scanner Functions ---
+        function startScanner() {
+            // If scanner already exists, don't recreate it
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { // Check if scanner is active and scanning
+                showToast("Scanner is already running.", "info");
+                return;
+            }
+
+            const qrCodeReaderElement = document.getElementById("reader");
+            stopScannerBtn.classList.remove('hidden'); // Show the stop button
+
+            // Define what happens when a barcode is successfully scanned
+            function onScanSuccess(decodedText, decodedResult) {
+                console.log(`Scanned code: ${decodedText}`);
+                stopScanner(); // Stop scanning after first match
+                addToCart(decodedText); // Call your function to handle the product
+                productSearchInput.value = decodedText; // Populate search input with scanned code
+                productSearchInput.dispatchEvent(new Event('input')); // Trigger search
+            }
+
+            // Define what happens when scan error occurs
+            function onScanError(errorMessage) {
+                // console.warn(`Scan error: ${errorMessage}`); // Log errors for debugging, but don't show to user constantly
+            }
+
+            // Define the scanner
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } }; // Set QR box size
+
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Use back camera
+                config,
+                onScanSuccess,
+                onScanError // Pass error handler
+            ).catch(err => {
+                console.error("Error starting scanner:", err);
+                showToast("Error starting scanner. Please ensure camera access is granted.", "error");
+                stopScannerBtn.classList.add('hidden'); // Hide stop button if scanner fails to start
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { // Check if scanner is active
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById("reader").innerHTML = ''; // Clear scanner view
+                    html5QrcodeScanner = null; // Reset scanner instance
+                    stopScannerBtn.classList.add('hidden'); // Hide the stop button
+                    showToast("Scanner stopped.", "info");
+                }).catch(err => {
+                    console.error("Error stopping scanner:", err);
+                    showToast("Error stopping scanner.", "error");
+                });
+            } else if (html5QrcodeScanner) {
+                 // If scanner object exists but isn't scanning, just clear it
+                 html5QrcodeScanner.clear();
+                 document.getElementById("reader").innerHTML = '';
+                 html5QrcodeScanner = null;
+                 stopScannerBtn.classList.add('hidden');
+            }
+        }
+
+        // Expose functions to the global scope for onclick attributes
+        window.startScanner = startScanner;
+        window.stopScanner = stopScanner;
+
+
+        // --- Event Listeners ---
+
+        // Product Search Input
+        productSearchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            if (searchTerm.length > 0) {
+                searchResultsDiv.classList.remove('hidden');
+                const filtered = products.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.id.includes(searchTerm)
+                );
+                renderProducts(filtered);
+            } else {
+                searchResultsDiv.classList.add('hidden');
+                productResultsList.innerHTML = '';
+            }
+        });
+
+        // Payment Method Selection
+        document.querySelectorAll('.payment-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                // Reset payment confirmation and hide digital status
+                paymentConfirmed = false;
+                digitalPaymentStatusDiv.classList.add('hidden');
+                digitalPaymentMessage.textContent = '';
+                digitalPaymentDetails.textContent = '';
+
+                // Remove active styling from all buttons
+                document.querySelectorAll('.payment-btn').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+                });
+
+                // Add active styling to the clicked button
+                event.target.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+
+                selectedPaymentMethod = event.target.id.replace('pay', '').replace('Btn', ''); // e.g., 'Cash', 'Mpesa', 'Card'
+
+                if (selectedPaymentMethod === 'Cash') {
+                    cashPaymentSection.classList.remove('hidden');
+                    cashReceivedInput.focus();
+                } else {
+                    cashPaymentSection.classList.add('hidden');
+                    balanceAmountSpan.textContent = formatCurrency(0); // Clear balance
+                    cashReceivedInput.value = '';
+
+                    // Disable payment buttons during processing
+                    payCashBtn.disabled = true;
+                    payMpesaBtn.disabled = true;
+                    payCardBtn.disabled = true;
+
+                    // Simulate digital payment processing
+                    digitalPaymentStatusDiv.classList.remove('hidden');
+                    digitalPaymentMessage.textContent = `Processing ${selectedPaymentMethod} payment...`;
+                    digitalPaymentDetails.textContent = 'Please wait...';
+                    showToast(`Initiating ${selectedPaymentMethod} payment...`, 'info');
+
+                    setTimeout(() => {
+                        paymentConfirmed = true;
+                        digitalPaymentMessage.textContent = `${selectedPaymentMethod} Payment Confirmed!`;
+                        const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+                        cashReceivedInput.value = grandTotal; // Simulate full payment received for digital methods
+                        balanceAmountSpan.textContent = formatCurrency(0); // Balance is 0 for digital payments
+
+                        if (selectedPaymentMethod === 'Mpesa') {
+                            const mpesaCode = `MP${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+                            digitalPaymentDetails.textContent = `Transaction Code: ${mpesaCode}\nAmount: ${formatCurrency(grandTotal)}`;
+                        } else if (selectedPaymentMethod === 'Card') {
+                            digitalPaymentDetails.textContent = `Payment processed via external card machine.\nAmount: ${formatCurrency(grandTotal)}`;
+                        }
+                        showToast(`${selectedPaymentMethod} payment successful!`, 'success');
+
+                        // Re-enable payment buttons after successful processing
+                        payCashBtn.disabled = false;
+                        payMpesaBtn.disabled = false;
+                        payCardBtn.disabled = false;
+                        calculateTotals(); // Re-calculate to enable complete sale button
+                    }, 15000); // Changed to 15 seconds
+                }
+
+                calculateTotals(); // Initial calculation to update complete sale button state
+            });
+        });
+
+        // Cash Received Input
+        cashReceivedInput.addEventListener('input', () => {
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+            const balance = cashReceived - grandTotal;
+            balanceAmountSpan.textContent = formatCurrency(balance);
+            calculateTotals(); // Re-calculate to enable/disable complete sale button
+        });
+
+        // Complete Sale Button
+        completeSaleBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                showToast('Cart is empty. Please add items before completing the sale.', 'error');
+                return;
+            }
+
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+
+            if (selectedPaymentMethod === 'Cash' && cashReceived < grandTotal) {
+                showToast('Cash received is less than the Grand Total. Please enter sufficient amount.', 'error');
+                return;
+            }
+
+            // Simulate sale completion
+            showToast(`Sale Completed! Total: ${formatCurrency(grandTotal)}`, 'success');
+            showReceipt(); // Show receipt after sale completion
+            resetPOS(); // Reset POS for next transaction
+        });
+
+        // Print Receipt Button (main UI)
+        printReceiptBtn.addEventListener('click', () => {
+            printReceipt();
+        });
+
+        // Receipt Modal Close Button
+        receiptCloseBtn.addEventListener('click', hideReceipt);
+
+        // Print Button inside Receipt Modal
+        printReceiptFromModalBtn.addEventListener('click', () => {
+            printReceipt();
+        });
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (event) => {
+            if (event.target === receiptModal) {
+                hideReceipt();
+            }
+            if (event.target === managerApprovalModal) {
+                hideManagerApprovalModal();
+                showToast('Manager approval cancelled.', 'info');
+            }
+        });
+
+        // Manager Approval Modal Buttons
+        approveManagerBtn.addEventListener('click', validateManagerApproval);
+        cancelManagerBtn.addEventListener('click', () => {
+            hideManagerApprovalModal();
+            showToast('Manager approval cancelled.', 'info');
+        });
+
+        // Manager Approval Modal Input Enter Key
+        managerCardIdInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                validateManagerApproval();
+            }
+        });
+        managerCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                validateManagerApproval();
+            }
+        });
+
+
+        // --- Keyboard Shortcuts ---
+        document.addEventListener('keydown', (event) => {
+            // Enter to add item (from search bar)
+            if (event.key === 'Enter' && productSearchInput === document.activeElement) {
+                const visibleResults = productResultsList.querySelectorAll('.add-to-cart-btn');
+                if (visibleResults.length > 0) {
+                    visibleResults[0].click(); // Simulate click on the first "Add" button
+                    event.preventDefault(); // Prevent default Enter key behavior (e.g., form submission)
+                }
+            }
+
+            // Ctrl + P to print
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault(); // Prevent browser's default print dialog
+                printReceipt();
+            }
+
+            // F2 to focus payment input (cash received)
+            if (event.key === 'F2') {
+                event.preventDefault(); // Prevent default F2 behavior
+                payCashBtn.click(); // Simulate clicking cash button to reveal input
+                cashReceivedInput.focus();
+            }
+        });
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTransactionLocally(); // Load any saved cart data
+            updateCartDisplay(); // Render cart on load
+            calculateTotals(); // Calculate totals on load
+        });
+    </script>
+</body>
+</html>
