@@ -1436,7 +1436,7 @@
             // Simulate sale completion
             showToast(`Sale Completed! Total: ${formatCurrency(grandTotal)}`, 'success');
             await showReceipt(); // Show receipt after sale completion
-            resetPOS(); // Reset POS for next transaction
+            resetPOS(); // Reset POS for next transaction -- MOVED THIS LINE HERE
         });
 
         // Print Receipt Button (main UI)
