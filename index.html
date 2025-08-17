@@ -3,51 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prince Alex Store Admin</title>
+    <title>Prince Alex Store POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.366.0"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6; /* Light gray background */
         }
-        .main-content {
-            flex: 1;
-            padding: 1.5rem;
+        .pos-container {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            flex: 1; /* Allows it to take up remaining space */
         }
-        .table-container {
-            overflow-x: auto;
-            max-height: 70vh; /* Limits height for scrolling */
-        }
-        table {
-            min-width: 100%;
-        }
-        .sidebar {
-            width: 280px;
-            background-color: #1a202c; /* Dark gray for a professional look */
-        }
-        .sidebar a {
-            padding: 1rem 1.5rem;
-            border-left: 4px solid transparent;
-            color: #d1d5db; /* Light gray text */
-            transition: all 0.2s ease-in-out;
-        }
-        .sidebar a:hover {
-            background-color: #2d3748;
-        }
-        .sidebar a.active {
-            background-color: #2d3748;
-            border-left-color: #3b82f6; /* Blue-500 */
-            color: #ffffff;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
+        .receipt-modal, .manager-approval-modal {
+            display: none; /* Hidden by default */
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -56,29 +29,38 @@
             height: 100%;
             overflow: auto;
             background-color: rgba(0,0,0,0.7);
-            /* Centering using Flexbox */
-            display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.3s ease-out;
+            transition: opacity 0.3s ease-in-out;
         }
-        .modal.show {
+        .receipt-modal.show, .manager-approval-modal.show {
+            display: flex;
             opacity: 1;
         }
-        .modal-content {
+        .receipt-content, .manager-approval-content {
             background-color: #fff;
-            padding: 2rem;
+            margin: auto;
+            padding: 1.5rem;
             border-radius: 0.5rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 320px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             position: relative;
-            transform: translateY(-50px);
-            transition: transform 0.3s ease-out;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            transform: scale(0.9);
+            transition: transform 0.3s ease-in-out;
         }
-        .modal.show .modal-content {
-            transform: translateY(0);
+        .receipt-modal.show .receipt-content, .manager-approval-modal.show .manager-approval-content {
+            transform: scale(1);
+        }
+        .receipt-content hr {
+            border-top: 1px dashed #cbd5e0;
+            margin: 0.75rem 0;
+        }
+        .receipt-content table {
+            font-size: 0.7rem;
         }
 
         /* Toast Alert Styling */
@@ -100,9 +82,6 @@
             opacity: 0;
             transform: translateY(-20px);
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
         .toast.show {
             opacity: 1;
@@ -113,293 +92,301 @@
         .toast.info { background-color: #3B82F6; /* Blue-500 */ }
         .toast.warning { background-color: #F59E0B; /* Yellow-500 */ }
 
-        /* Hide the spinner from number inputs */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none;
-            margin: 0;
+        /* Scanner message styling */
+        .scanner-message {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #4a5568;
+            font-weight: 600;
+            z-index: 10; /* Above the video feed */
+            border-radius: 0.5rem;
         }
-        input[type=number] {
-            -moz-appearance: textfield;
+        .scanner-message .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4a5568;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 0.5rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
+        .search-input-container {
+            position: relative;
+        }
+        .clear-search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #ccc;
+            cursor: pointer;
+            line-height: 1;
+            display: none;
+        }
+        .search-input-container:hover .clear-search-btn {
+            display: block;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .receipt-modal, .receipt-modal * {
+                visibility: visible;
+            }
+            .receipt-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background-color: #fff;
+                box-shadow: none;
+            }
+            .receipt-content {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0.5rem;
+                box-shadow: none;
+                border-radius: 0;
+                font-size: 0.7rem;
+            }
+            .receipt-content hr {
+                margin: 0.5rem 0;
+            }
+            .receipt-content table {
+                font-size: 0.65rem;
+            }
+            .receipt-close-btn, #printReceiptFromModalBtn {
+                display: none;
+            }
+            /* Hide toast container and manager approval modal when printing */
+            #toast-container, .manager-approval-modal {
+                display: none;
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex min-h-screen">
+<body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <div id="adminLoginModal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold mb-4 text-center text-red-700">Admin Login</h2>
-            <input id="adminCode" type="password" 
-                placeholder="Scan Card or Enter PIN"
-                class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-600">
-            <button onclick="adminLogin()" 
-                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
-            <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center"></p>
+    <div id="cashierLogin" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[1002] transition-opacity duration-300">
+      <div class="bg-white p-6 rounded-xl shadow-lg w-96 transition-transform duration-300 transform scale-95">
+        <h2 class="text-2xl font-bold mb-4 text-center text-blue-700">Cashier Login</h2>
+        <input id="cashierCode" type="password" 
+          placeholder="Scan Card or Enter PIN"
+          class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-600">
+        <button onclick="cashierLogin()" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
+        <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid code, try again</p>
+      </div>
+    </div>
+
+    <div id="managerApproval" class="manager-approval-modal transition-opacity duration-300">
+      <div class="manager-approval-content transition-transform duration-300">
+        <h2 class="text-2xl font-bold mb-4 text-center text-red-600">Manager Approval Required</h2>
+        <input id="managerCode" type="password" 
+          placeholder="Manager PIN or Card ID"
+          class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-600">
+        <button onclick="approveAction()" 
+          class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Approve</button>
+        <p id="approvalError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid Manager Code</p>
+      </div>
+    </div>
+
+
+    <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
+        <h1 class="text-xl font-bold">Prince Alex Store POS</h1>
+        <div class="flex items-center space-x-4">
+            <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Loading...</span></span>
+            <button id="adminPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Admin Panel</button>
+            <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
+            <button id="settingsBtn" class="bg-blue-800 hover:bg-blue-900 text-white p-2 rounded-lg transition duration-200 shadow-sm">⚙️</button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 flex justify-center items-start">
+        <div class="pos-container flex flex-col lg:flex-row p-6 w-full max-w-5xl"> <div class="lg:w-2/3 p-4 bg-white rounded-l-xl lg:border-r border-gray-200">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center lg:text-left">Billing Panel</h1>
+
+                <div class="mb-6 flex flex-col sm:flex-row items-center gap-3">
+                    <div class="search-input-container w-full sm:w-2/3">
+                        <input type="text" id="productSearch" placeholder="Scan or type product barcode/name..."
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                        <button id="clearSearchBtn" class="clear-search-btn text-gray-400 hover:text-gray-600">&times;</button>
+                    </div>
+                    <button onclick="startScanner()" class="w-full sm:w-1/3 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">
+                        📷 Scan Barcode
+                    </button>
+                </div>
+
+                <div id="reader" style="width: 100%; margin-top: 10px; position: relative;">
+                    <div id="productScannerMessage" class="scanner-message hidden">
+                        <div class="spinner"></div>
+                        <span>Initializing camera...</span>
+                    </div>
+                </div>
+                <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md">
+                    ❌ Close Scanner
+                </button>
+
+                <div id="searchResults" class="mb-6 hidden">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Search Results</h2>
+                    <div id="productResultsList" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
+                        </div>
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Current Cart</h2>
+                    <div class="overflow-x-auto rounded-lg shadow-md">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-blue-600 text-white">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Item Name</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">Qty</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">Price</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium">VAT</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartItems" class="divide-y divide-gray-200">
+                                <tr id="emptyCartMessage">
+                                    <td colspan="5" class="py-4 px-4 text-center text-gray-500">Cart is empty. Add items!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:w-1/3 p-4 bg-gray-50 rounded-r-xl lg:rounded-l-none mt-6 lg:mt-0 shadow-inner">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Order Summary</h2>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-medium text-gray-700">Total (Before VAT):</span>
+                        <span id="totalBeforeVat" class="text-lg font-semibold text-gray-900">KSh 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-medium text-gray-700">VAT Amount (<span id="vatRateDisplay">16</span>%):</span>
+                        <span id="vatAmount" class="text-lg font-semibold text-gray-900">KSh 0.00</span>
+                    </div>
+                    <hr class="my-4 border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold text-gray-800">Grand Total:</span>
+                        <span id="grandTotal" class="text-2xl font-extrabold text-blue-700">KSh 0.00</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Payment Options</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <button id="payCashBtn" class="payment-btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>💵 Cash</button>
+                        <button id="payMpesaBtn" class="payment-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>📱 M-PESA</button>
+                        <button id="payCardBtn" class="payment-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>💳 Card</button>
+                    </div>
+
+                    <div id="cashPaymentSection" class="hidden">
+                        <label for="cashReceived" class="block text-gray-700 text-sm font-bold mb-2">Cash Received (KSh):</label>
+                        <input type="number" id="cashReceived" placeholder="Enter amount"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-lg font-medium text-gray-700">Balance:</span>
+                            <span id="balanceAmount" class="text-xl font-bold text-red-600">KSh 0.00</span>
+                        </div>
+                    </div>
+
+                    <div id="digitalPaymentStatus" class="hidden text-center p-3 mt-4 rounded-lg bg-gray-100">
+                        <p id="digitalPaymentMessage" class="text-gray-700 font-semibold mb-2"></p>
+                        <p id="digitalPaymentDetails" class="text-sm text-gray-600"></p>
+                    </div>
+
+                    <button id="completeSaleBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 rounded-lg text-xl transition duration-200 shadow-lg mt-4" disabled>Complete Sale</button>
+                </div>
+
+                <div class="mt-4 flex flex-col space-y-2">
+                    <button id="printReceiptBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">
+                        Print Receipt <span class="text-xs text-gray-300 ml-1">(Ctrl+P)</span>
+                    </button>
+                    <button id="cancelSaleBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">Cancel Current Sale</button>
+                    <button id="refundSaleBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">Process Refund</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="receiptModal" class="receipt-modal">
+        <div class="receipt-content">
+            <button class="receipt-close-btn absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <div id="receiptContentBody">
+                </div>
+            <button id="printReceiptFromModalBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4">Print</button>
         </div>
     </div>
-    
+
     <div id="toast-container"></div>
 
-    <div id="adminPanel" class="hidden flex w-full">
-        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4">
-            <div class="flex items-center justify-center p-6 border-b border-gray-700">
-                <img src="https://placehold.co/40x40/fff/000?text=A" alt="Admin Icon" class="rounded-full mr-2">
-                <span class="text-lg font-bold">Admin Panel</span>
-            </div>
-            <nav class="flex-1 mt-6 space-y-2">
-                <a href="#" class="flex items-center space-x-3 active" data-section="dashboard">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM6 10a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" /></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="flex items-center space-x-3" data-section="products">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM6 10a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" /></svg>
-                    <span>Products Management</span>
-                </a>
-                <a href="#" class="flex items-center space-x-3" data-section="users">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
-                    <span>Users Management</span>
-                </a>
-                <a href="#" class="flex items-center space-x-3" data-section="sales">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.171 1.341l.244-.122a1.002 1.002 0 00.933-.42l4.98-9.96-2.5-1.25a1 1 0 00-.777 1.87L9 15l2.223-1.111a1 1 0 00.554-1.87l-2.5-1.25 4.98-9.96a1.002 1 0 00.933.42l.244.122a1 1 0 001.171-1.341l-7-14z" /></svg>
-                    <span>Sales Reports</span>
-                </a>
-                <a href="#" class="flex items-center space-x-3" data-section="manager-logs">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1h2V3a1 1 0 10-2 0zm-2 2h6l.5 1h-7l.5-1zM4 6a2 2 0 012-2h8a2 2 0 012 2v2H4V6zm14 3h-2v1h2v1h-2v1h2v-3zm-2-2h2v1h-2v-1zm-2 5a2 2 0 01-2 2H6a2 2 0 01-2-2V8h12v4z" clip-rule="evenodd" /></svg>
-                    <span>Manager Approvals</span>
-                </a>
-                <a href="#" class="flex items-center space-x-3" data-section="audit-logs">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 002 0v-2a1 1 0 10-2 0v2zm1 4a1 1 0 100 2 1 1 0 000-2z" /></svg>
-                    <span>Audit Logs</span>
-                </a>
-            </nav>
-            <div class="mt-auto p-4 border-t border-gray-700">
-                <button onclick="adminLogout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Logout</button>
-            </div>
-        </aside>
-
-        <main class="flex-1 p-6">
-            <section id="dashboard" class="main-content">
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-blue-100 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold text-blue-800">Sales Today</h3>
-                        <p id="salesToday" class="text-4xl font-bold text-blue-900 mt-2">KSh 0.00</p>
-                    </div>
-                    <div class="bg-green-100 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold text-green-800">Active Cashiers</h3>
-                        <p id="activeCashiers" class="text-4xl font-bold text-green-900 mt-2">0</p>
-                    </div>
-                    <div class="bg-yellow-100 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold text-yellow-800">Low Stock Alerts</h3>
-                        <p id="lowStockAlerts" class="text-4xl font-bold text-yellow-900 mt-2">0</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="products" class="main-content hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-800">Products Management</h2>
-                    <button id="addProductBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-                        + Add New Product
-                    </button>
-                </div>
-                <div class="table-container bg-white rounded-lg shadow-md">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Barcode</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Product Name</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Price (KSh)</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Stock</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">VAT Rate</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="6" class="py-4 text-center text-gray-500">Loading products...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="users" class="main-content hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-800">Users Management</h2>
-                    <button id="addUserBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-                        + Add New User
-                    </button>
-                </div>
-                <div class="table-container bg-white rounded-lg shadow-md">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Name</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Role</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Card ID</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">PIN</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="5" class="py-4 text-center text-gray-500">Loading users...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="sales" class="main-content hidden">
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">Sales Reports</h2>
-                <div class="flex items-center space-x-4 mb-6">
-                    <input type="date" id="saleStartDate" class="border rounded-lg p-2">
-                    <input type="date" id="saleEndDate" class="border rounded-lg p-2">
-                    <input type="text" id="saleSearchInput" placeholder="Search by cashier/product..." class="border rounded-lg p-2 flex-1">
-                    <button id="filterSalesBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Filter</button>
-                    <button id="exportSalesBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Export CSV</button>
-                </div>
-                <div class="table-container bg-white rounded-lg shadow-md">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Invoice No.</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Date</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Grand Total</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Payment Method</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="salesTableBody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="6" class="py-4 text-center text-gray-500">No sales data.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="manager-logs" class="main-content hidden">
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">Manager Approvals</h2>
-                <div class="table-container bg-white rounded-lg shadow-md">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Timestamp</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Manager</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Item</th>
-                            </tr>
-                        </thead>
-                        <tbody id="managerLogsTableBody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="5" class="py-4 text-center text-gray-500">No manager approval logs.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            
-            <section id="audit-logs" class="main-content hidden">
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">Audit Logs</h2>
-                <div class="table-container bg-white rounded-lg shadow-md">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Timestamp</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">User</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Details</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="auditLogsTableBody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="5" class="py-4 text-center text-gray-500">No audit logs.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <h3 id="productModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add Product</h3>
-            <form id="productForm">
-                <input type="hidden" id="productId">
-                <div class="mb-4">
-                    <label for="productBarcode" class="block text-gray-700 text-sm font-bold mb-2">Barcode</label>
-                    <input type="text" id="productBarcode" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="productName" class="block text-gray-700 text-sm font-bold mb-2">Product Name</label>
-                    <input type="text" id="productName" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="productPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh)</label>
-                    <input type="number" id="productPrice" step="0.01" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="productStock" class="block text-gray-700 text-sm font-bold mb-2">Stock</label>
-                    <input type="number" id="productStock" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="productVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16 for 16%)</label>
-                    <input type="number" id="productVatRate" step="0.01" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeModal('productModal')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save Product</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <h3 id="userModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add User</h3>
-            <form id="userForm">
-                <input type="hidden" id="userId">
-                <div class="mb-4">
-                    <label for="userName" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
-                    <input type="text" id="userName" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="userRole" class="block text-gray-700 text-sm font-bold mb-2">Role</label>
-                    <select id="userRole" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                        <option value="cashier">Cashier</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="userCardId" class="block text-gray-700 text-sm font-bold mb-2">Card ID (Optional)</label>
-                    <input type="text" id="userCardId" class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="mb-4">
-                    <label for="userPin" class="block text-gray-700 text-sm font-bold mb-2">PIN</label>
-                    <input type="password" id="userPin" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeModal('userModal')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
     <script type="module">
+        //
+        // 🔑 Firebase Security Rules (IMPORTANT!) 🔑
+        //
+        // You are encountering "Missing or insufficient permissions" because your Firestore
+        // database rules are not configured to allow the application to read and write data.
+        //
+        // To fix this, you need to go to your Firebase project console:
+        // 1. Go to Firestore Database -> Rules tab.
+        // 2. Replace the existing rules with the following for development purposes.
+        //    (For production, you'll need more refined rules based on authentication.)
+        //
+        // rules_version = '2';
+        // service cloud.firestore {
+        //   match /databases/{database}/documents {
+        //     // Allow read and write access to 'products', 'sales', 'users', and 'managerLogs'
+        //     // for any authenticated user. For testing, you might even allow unauthenticated access
+        //     // but ensure to tighten this for production!
+        //     match /{document=**} {
+        //       allow read, write: if true; // WARNING: This allows anyone to read/write!
+        //                                   // Use this ONLY for initial setup/testing.
+        //                                   // For production, consider: allow read, write: if request.auth != null;
+        //     }
+        //
+        //     // More specific rules (example for authenticated users):
+        //     // match /products/{productId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /sales/{saleId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /users/{userId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /managerLogs/{logId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //   }
+        // }
+        //
+        // After updating the rules, publish them. Your application should then be able to
+        // interact with Firestore correctly.
+        //
+
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Firebase config (from index.html)
+        // Firebase config (yours)
         const firebaseConfig = {
             apiKey: "AIzaSyAUNs3WYS2mkvPvzRDfhyZFUbP2XpZjDQg",
             authDomain: "retailflow-pos-11726.firebaseapp.com",
@@ -416,154 +403,786 @@
         // Firestore collection references
         const productsCol = collection(db, "products");
         const salesCol = collection(db, "sales");
-        const usersCol = collection(db, "users");
-        const managerLogsCol = collection(db, "managerLogs");
-        const auditLogsCol = collection(db, "auditLogs"); // New Audit Logs collection
+        const usersCol = collection(db, "users"); // Users collection reference
+        const managerLogsCol = collection(db, "managerLogs"); // New: Manager Logs collection reference (serves as audit trail)
+
+        // --- Product Database (Initial Data) ---
+        // This will now be loaded from Firestore
+        let products = []; 
+        let vatRate = 0.16; // Centralized VAT rate
 
         // --- Global Variables ---
-        let products = [];
-        let users = [];
-        let sales = [];
-        let managerLogs = [];
-        let auditLogs = [];
-        let currentAdmin = null;
+        let cart = []; // Stores items currently in the cart
+        let selectedPaymentMethod = null;
+        let transactionIdCounter = 1000; // Simple counter for transaction IDs
+        let pendingApprovalAction = null; // Stores the function to execute after manager approval
+        let pendingApprovalActionDetails = { action: '', itemName: '' }; // Stores details for logging manager action
+        let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
+        let html5QrcodeScanner; // Declare product scanner variable globally
+        let lastScannedCode = null; // New: Debounce variable for product scanner
+        let currentCashier = null; // Stores the currently logged-in cashier object
+        let inactivityTimer; // Timer for auto-logout
+        const INACTIVITY_TIMEOUT_MINUTES = 5;
 
         // --- DOM Elements ---
-        const adminLoginModal = document.getElementById('adminLoginModal');
-        const adminCodeInput = document.getElementById('adminCode');
-        const loginErrorMsg = document.getElementById('loginError');
-        const adminPanel = document.getElementById('adminPanel');
-        const sidebarLinks = document.querySelectorAll('.sidebar a');
-        const sections = document.querySelectorAll('.main-content');
+        const cashierLoginDiv = document.getElementById('cashierLogin'); // New: Login screen div
+        const cashierCodeInput = document.getElementById('cashierCode'); // New: Cashier code input
+        const loginErrorMsg = document.getElementById('loginError');     // New: Login error error message
+        const productSearchInput = document.getElementById('productSearch');
+        const clearSearchBtn = document.getElementById('clearSearchBtn'); // New: Clear search button
+        const searchResultsDiv = document.getElementById('searchResults');
+        const productResultsList = document.getElementById('productResultsList');
+        const cartItemsTableBody = document.getElementById('cartItems');
+        const emptyCartMessage = document.getElementById('emptyCartMessage');
+        const totalBeforeVatSpan = document.getElementById('totalBeforeVat');
+        const vatRateDisplay = document.getElementById('vatRateDisplay'); // New: VAT rate display
+        const vatAmountSpan = document.getElementById('vatAmount');
+        const grandTotalSpan = document.getElementById('grandTotal');
+        const payCashBtn = document.getElementById('payCashBtn');
+        const payMpesaBtn = document.getElementById('payMpesaBtn');
+        const payCardBtn = document.getElementById('payCardBtn');
+        const cashPaymentSection = document.getElementById('cashPaymentSection');
+        const cashReceivedInput = document.getElementById('cashReceived');
+        const balanceAmountSpan = document.getElementById('balanceAmount');
+        const completeSaleBtn = document.getElementById('completeSaleBtn');
+        const printReceiptBtn = document.getElementById('printReceiptBtn');
+        const receiptModal = document.getElementById('receiptModal');
+        const receiptContentBody = document.getElementById('receiptContentBody');
+        const receiptCloseBtn = document.querySelector('.receipt-close-btn');
+        const printReceiptFromModalBtn = document.getElementById('printReceiptFromModalBtn');
         const toastContainer = document.getElementById('toast-container');
+        const cashierNameDisplay = document.getElementById('cashierNameDisplay');
+        const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
+        const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
+        const logoutBtn = document.getElementById('logoutBtn'); // Logout button
+        const mainPosContent = document.querySelector('main'); // Reference to the main POS content area
 
-        // Dashboard Elements
-        const salesTodaySpan = document.getElementById('salesToday');
-        const activeCashiersSpan = document.getElementById('activeCashiers');
-        const lowStockAlertsSpan = document.getElementById('lowStockAlerts');
+        // Manager Approval Modal Elements
+        const managerApprovalModal = document.getElementById('managerApproval'); 
+        const managerCodeInput = document.getElementById('managerCode'); 
+        const approvalError = document.getElementById('approvalError'); 
 
-        // Products Management Elements
-        const productsTableBody = document.getElementById('productsTableBody');
-        const addProductBtn = document.getElementById('addProductBtn');
-        const productModal = document.getElementById('productModal');
-        const productModalTitle = document.getElementById('productModalTitle');
-        const productForm = document.getElementById('productForm');
-        const productIdInput = document.getElementById('productId');
-        const productBarcodeInput = document.getElementById('productBarcode');
-        const productNameInput = document.getElementById('productName');
-        const productPriceInput = document.getElementById('productPrice');
-        const productStockInput = document.getElementById('productStock');
-        const productVatRateInput = document.getElementById('productVatRate');
+        // New buttons for manager actions
+        const cancelSaleBtn = document.getElementById('cancelSaleBtn');
+        const refundSaleBtn = document.getElementById('refundSaleBtn');
 
-        // Users Management Elements
-        const usersTableBody = document.getElementById('usersTableBody');
-        const addUserBtn = document.getElementById('addUserBtn');
-        const userModal = document.getElementById('userModal');
-        const userModalTitle = document.getElementById('userModalTitle');
-        const userForm = document.getElementById('userForm');
-        const userIdInput = document.getElementById('userId');
-        const userNameInput = document.getElementById('userName');
-        const userRoleInput = document.getElementById('userRole');
-        const userCardIdInput = document.getElementById('userCardId');
-        const userPinInput = document.getElementById('userPin');
 
-        // Sales Reports Elements
-        const salesTableBody = document.getElementById('salesTableBody');
-        const saleStartDateInput = document.getElementById('saleStartDate');
-        const saleEndDateInput = document.getElementById('saleEndDate');
-        const saleSearchInput = document.getElementById('saleSearchInput');
-        const filterSalesBtn = document.getElementById('filterSalesBtn');
-        const exportSalesBtn = document.getElementById('exportSalesBtn');
+        // Scanner messages 
+        const productScannerMessage = document.getElementById('productScannerMessage');
 
-        // Manager Logs Elements
-        const managerLogsTableBody = document.getElementById('managerLogsTableBody');
-        
-        // Audit Logs Elements
-        const auditLogsTableBody = document.getElementById('auditLogsTableBody');
+
+        // Digital Payment Status Elements
+        const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
+        const digitalPaymentMessage = document.getElementById('digitalPaymentMessage');
+        const digitalPaymentDetails = document.getElementById('digitalPaymentDetails');
 
 
         // --- Helper Functions ---
         
+        /**
+         * Resets the auto-logout timer.
+         */
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(cashierLogout, INACTIVITY_TIMEOUT_MINUTES * 60 * 1000);
+            console.log("Timer reset");
+        }
+
+        /**
+         * Toggles the visibility and animation of a modal.
+         * @param {HTMLElement} modal - The modal element to toggle.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleModal(modal, show) {
+            if (show) {
+                modal.classList.add('show');
+            } else {
+                modal.classList.remove('show');
+            }
+        }
+
+        /**
+         * Displays a toast notification.
+         * @param {string} message - The message to display.
+         * @param {'success'|'error'|'info'|'warning'} type - The type of toast (for styling).
+         * @param {number} duration - How long the toast should be visible in ms.
+         */
         function showToast(message, type = 'info', duration = 3000) {
             const toast = document.createElement('div');
+            const icon = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+                warning: '⚠️'
+            }[type] || '';
             toast.className = `toast ${type}`;
-            
-            let icon = '';
-            switch(type) {
-                case 'success': icon = '✅'; break;
-                case 'error': icon = '❌'; break;
-                case 'warning': icon = '⚠️'; break;
-                case 'info': icon = '💡'; break;
-            }
-            toast.innerHTML = `${icon} ${message}`;
-
+            toast.textContent = `${icon} ${message}`;
             toastContainer.appendChild(toast);
+
+            // Trigger reflow to ensure transition plays
             void toast.offsetWidth;
+
             toast.classList.add('show');
+
             setTimeout(() => {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove(), { once: true });
             }, duration);
         }
 
-        function showSection(sectionId) {
-            sections.forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById(sectionId).classList.remove('hidden');
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+        /**
+         * Plays a simple beep sound.
+         */
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.type = 'sine'; // Sine wave for a clean beep
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A4 note
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume
+
+                oscillator.start(audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.1); // Short decay
+                oscillator.stop(audioContext.currentTime + 0.1); // Stop after 0.1 seconds
+            } catch (e) {
+                console.warn("AudioContext not supported or error playing sound:", e);
+            }
         }
 
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.style.display = 'flex';
-            requestAnimationFrame(() => {
-                modal.classList.add('show');
-            });
-        }
-
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('show');
-            modal.addEventListener('transitionend', () => {
-                modal.style.display = 'none';
-            }, { once: true });
-        }
-        
+        /**
+         * Formats a number to currency string (KSh).
+         * @param {number} amount - The amount to format.
+         * @returns {string} Formatted currency string.
+         */
         function formatCurrency(amount) {
-            return `KSh ${parseFloat(amount).toFixed(2)}`;
+            // Ensure amount is a number and handle potential NaN
+            const numAmount = parseFloat(amount);
+            if (isNaN(numAmount)) {
+                return 'KSh 0.00';
+            }
+            return `KSh ${numAmount.toFixed(2)}`;
         }
 
-        function formatDate(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleString();
+        /**
+         * Calculates VAT based on price and VAT rate.
+         * Assumes VAT Exclusive pricing (price in DB excludes VAT).
+         * @param {number} price - The price of the item (or subtotal of items).
+         * @param {number} vatRate - The VAT rate (e.g., 0.16 for 16%).
+         * @returns {{netPrice: number, vatAmount: number, total: number}} Object containing net price, VAT amount, and total.
+         */
+        function calculateVAT(price, vatRate) {
+            // Price is VAT Exclusive, add it
+            const vatAmount = price * vatRate;
+            const total = price + vatAmount;
+            return { netPrice: price, vatAmount, total };
         }
 
-        // --- Authentication ---
-        async function adminLogin() {
-            const code = adminCodeInput.value.trim();
-            loginErrorMsg.classList.add("hidden");
+        /**
+         * Calculates VAT for a single item.
+         * @param {object} product - The product object.
+         * @param {number} quantity - The quantity of the product.
+         * @returns {number} The calculated VAT amount.
+         */
+        function calculateItemVat(product, quantity) {
+            const { vatAmount } = calculateVAT(product.price * quantity, vatRate);
+            return vatAmount;
+        }
 
-            if (!code) {
-                loginErrorMsg.textContent = "⚠️ Please enter a PIN or Card ID.";
-                loginErrorMsg.classList.remove("hidden");
-                showToast("⚠️ Enter PIN/Card ID first.", "warning");
+        /**
+         * Calculates the subtotal for a single item (price * quantity + item VAT).
+         * @param {object} product - The product object.
+         * @param {number} quantity - The quantity of the product.
+         * @returns {number} The calculated item subtotal.
+         */
+        function calculateItemSubtotal(product, quantity) {
+            const { total } = calculateVAT(product.price * quantity, vatRate);
+            return total;
+        }
+
+        /**
+         * Updates the cart summary (total before VAT, VAT amount, grand total).
+         * Also controls the complete sale button's disabled state.
+         */
+        function calculateTotals() {
+            let totalBeforeVat = 0; // This will be the net amount
+            let totalVatAmount = 0;
+
+            cart.forEach(item => {
+                const itemNetPrice = item.product.price * item.quantity;
+                const { vatAmount } = calculateVAT(itemNetPrice, vatRate);
+                
+                totalBeforeVat += itemNetPrice;
+                totalVatAmount += vatAmount;
+            });
+
+            const grandTotal = totalBeforeVat + totalVatAmount;
+
+            totalBeforeVatSpan.textContent = formatCurrency(totalBeforeVat);
+            vatAmountSpan.textContent = formatCurrency(totalVatAmount);
+            grandTotalSpan.textContent = formatCurrency(grandTotal);
+
+            // Logic for enabling/disabling complete sale button
+            let enableCompleteSale = false;
+            if (cart.length > 0) {
+                if (selectedPaymentMethod === 'Cash') {
+                    const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+                    enableCompleteSale = cashReceived >= grandTotal;
+                } else if (selectedPaymentMethod === 'Mpesa' || selectedPaymentMethod === 'Card') {
+                    enableCompleteSale = paymentConfirmed;
+                }
+            }
+            completeSaleBtn.disabled = !enableCompleteSale;
+            printReceiptBtn.disabled = cart.length === 0;
+
+            // Disable payment buttons if cart is empty
+            const paymentButtons = [payCashBtn, payMpesaBtn, payCardBtn];
+            if (cart.length === 0) {
+                paymentButtons.forEach(btn => btn.disabled = true);
+                // Also reset selected payment method display if cart becomes empty
+                selectedPaymentMethod = null;
+                paymentConfirmed = false;
+                cashPaymentSection.classList.add('hidden');
+                digitalPaymentStatusDiv.classList.add('hidden');
+                document.querySelectorAll('.payment-btn').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+                });
+            } else {
+                paymentButtons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        /**
+         * Renders products in the search results list.
+         * @param {Array<object>} filteredProducts - Products to display.
+         */
+        function renderProducts(filteredProducts) {
+            productResultsList.innerHTML = ''; // Clear previous results
+            if (filteredProducts.length === 0) {
+                productResultsList.innerHTML = '<p class="p-4 text-gray-500">No products found.</p>';
                 return;
             }
 
-            try {
-                const q = query(usersCol, where("role", "==", "admin"));
-                const snapshot = await getDocs(q);
+            filteredProducts.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'flex justify-between items-center p-3 border-b border-gray-100 last:border-b-0 hover:bg-blue-50 cursor-pointer rounded-lg';
+                productDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${product.thumbnail || 'https://placehold.co/40x40/E5E7EB/4B5563?text=N/A'}" alt="Product thumbnail" class="w-10 h-10 rounded">
+                        <div>
+                            <p class="font-semibold text-gray-800">${product.name}</p>
+                            <p class="text-sm text-gray-500">ID: ${product.id}</p>
+                            <p class="text-xs text-gray-400">Stock: ${product.stock}</p>
+                        </div>
+                    </div>
+                    <button data-product-id="${product.id}" class="add-to-cart-btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition duration-200">
+                        Add (KSh ${product.price.toFixed(2)})
+                    </button>
+                `;
+                productResultsList.appendChild(productDiv);
+            });
 
-                if (snapshot.empty) {
-                    loginErrorMsg.textContent = "❌ No admin users found in database.";
-                    loginErrorMsg.classList.remove("hidden");
-                    showToast("❌ No admin accounts set up!", "error");
+            // Attach event listeners to new "Add" buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', async (event) => { // Made async to handle potential stock updates
+                    const productId = event.target.dataset.productId;
+                    await addToCart(productId); // Await addToCart
+                    productSearchInput.value = ''; // Clear search bar
+                    searchResultsDiv.classList.add('hidden'); // Hide search results
+                    productSearchInput.focus(); // Auto-focus search bar
+                });
+            });
+        }
+
+        /**
+         * Adds a product to the cart or increments its quantity.
+         * @param {string} productId - The ID of the product to add.
+         */
+        async function addToCart(productId) {
+            const productToAdd = products.find(p => p.id === productId);
+            if (!productToAdd) {
+                showToast(`Product with ID ${productId} not found.`, 'error');
+                return;
+            }
+
+            const existingItemIndex = cart.findIndex(item => item.product.id === productId);
+
+            if (existingItemIndex > -1) {
+                if (cart[existingItemIndex].quantity < productToAdd.stock) {
+                    cart[existingItemIndex].quantity++;
+                    showToast(`${productToAdd.name} added to cart!`, 'success');
+                } else {
+                    showToast(`Not enough stock for ${productToAdd.name}.`, 'warning');
+                    return; // Prevent adding if stock is insufficient
+                }
+            } else {
+                if (productToAdd.stock > 0) {
+                    cart.push({ product: productToAdd, quantity: 1 });
+                    showToast(`${productToAdd.name} added to cart!`, 'success');
+                } else {
+                    showToast(`${productToAdd.name} is out of stock.`, 'error');
+                    return; // Prevent adding if out of stock
+                }
+            }
+            updateCartDisplay();
+            calculateTotals();
+        }
+
+        /**
+         * Updates the quantity of an item in the cart.
+         * @param {string} productId - The ID of the product.
+         * @param {number} change - The amount to change the quantity by (+1 or -1).
+         */
+        function updateCartItemQuantity(productId, change) {
+            const itemIndex = cart.findIndex(item => item.product.id === productId);
+            if (itemIndex > -1) {
+                const currentItem = cart[itemIndex];
+                const productInDb = products.find(p => p.id === productId);
+
+                // If quantity increases, check stock
+                if (change > 0 && currentItem.quantity + change > productInDb.stock) {
+                    showToast(`Cannot add more ${currentItem.product.name}. Max stock reached.`, 'warning');
                     return;
                 }
+
+                // If quantity goes to 0 or less, require manager approval
+                if (currentItem.quantity + change <= 0) {
+                    pendingApprovalAction = () => {
+                        const removedItemName = currentItem.product.name;
+                        cart.splice(itemIndex, 1); // Remove item
+                        updateCartDisplay();
+                        calculateTotals();
+                        showToast(`${removedItemName} removed from cart.`, 'info');
+                    };
+                    // Set details for logging
+                    pendingApprovalActionDetails = { 
+                        action: 'Adjust Quantity to Zero/Remove', 
+                        itemName: currentItem.product.name 
+                    };
+                    requestManagerApproval(); // Trigger manager approval
+                } else {
+                    currentItem.quantity += change;
+                    updateCartDisplay();
+                    calculateTotals();
+                    showToast(`${currentItem.product.name} quantity updated.`, 'info');
+                }
+            }
+        }
+
+        /**
+         * Removes an item from the cart. Requires manager approval.
+         * @param {string} productId - The ID of the product to remove.
+         */
+        function removeItemFromCart(productId) {
+            const itemToRemove = cart.find(item => item.product.id === productId);
+            if (!itemToRemove) return;
+
+            pendingApprovalAction = () => {
+                cart = cart.filter(item => item.product.id !== productId);
+                updateCartDisplay();
+                calculateTotals();
+                showToast(`${itemToRemove.product.name} removed from cart.`, 'info');
+            };
+            // Set details for logging
+            pendingApprovalActionDetails = { 
+                action: 'Remove Item', 
+                itemName: itemToRemove.product.name 
+            };
+            requestManagerApproval(); // Trigger manager approval
+        }
+
+        /**
+         * Renders the current items in the cart table.
+         */
+        function updateCartDisplay() {
+            cartItemsTableBody.innerHTML = ''; // Clear current cart display
+
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                cart.forEach(item => {
+                    const itemVat = calculateItemVat(item.product, item.quantity);
+                    const itemSubtotal = calculateItemSubtotal(item.product, item.quantity);
+
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="py-3 px-4 text-gray-800 font-medium flex items-center space-x-2">
+                            <img src="${item.product.thumbnail || 'https://placehold.co/40x40/E5E7EB/4B5563?text=N/A'}" alt="Product thumbnail" class="w-8 h-8 rounded">
+                            <span>${item.product.name}</span>
+                        </td>
+                        <td class="py-3 px-4 text-gray-700">
+                            <div class="flex items-center">
+                                <button data-product-id="${item.product.id}" data-change="-1" class="qty-btn bg-red-400 hover:bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm">-</button>
+                                <span class="mx-2 font-bold">${item.quantity}</span>
+                                <button data-product-id="${item.product.id}" data-change="1" class="qty-btn bg-green-400 hover:bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm">+</button>
+                                <button data-product-id="${item.product.id}" class="remove-item-btn ml-3 text-red-600 hover:text-red-800 text-lg">&times;</button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-700">${formatCurrency(item.product.price)}</td>
+                        <td class="py-3 px-4 text-gray-700">${formatCurrency(itemVat)}</td>
+                        <td class="py-3 px-4 text-gray-900 font-semibold">${formatCurrency(itemSubtotal)}</td>
+                    `;
+                    cartItemsTableBody.appendChild(row);
+                });
+
+                // Attach event listeners for quantity buttons and remove buttons
+                document.querySelectorAll('.qty-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const productId = event.target.dataset.productId;
+                        const change = parseInt(event.target.dataset.change);
+                        updateCartItemQuantity(productId, change);
+                    });
+                });
+
+                document.querySelectorAll('.remove-item-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const productId = event.target.dataset.productId;
+                        removeItemFromCart(productId);
+                    });
+                });
+            }
+        }
+
+        /**
+         * Generates the HTML content for the receipt.
+         * @returns {string} HTML string of the receipt.
+         */
+        async function generateReceiptContent() { 
+            const now = new Date();
+            const transactionId = `TXN-${transactionIdCounter}`;
+            transactionIdCounter++; // Increment for next transaction
+
+            const storeName = "Prince Alex Store";
+            const storeAddress = "123 Market Street, Nairobi, Kenya";
+            const storeEmail = "info@princealexstore.com";
+            const cashierName = currentCashier ? currentCashier.name : "Unknown"; // Use currentCashier
+            const tillNumber = "001"; 
+            const serialNumber = "SN-POS-2024-001"; // Placeholder
+            const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
+            const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
+            const printedDate = now.toLocaleString();
+
+            let itemsTableRows = '';
+            let grossSaleValue = 0; // Sum of price * qty (before VAT)
+
+            // Prepare cart items for saving (simplified structure)
+            const salesCartItems = cart.map(item => ({
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+                vatRate: item.product.vatRate,
+                amount: calculateItemSubtotal(item.product, item.quantity) // Amount includes VAT
+            }));
+
+
+            cart.forEach(item => {
+                const itemNetPrice = item.product.price * item.quantity;
+                const { vatAmount, total: itemAmountInclVat } = calculateVAT(itemNetPrice, vatRate);
+
+                grossSaleValue += itemNetPrice; // Sum of net prices
+
+                itemsTableRows += `
+                    <tr>
+                        <td class="py-1 px-2 text-left">${item.product.name}</td>
+                        <td class="py-1 px-2 text-center">${item.product.id}</td>
+                        <td class="py-1 px-2 text-center">${item.quantity}</td>
+                        <td class="py-1 px-2 text-right">${item.product.price.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right">${itemAmountInclVat.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            // These values are already updated by calculateTotals() based on the new logic
+            const totalBeforeVat = parseFloat(totalBeforeVatSpan.textContent.replace('KSh ', ''));
+            const vatAmount = parseFloat(vatAmountSpan.textContent.replace('KSh ', ''));
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            let cashReceived = parseFloat(cashReceivedInput.value) || 0;
+            let balance = parseFloat(balanceAmountSpan.textContent.replace('KSh ', ''));
+
+            // Adjust received and balance for digital payments on receipt
+            let paymentDetails = `Cash: ${formatCurrency(cashReceived)}`;
+            let balanceDisplay = formatCurrency(balance);
+            if (selectedPaymentMethod === 'Mpesa' || selectedPaymentMethod === 'Card') {
+                cashReceived = grandTotal;
+                balance = 0;
+                balanceDisplay = formatCurrency(0); // Show 0 change for digital
+                paymentDetails = `${selectedPaymentMethod}: ${formatCurrency(grandTotal)}`;
+            }
+
+            const totalSavings = 0.00; // Placeholder for total savings
+
+            // Construct the sale object to save
+            const saleData = {
+                invoiceNo: transactionId,
+                timestamp: now.toISOString(), // Use ISO string for Firestore
+                cashierName: cashierName,
+                tillNumber: tillNumber,
+                cartItems: salesCartItems, // Store the simplified cart items
+                paymentMethod: selectedPaymentMethod,
+                grossSaleValue: grossSaleValue, // This is the Net Amount before VAT
+                totalBeforeVat: totalBeforeVat, // This should be the same as grossSaleValue now
+                vatAmount: vatAmount,
+                grandTotal: grandTotal,
+                receivedAmount: cashReceived,
+                balancePaid: balance,
+                totalSavings: totalSavings,
+                serialNo: serialNumber,
+                cuInvoiceNo: cuInvoiceNumber,
+                cuDate: cuDate,
+                printedDate: printedDate
+            };
+            
+            // Save the completed sale to Firestore
+            await saveSaleToFirestore(saleData); 
+            // Update stock in Firestore
+            await updateStockAfterSale(saleData.cartItems);
+
+            return `
+                <div class="text-center mb-4">
+                    <img src="https://placehold.co/80x80/000/fff?text=STORE+LOGO" alt="Store Logo" class="mx-auto mb-2 rounded-full">
+                    <h2 class="text-2xl font-bold text-gray-900">${storeName}</h2>
+                    <p class="text-sm text-gray-600">${storeAddress}</p>
+                    <p class="text-sm text-gray-600">Email: ${storeEmail}</p>
+                </div>
+                <hr>
+                <h3 class="text-xl font-bold text-center my-4">TAX INVOICE</h3>
+                <hr>
+                <div class="my-4 text-gray-700">
+                    <div class="flex justify-between mb-1"><span>Invoice No:</span><span>${transactionId}</span></div>
+                    <div class="flex justify-between mb-1"><span>Date:</span><span>${now.toLocaleDateString()}</span></div>
+                    <div class="flex justify-between mb-1"><span>Time:</span><span>${now.toLocaleTimeString()}</span></div>
+                    <div class="flex justify-between mb-1"><span>Cashier:</span><span>${cashierName}</span></div>
+                    <div class="flex justify-between mb-1"><span>Till No:</span><span>${tillNumber}</span></div>
+                </div>
+                <hr>
+                <div class="my-4">
+                    <h3 class="font-bold text-lg mb-2">Products Bought:</h3>
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-300">
+                                <th class="py-1 px-2 text-left">Item</th>
+                                <th class="py-1 px-2 text-center">Barcode</th>
+                                <th class="py-1 px-2 text-center">Qty</th>
+                                <th class="py-1 px-2 text-right">Unit Price</th>
+                                <th class="py-1 px-2 text-right">Amount (Incl. VAT)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsTableRows}
+                        </tbody>
+                    </table>
+                </div>
+                <hr>
+                <div class="my-4 text-gray-800">
+                    <div class="flex justify-between mb-1">
+                        <span>Net Amount (Before VAT):</span>
+                        <span>${formatCurrency(totalBeforeVat)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>VAT (${vatRate * 100}%):</span>
+                        <span>${formatCurrency(vatAmount)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-2">
+                        <span>Grand Total:</span>
+                        <span>${formatCurrency(grandTotal)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1 mt-2">
+                        <span>Payment:</span>
+                        <span>${paymentDetails}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Change:</span>
+                        <span>${balanceDisplay}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-2">
+                        <span>Total Savings:</span>
+                        <span>${formatCurrency(totalSavings)}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="my-4 text-gray-800">
+                    <h3 class="font-bold text-lg mb-2">Tax Summary:</h3>
+                    <div class="flex justify-between mb-1">
+                        <span>VAT (${vatRate * 100}% of ${formatCurrency(totalBeforeVat)}):</span>
+                        <span>${formatCurrency(vatAmount)}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center mt-4">
+                    <p class="font-bold italic text-sm text-gray-700">Thank you for shopping with us!</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`Transaction ID: ${transactionId}, Total: ${grandTotal}`)}" alt="QR Code for Verification" class="mx-auto mb-2">
+                    <p class="text-sm text-gray-600">Scan for Verification</p>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1 mt-2">
+                        <span>Serial No:</span>
+                        <span>${serialNumber}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>CU Invoice No:</span>
+                        <span>${cuInvoiceNumber}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>CU Date:</span>
+                        <span>${cuDate}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">Printed Date: ${printedDate}</p>
+                    <p class="text-sm text-gray-600 mt-4 border-t border-dashed pt-2">
+                        <span class="font-bold">Return Policy:</span> Items can be returned within 14 days with original receipt.
+                    </p>
+                </div>
+            `;
+        }
+
+        /**
+         * Displays the receipt modal with generated content.
+         */
+        async function showReceipt() { 
+            receiptContentBody.innerHTML = await generateReceiptContent(); 
+            toggleModal(receiptModal, true); // Show the modal with animation
+        }
+
+        /**
+         * Hides the receipt modal.
+         */
+        function hideReceipt() {
+            toggleModal(receiptModal, false); // Hide the modal with animation
+        }
+
+        /**
+         * Handles the printing of the receipt.
+         */
+        function printReceipt() {
+            if (cart.length === 0) {
+                showToast('Cart is empty. Nothing to print.', 'warning');
+                return;
+            }
+            showReceipt(); 
+            setTimeout(() => {
+                const printContents = receiptContentBody.innerHTML;
+                const originalContents = document.body.innerHTML;
+
+                // Create a new window for printing
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write('<html><head><title>Receipt</title>');
+                // Include basic styles for printing
+                printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">');
+                printWindow.document.write('<style>');
+                printWindow.document.write(`
+                    body { font-family: 'Inter', sans-serif; margin: 0; padding: 1rem; }
+                    .receipt-content { width: 100%; max-width: 400px; margin: 0 auto; padding: 0; }
+                    .receipt-content hr { border-top: 1px dashed #cbd5e0; margin: 1rem 0; }
+                    .text-center { text-align: center; }
+                    .mb-4 { margin-bottom: 1rem; }
+                    .text-2xl { font-size: 1.5rem; }
+                    .font-bold { font-weight: 700; }
+                    .text-gray-900 { color: #1a202c; }
+                    .text-sm { font-size: 0.875rem; }
+                    .text-gray-600 { color: #4a5568; }
+                    .my-4 { margin-top: 1rem; margin-bottom: 1rem; }
+                    .text-gray-700 { color: #2d3748; }
+                    .font-semibold { font-weight: 600; }
+                    .text-lg { font-size: 1.125rem; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .text-xs { font-size: 0.75rem; }
+                    .ml-4 { margin-left: 1rem; }
+                    .mx-auto { margin-left: auto; margin-right: auto; }
+                    img { display: block; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #eee; }
+                    th { text-align: left; }
+                    td { text-align: right; }
+                    td:first-child { text-align: left; }
+                `);
+                printWindow.document.write('</style></head><body>');
+                printWindow.document.write('<div class="receipt-content">');
+                printWindow.document.write(printContents);
+                printWindow.document.write('</div></body></html>');
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+                hideReceipt(); // Hide modal after print command
+            }, 50); // Small delay
+        }
+
+        /**
+         * Triggers the manager approval modal for restricted actions.
+         */
+        function requestManagerApproval() {
+            managerCodeInput.value = ""; // Clear input field
+            approvalError.classList.add("hidden"); // Hide previous error
+            toggleModal(managerApprovalModal, true); // Show the modal with animation
+            managerCodeInput.focus(); // Focus on input for scanner/manual entry
+        }
+
+        /**
+         * Handles the manager approval process.
+         * This function replaces the previous validateManagerApproval().
+         */
+        async function approveAction() {
+            const code = managerCodeInput.value.trim();
+            approvalError.classList.add("hidden"); // Hide error on new attempt
+
+            try {
+                const q = query(usersCol, where("role", "in", ["manager", "admin"]));
+                const snapshot = await getDocs(q);
+
+                let approvedUser = null;
+                snapshot.forEach(docSnap => {
+                    const user = docSnap.data();
+                    if (user.code === code || user.cardId === code) {
+                        approvedUser = { id: docSnap.id, ...user };
+                    }
+                });
+
+                if (approvedUser) {
+                    toggleModal(managerApprovalModal, false); // Hide approval modal with animation
+                    showToast(`Approved by ${approvedUser.name}`, "success");
+
+                    // Execute the pending action
+                    if (pendingApprovalAction) {
+                        pendingApprovalAction();
+                    }
+
+                    // Log the approval
+                    await addDoc(managerLogsCol, {
+                        manager: approvedUser.name,
+                        action: pendingApprovalActionDetails.action, // Use the stored action details
+                        item: pendingApprovalActionDetails.itemName,   // Use the stored item name
+                        cashier: currentCashier ? currentCashier.name : "Unknown", // Current cashier
+                        timestamp: serverTimestamp() // Use Firestore server timestamp
+                    });
+
+                } else {
+                    approvalError.classList.remove("hidden"); // Show invalid code error
+                    showToast("Invalid Manager Code", "error");
+                    managerCodeInput.value = ''; // Clear input
+                    managerCodeInput.focus(); // Re-focus
+                }
+            } catch (error) {
+                console.error("Error during manager approval:", error);
+                showToast("An error occurred during approval. Please try again.", "error");
+            }
+        }
+
+
+        /**
+         * Logs a cashier in.
+         */
+        async function cashierLogin() {
+            const code = cashierCodeInput.value.trim();
+            loginErrorMsg.classList.add("hidden"); // Hide previous error
+
+            try {
+                const q = query(usersCol, where("role", "==", "cashier"));
+                const snapshot = await getDocs(q);
 
                 let found = null;
                 snapshot.forEach(docSnap => {
@@ -574,474 +1193,511 @@
                 });
 
                 if (found) {
-                    currentAdmin = found;
-                    localStorage.setItem("currentAdmin", JSON.stringify(found));
-                    closeModal('adminLoginModal');
-                    adminPanel.classList.remove("hidden");
-                    showToast(`✅ Welcome, ${currentAdmin.name}!`, "success");
-                    initializeAdminPanel();
-                } else {
-                    loginErrorMsg.textContent = "❌ Invalid Admin PIN or Card ID.";
-                    loginErrorMsg.classList.remove("hidden");
-                    showToast("❌ Invalid Admin PIN or Card ID.", "error");
-                    adminCodeInput.value = '';
-                    adminCodeInput.focus();
-                }
+                    currentCashier = found;
+                    // For persistence, we'll use localStorage
+                    localStorage.setItem("currentCashier", JSON.stringify(found)); 
+                    cashierLoginDiv.classList.add("hidden"); // Hide login screen
+                    mainPosContent.classList.remove("hidden"); // Show main POS content
+                    cashierNameDisplay.textContent = currentCashier.name; // Update display
+                    showToast(`Welcome, ${currentCashier.name}!`, "success"); // Use checkmark emoji
+                    resetInactivityTimer(); // Start the inactivity timer
 
+                    // Setup real-time listener for products after successful login
+                    productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
+                        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("Products updated in real-time:", products);
+                        updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
+                        calculateTotals();   // Re-calculate totals
+                    }, (error) => {
+                        console.error("Error listening to products collection:", error);
+                        showToast("Failed to get real-time product updates. Please check console.", "error");
+                    });
+                } else {
+                    loginErrorMsg.classList.remove("hidden"); // Show error
+                    showToast("Invalid PIN or Card ID.", "error"); // Use cross emoji
+                    cashierCodeInput.value = '';
+                    cashierCodeInput.focus();
+                }
             } catch (error) {
-                console.error("Error during admin login:", error);
-                loginErrorMsg.textContent = "❌ Login failed due to a system error.";
-                loginErrorMsg.classList.remove("hidden");
-                showToast("⚠️ Login failed. Check console.", "error");
-            }
-        }
-        
-        function adminLogout() {
-            currentAdmin = null;
-            localStorage.removeItem("currentAdmin");
-            showToast("Logged out successfully.", "info");
-            adminPanel.classList.add("hidden");
-            openModal('adminLoginModal');
-            adminCodeInput.value = '';
-            adminCodeInput.focus();
-            
-            // Stop all listeners on logout
-            if (productsUnsubscribe) productsUnsubscribe();
-            if (usersUnsubscribe) usersUnsubscribe();
-            if (salesUnsubscribe) salesUnsubscribe();
-            if (managerLogsUnsubscribe) managerLogsUnsubscribe();
-            if (auditLogsUnsubscribe) auditLogsUnsubscribe();
-        }
-        
-        // Unsubscribe functions for real-time listeners
-        let productsUnsubscribe, usersUnsubscribe, salesUnsubscribe, managerLogsUnsubscribe, auditLogsUnsubscribe;
-
-        // --- Data Fetching and Rendering ---
-
-        function initializeAdminPanel() {
-            // Setup real-time listeners for all collections
-            productsUnsubscribe = onSnapshot(productsCol, (snapshot) => {
-                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProducts();
-                updateDashboard();
-            });
-            usersUnsubscribe = onSnapshot(usersCol, (snapshot) => {
-                users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderUsers();
-                updateDashboard();
-            });
-            salesUnsubscribe = onSnapshot(salesCol, (snapshot) => {
-                sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderSales(sales); // Initial render
-                updateDashboard();
-            });
-            managerLogsUnsubscribe = onSnapshot(managerLogsCol, (snapshot) => {
-                managerLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderManagerLogs();
-            });
-            auditLogsUnsubscribe = onSnapshot(auditLogsCol, (snapshot) => {
-                auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderAuditLogs();
-            });
-
-            showSection('dashboard');
-        }
-
-        // --- Dashboard Functions ---
-        async function updateDashboard() {
-            // Sales Today
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const salesToday = sales.filter(s => new Date(s.timestamp) >= today);
-            const totalSalesToday = salesToday.reduce((sum, s) => sum + s.grandTotal, 0);
-            salesTodaySpan.textContent = formatCurrency(totalSalesToday);
-
-            // Active Cashiers (placeholder, based on last login or a specific field)
-            const activeCashierCount = users.filter(u => u.role === 'cashier').length;
-            activeCashiersSpan.textContent = activeCashierCount;
-
-            // Low Stock Alerts
-            const lowStockCount = products.filter(p => p.stock < 10).length;
-            lowStockAlertsSpan.textContent = lowStockCount;
-        }
-
-        // --- Products Management Functions ---
-        function renderProducts() {
-            productsTableBody.innerHTML = '';
-            products.forEach(product => {
-                const row = document.createElement('tr');
-                row.className = 'bg-white hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${product.id}</td>
-                    <td class="py-3 px-4 text-gray-800">${product.name}</td>
-                    <td class="py-3 px-4 text-gray-700">${formatCurrency(product.price)}</td>
-                    <td class="py-3 px-4 text-gray-700">${product.stock}</td>
-                    <td class="py-3 px-4 text-gray-700">${(product.vatRate * 100).toFixed(0)}%</td>
-                    <td class="py-3 px-4">
-                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                        <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800">Delete</button>
-                    </td>
-                `;
-                productsTableBody.appendChild(row);
-            });
-            if (products.length === 0) {
-                productsTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500">No products found.</td></tr>`;
+                console.error("Error during cashier login:", error);
+                showToast("Login failed. Please try again later.", "error");
             }
         }
 
-        async function saveProduct() {
-            const id = productIdInput.value.trim();
-            const barcode = productBarcodeInput.value.trim();
-            const name = productNameInput.value.trim();
-            const price = parseFloat(productPriceInput.value);
-            const stock = parseInt(productStockInput.value, 10);
-            const vatRate = parseFloat(productVatRateInput.value);
+        /**
+         * Handles cashier logout.
+         */
+        function cashierLogout() {
+            currentCashier = null;
+            localStorage.removeItem("currentCashier");
+            cashierNameDisplay.textContent = "Logged Out";
+            showToast("Logged out due to inactivity.", "info"); // Inform user about auto-logout
+            clearTimeout(inactivityTimer); // Clear the timer
+            // Reset POS state
+            resetPOS(); 
+            // Hide main POS content on logout
+            mainPosContent.classList.add("hidden");
+            // Show login screen
+            cashierLoginDiv.classList.remove("hidden");
+            cashierCodeInput.value = '';
+            cashierCodeInput.focus();
+            // Important: Stop product snapshot listener on logout to prevent issues
+            if (productsSnapshotUnsubscribe) {
+                productsSnapshotUnsubscribe();
+                productsSnapshotUnsubscribe = null;
+            }
+        }
 
-            if (!barcode || !name || isNaN(price) || isNaN(stock) || isNaN(vatRate)) {
-                showToast("Please fill all required fields correctly.", "error");
+        // Store the unsubscribe function for the product snapshot listener
+        let productsSnapshotUnsubscribe = null;
+
+        /**
+         * Saves a completed sale transaction to Firestore.
+         * @param {object} saleData - The completed sale object.
+         */
+        async function saveSaleToFirestore(saleData) {
+            try {
+                // Use the name from the currentCashier object
+                saleData.cashierName = currentCashier ? currentCashier.name : "Unknown"; 
+                await addDoc(salesCol, saleData);
+                console.log("Sale saved to Firestore:", saleData);
+            } catch (error) {
+                console.error("Error saving sale to Firestore:", error);
+                showToast("Failed to save sale. Please check console.", "error");
+            }
+        }
+
+        /**
+         * Updates stock in Firestore after a sale.
+         * @param {Array<object>} cartItems - Items in the completed sale.
+         */
+        async function updateStockAfterSale(cartItems) {
+            for (let item of cartItems) {
+                const productRef = doc(db, "products", item.id);
+                const productInDb = products.find(p => p.id === item.id); // Find the current product in our local 'products' array
+                if (productInDb) {
+                    const newStock = productInDb.stock - item.quantity;
+                    await updateDoc(productRef, {
+                        stock: newStock >= 0 ? newStock : 0 // Ensure stock doesn't go negative in DB
+                    });
+                    // Also update the local 'products' array to reflect new stock
+                    productInDb.stock = newStock >= 0 ? newStock : 0;
+                }
+            }
+            console.log("Stock updated in Firestore.");
+        }
+
+        /**
+         * Resets the POS system to a fresh state after a completed sale.
+         */
+        function resetPOS() {
+            cart = [];
+            selectedPaymentMethod = null;
+            paymentConfirmed = false; // Reset payment confirmation
+            cashReceivedInput.value = '';
+            balanceAmountSpan.textContent = formatCurrency(0);
+            document.querySelectorAll('.payment-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+            });
+            cashPaymentSection.classList.add('hidden');
+            digitalPaymentStatusDiv.classList.add('hidden'); // Hide digital payment status
+            digitalPaymentMessage.textContent = '';
+            digitalPaymentDetails.textContent = '';
+            updateCartDisplay();
+            calculateTotals();
+        }
+
+        /**
+         * Function to handle "Cancel Sale" action, clears the current cart.
+         */
+        function cancelCurrentSale() {
+            cart = []; // Clear the cart
+            resetPOS(); // Reset the POS state
+            showToast("Current sale cancelled.", "info");
+        }
+
+        /**
+         * Function to simulate "Process Refund" action.
+         * In a real system, this would involve selecting a past sale and handling stock/financial reversal.
+         */
+        function processRefund() {
+            showToast("Refund initiated (placeholder: requires selection of a past sale for full functionality).", "info");
+            resetPOS(); // Reset cart as a demonstration of completing the action
+        }
+
+
+        // --- Product Barcode Scanner Functions ---
+        // Keeping these functions as they are used, but their related DOM elements in manager approval modal HTML are removed.
+        function startScanner() {
+            // If scanner already exists or is in a scanning state, don't restart
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                showToast("Product scanner is already running.", "info");
                 return;
             }
 
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "products", id), {
-                        barcode, name, price, stock, vatRate
-                    });
-                    showToast("Product updated successfully!", "success");
-                    logAudit("Update Product", `Updated product: ${name} (ID: ${id})`);
-                } else {
-                    const newProductRef = doc(productsCol);
-                    await setDoc(newProductRef, {
-                        id: newProductRef.id, // Use the generated ID
-                        barcode, name, price, stock, vatRate
-                    });
-                    showToast("Product added successfully!", "success");
-                    logAudit("Add Product", `Added new product: ${name}`);
+            productScannerMessage.classList.remove('hidden'); // Show initializing message
+            const qrCodeReaderElement = document.getElementById("reader");
+            stopScannerBtn.classList.remove('hidden'); // Show the stop button
+
+            // Define what happens when a barcode is successfully scanned
+            async function onScanSuccess(decodedText, decodedResult) {
+                // Debounce logic: only process if different from last scanned or if enough time has passed
+                if (!lastScannedCode || lastScannedCode !== decodedText) {
+                    lastScannedCode = decodedText;
+                    playBeep(); // Play beep sound on success
+                    await addToCart(decodedText); // Call your function to handle the product
+                    productSearchInput.value = decodedText; // Populate search input with scanned code
+                    // Set a timeout to clear the lastScannedCode after a debounce period (e.g., 800ms)
+                    setTimeout(() => { lastScannedCode = null; }, 800); 
                 }
-                closeModal('productModal');
-            } catch (e) {
-                console.error("Error saving product:", e);
-                showToast("Failed to save product. Check console for details.", "error");
+                // Do NOT stop scanner here; allow continuous scanning
             }
-        }
-        
-        function editProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                productModalTitle.textContent = "Edit Product";
-                productIdInput.value = product.id;
-                productBarcodeInput.value = product.barcode;
-                productNameInput.value = product.name;
-                productPriceInput.value = product.price;
-                productStockInput.value = product.stock;
-                productVatRateInput.value = product.vatRate;
-                openModal('productModal');
-            }
-        }
 
-        async function deleteProduct(productId) {
-            if (confirm("Are you sure you want to delete this product?")) {
-                try {
-                    await deleteDoc(doc(db, "products", productId));
-                    showToast("Product deleted successfully!", "success");
-                    logAudit("Delete Product", `Deleted product with ID: ${productId}`);
-                } catch (e) {
-                    console.error("Error deleting product:", e);
-                    showToast("Failed to delete product. Check console.", "error");
-                }
+            // Define what happens when scan error occurs
+            function onScanError(errorMessage) {
+                // console.warn(`Scan error: ${errorMessage}`); // Log errors for debugging, but don't show to user constantly
             }
-        }
 
-        // --- Users Management Functions ---
-        function renderUsers() {
-            usersTableBody.innerHTML = '';
-            users.forEach(user => {
-                const row = document.createElement('tr');
-                row.className = 'bg-white hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${user.name}</td>
-                    <td class="py-3 px-4 text-gray-800">${user.role}</td>
-                    <td class="py-3 px-4 text-gray-700">${user.cardId || 'N/A'}</td>
-                    <td class="py-3 px-4 text-gray-700">${user.code || 'N/A'}</td>
-                    <td class="py-3 px-4">
-                        <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                        <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-800">Delete</button>
-                    </td>
-                `;
-                usersTableBody.appendChild(row);
+            // Define the scanner
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            // Optimized config: Higher FPS, smaller QR box, disableFlip
+            const config = { 
+                fps: 30, // Increased FPS for smoother scanning
+                qrbox: { width: 200, height: 200 }, // Reduced QR box size for faster decode
+                disableFlip: true // Can improve performance on some devices
+            };
+
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Use back camera for better performance
+                config,
+                onScanSuccess,
+                onScanError // Pass error handler
+            ).then(() => {
+                productScannerMessage.classList.add('hidden'); // Hide message once camera starts
+            }).catch(err => {
+                console.error("Error starting scanner:", err);
+                showToast("Error starting scanner. Please ensure camera access is granted.", "error");
+                stopScannerBtn.classList.add('hidden'); // Hide stop button if scanner fails to start
+                productScannerMessage.classList.add('hidden'); // Hide message on error
             });
-            if (users.length === 0) {
-                usersTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No users found.</td></tr>`;
-            }
         }
 
-        async function saveUser() {
-            const id = userIdInput.value.trim();
-            const name = userNameInput.value.trim();
-            const role = userRoleInput.value;
-            const cardId = userCardIdInput.value.trim() || null;
-            const code = userPinInput.value.trim();
-
-            if (!name || !role || !code) {
-                showToast("Please fill all required fields correctly.", "error");
-                return;
-            }
-            if (code.length !== 4) {
-                 showToast("PIN must be exactly 4 digits.", "error");
-                 return;
-            }
-
-            try {
-                const userData = { name, role, cardId, code };
-                if (id) {
-                    await updateDoc(doc(db, "users", id), userData);
-                    showToast("User updated successfully!", "success");
-                    logAudit("Update User", `Updated user: ${name} (${role})`);
-                } else {
-                    const newUserRef = doc(usersCol);
-                    await setDoc(newUserRef, { id: newUserRef.id, ...userData });
-                    showToast("User added successfully!", "success");
-                    logAudit("Add User", `Added new user: ${name} (${role})`);
-                }
-                closeModal('userModal');
-            }
-            catch (e) {
-                console.error("Error saving user:", e);
-                showToast("Failed to save user. Check console.", "error");
-            }
-        }
-        
-        function editUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (user) {
-                userModalTitle.textContent = "Edit User";
-                userIdInput.value = user.id;
-                userNameInput.value = user.name;
-                userRoleInput.value = user.role;
-                userCardIdInput.value = user.cardId || '';
-                userPinInput.value = user.code;
-                openModal('userModal');
-            }
-        }
-
-        async function deleteUser(userId) {
-            if (confirm("Are you sure you want to delete this user?")) {
-                try {
-                    await deleteDoc(doc(db, "users", userId));
-                    showToast("User deleted successfully!", "success");
-                    logAudit("Delete User", `Deleted user with ID: ${userId}`);
-                } catch (e) {
-                    console.error("Error deleting user:", e);
-                    showToast("Failed to delete user. Check console.", "error");
-                }
-            }
-        }
-
-        // --- Sales Reports Functions ---
-        function renderSales(salesData) {
-            salesTableBody.innerHTML = '';
-            salesData.forEach(sale => {
-                const row = document.createElement('tr');
-                row.className = 'bg-white hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${sale.invoiceNo}</td>
-                    <td class="py-3 px-4 text-gray-700">${formatDate(sale.timestamp)}</td>
-                    <td class="py-3 px-4 text-gray-700">${sale.cashierName}</td>
-                    <td class="py-3 px-4 text-gray-700">${formatCurrency(sale.grandTotal)}</td>
-                    <td class="py-3 px-4 text-gray-700">${sale.paymentMethod}</td>
-                    <td class="py-3 px-4">
-                        <button onclick="showSaleDetails('${sale.id}')" class="text-blue-600 hover:text-blue-800">View Details</button>
-                    </td>
-                `;
-                salesTableBody.appendChild(row);
-            });
-            if (salesData.length === 0) {
-                salesTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500">No sales data.</td></tr>`;
-            }
-        }
-
-        function filterSales() {
-            const startDate = saleStartDateInput.value ? new Date(saleStartDateInput.value).getTime() : 0;
-            const endDate = saleEndDateInput.value ? new Date(saleEndDateInput.value).getTime() + 86399999 : Infinity; // End of day
-            const searchTerm = saleSearchInput.value.toLowerCase();
-            
-            const filtered = sales.filter(sale => {
-                const saleDate = new Date(sale.timestamp).getTime();
-                const matchesDate = saleDate >= startDate && saleDate <= endDate;
-                
-                const matchesSearch = !searchTerm || 
-                    sale.cashierName.toLowerCase().includes(searchTerm) ||
-                    sale.cartItems.some(item => item.name.toLowerCase().includes(searchTerm));
-                
-                return matchesDate && matchesSearch;
-            });
-            
-            renderSales(filtered);
-            showToast(`Found ${filtered.length} sales.`, 'info');
-        }
-
-        function exportSalesToCSV() {
-            const header = ["Invoice No.", "Date", "Time", "Cashier", "Grand Total", "Payment Method", "Items"];
-            const rows = sales.map(sale => {
-                const date = new Date(sale.timestamp);
-                const itemsList = sale.cartItems.map(item => `${item.name} (x${item.quantity})`).join("; ");
-                return [
-                    sale.invoiceNo,
-                    date.toLocaleDateString(),
-                    date.toLocaleTimeString(),
-                    sale.cashierName,
-                    sale.grandTotal,
-                    sale.paymentMethod,
-                    `"${itemsList}"`
-                ];
-            });
-            
-            const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...rows.map(e => e.join(","))].join("\n");
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Sales data exported to CSV!", "success");
-        }
-
-        // --- Manager Approvals Functions ---
-        function renderManagerLogs() {
-            managerLogsTableBody.innerHTML = '';
-            managerLogs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Sort by most recent
-            managerLogs.forEach(log => {
-                const row = document.createElement('tr');
-                row.className = 'bg-white hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.manager}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.cashier}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.action}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.item}</td>
-                `;
-                managerLogsTableBody.appendChild(row);
-            });
-            if (managerLogs.length === 0) {
-                managerLogsTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No manager approval logs.</td></tr>`;
-            }
-        }
-
-        // --- Audit Logs Functions ---
-        async function logAudit(action, details) {
-            try {
-                await addDoc(auditLogsCol, {
-                    user: currentAdmin ? currentAdmin.name : "Unknown",
-                    action: action,
-                    details: details,
-                    timestamp: new Date().toISOString()
+        function stopScanner() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { // Check if scanner is active
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById("reader").innerHTML = ''; // Clear scanner view
+                    html5QrcodeScanner = null; // Reset scanner instance
+                    stopScannerBtn.classList.add('hidden'); // Hide the stop button
+                    showToast("Product scanner stopped.", "info");
+                    productScannerMessage.classList.add('hidden'); // Hide message
+                    lastScannedCode = null; // Reset debounce variable when scanner is explicitly stopped
+                }).catch(err => {
+                    console.error("Error stopping scanner:", err);
+                    showToast("Error stopping scanner.", "error");
+                    productScannerMessage.classList.add('hidden'); // Hide message
+                    lastScannedCode = null; // Reset debounce variable on stop error
                 });
-            } catch (e) {
-                console.error("Error logging audit action:", e);
+            } else if (html5QrcodeScanner) {
+                 // If scanner object exists but isn't scanning, just clear it
+                 html5QrcodeScanner.clear();
+                 document.getElementById("reader").innerHTML = '';
+                 html5QrcodeScanner = null;
+                 stopScannerBtn.classList.add('hidden');
+                 productScannerMessage.classList.add('hidden'); // Hide message
+                 lastScannedCode = null; // Reset debounce variable
             }
         }
 
-        function renderAuditLogs() {
-            auditLogsTableBody.innerHTML = '';
-            auditLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            auditLogs.forEach(log => {
-                const row = document.createElement('tr');
-                row.className = 'bg-white hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${new Date(log.timestamp).toLocaleString()}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.user}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.action}</td>
-                    <td class="py-3 px-4 text-gray-700">${log.details}</td>
-                    <td class="py-3 px-4 text-gray-700">Success</td>
-                `;
-                auditLogsTableBody.appendChild(row);
-            });
-            if (auditLogs.length === 0) {
-                auditLogsTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No audit logs.</td></tr>`;
-            }
+        // --- Manager Card Scanner Functions (Simplified for general approval) ---
+        // These are just placeholder functions now that the general manager approval uses a direct input.
+        function startManagerScanner() {
+            showToast("Manager card scanner for this modal is not directly implemented, please use the PIN/Card ID input.", "info");
         }
+
+        function stopManagerScanner() {
+            showToast("Manager card scanner operation is not active for this modal.", "info");
+        }
+
+
+        // Expose functions to the global scope for onclick attributes
+        window.startScanner = startScanner;
+        window.stopScanner = stopScanner;
+        window.cashierLogin = cashierLogin; // Expose cashierLogin for the button
+        window.approveAction = approveAction; // Expose approveAction for the button
 
 
         // --- Event Listeners ---
-        
-        // Navigation links
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = link.dataset.section;
-                showSection(sectionId);
+
+        // Product Search Input
+        productSearchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            if (searchTerm.length > 0) {
+                searchResultsDiv.classList.remove('hidden');
+                clearSearchBtn.style.display = 'block';
+                const filtered = products.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.id.includes(searchTerm)
+                );
+                renderProducts(filtered);
+            } else {
+                searchResultsDiv.classList.add('hidden');
+                productResultsList.innerHTML = '';
+                clearSearchBtn.style.display = 'none';
+            }
+            resetInactivityTimer();
+        });
+
+        // Clear Search Button
+        clearSearchBtn.addEventListener('click', () => {
+            productSearchInput.value = '';
+            searchResultsDiv.classList.add('hidden');
+            clearSearchBtn.style.display = 'none';
+            productSearchInput.focus();
+        });
+
+        // Payment Method Selection
+        document.querySelectorAll('.payment-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                resetInactivityTimer();
+                // Reset payment confirmation and hide digital status
+                paymentConfirmed = false;
+                digitalPaymentStatusDiv.classList.add('hidden');
+                digitalPaymentMessage.textContent = '';
+                digitalPaymentDetails.textContent = '';
+
+                // Remove active styling from all buttons
+                document.querySelectorAll('.payment-btn').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+                });
+
+                // Add active styling to the clicked button
+                event.target.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+
+                selectedPaymentMethod = event.target.id.replace('pay', '').replace('Btn', ''); // e.g., 'Cash', 'Mpesa', 'Card'
+
+                if (selectedPaymentMethod === 'Cash') {
+                    cashPaymentSection.classList.remove('hidden');
+                    cashReceivedInput.focus();
+                } else {
+                    cashPaymentSection.classList.add('hidden');
+                    balanceAmountSpan.textContent = formatCurrency(0); // Clear balance
+                    cashReceivedInput.value = '';
+
+                    // Disable payment buttons during processing
+                    payCashBtn.disabled = true;
+                    payMpesaBtn.disabled = true;
+                    payCardBtn.disabled = true;
+
+                    // Simulate digital payment processing
+                    digitalPaymentStatusDiv.classList.remove('hidden');
+                    digitalPaymentMessage.textContent = `Processing ${selectedPaymentMethod} payment...`;
+                    digitalPaymentDetails.textContent = 'Please wait...';
+                    showToast(`Initiating ${selectedPaymentMethod} payment...`, 'info');
+
+                    setTimeout(() => {
+                        paymentConfirmed = true;
+                        digitalPaymentMessage.textContent = `✅ ${selectedPaymentMethod} Payment Confirmed!`;
+                        const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+                        cashReceivedInput.value = grandTotal.toFixed(2); // Simulate full payment received for digital methods
+                        balanceAmountSpan.textContent = formatCurrency(0); // Balance is 0 for digital payments
+
+                        if (selectedPaymentMethod === 'Mpesa') {
+                            const mpesaCode = `MP${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+                            digitalPaymentDetails.textContent = `Transaction Code: ${mpesaCode}\nAmount: ${formatCurrency(grandTotal)}`;
+                        } else if (selectedPaymentMethod === 'Card') {
+                            digitalPaymentDetails.textContent = `Payment processed via external card machine.\nAmount: ${formatCurrency(grandTotal)}`;
+                        }
+                        showToast(`${selectedPaymentMethod} payment successful!`, 'success');
+
+                        // Re-enable payment buttons after successful processing
+                        payCashBtn.disabled = false;
+                        payMpesaBtn.disabled = false;
+                        payCardBtn.disabled = false;
+                        calculateTotals(); // Re-calculate to enable complete sale button
+                    }, 5000); // Changed to 5 seconds for faster testing
+                }
+
+                calculateTotals(); // Initial calculation to update complete sale button state
             });
         });
-        
-        // Modals
-        window.onclick = function(event) {
-            const productModalElement = document.getElementById('productModal');
-            const userModalElement = document.getElementById('userModal');
 
-            if (event.target === productModalElement) {
-                closeModal('productModal');
+        // Cash Received Input
+        cashReceivedInput.addEventListener('input', () => {
+            resetInactivityTimer();
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+            const balance = cashReceived - grandTotal;
+            balanceAmountSpan.textContent = formatCurrency(balance);
+            calculateTotals(); // Re-calculate to enable/disable complete sale button
+        });
+
+        // Complete Sale Button
+        completeSaleBtn.addEventListener('click', async () => { 
+            resetInactivityTimer();
+            if (cart.length === 0) {
+                showToast('Cart is empty. Please add items before completing the sale.', 'error');
+                return;
             }
-            if (event.target === userModalElement) {
-                closeModal('userModal');
+
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+
+            if (selectedPaymentMethod === 'Cash' && cashReceived < grandTotal) {
+                showToast('Cash received is less than the Grand Total. Please enter sufficient amount.', 'error');
+                return;
             }
-        };
 
-        // Product Modal
-        addProductBtn.addEventListener('click', () => {
-            productModalTitle.textContent = "Add New Product";
-            productForm.reset();
-            productIdInput.value = '';
-            openModal('productModal');
-        });
-        productForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            saveProduct();
+            // Simulate sale completion
+            showToast(`Sale Completed! Total: ${formatCurrency(grandTotal)}`, 'success');
+            await showReceipt(); // Show receipt after sale completion
+            resetPOS(); // Reset POS for next transaction 
         });
 
-        // User Modal
-        addUserBtn.addEventListener('click', () => {
-            userModalTitle.textContent = "Add New User";
-            userForm.reset();
-            userIdInput.value = '';
-            openModal('userModal');
-        });
-        userForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            saveUser();
+        // Print Receipt Button (main UI)
+        printReceiptBtn.addEventListener('click', () => {
+            resetInactivityTimer();
+            printReceipt();
         });
 
-        // Sales Reports
-        filterSalesBtn.addEventListener('click', filterSales);
-        exportSalesBtn.addEventListener('click', exportSalesToCSV);
+        // Receipt Modal Close Button
+        receiptCloseBtn.addEventListener('click', hideReceipt);
+
+        // Print Button inside Receipt Modal
+        printReceiptFromModalBtn.addEventListener('click', () => {
+            printReceipt();
+        });
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (event) => {
+            if (event.target === receiptModal) {
+                hideReceipt();
+            }
+            if (event.target === managerApprovalModal) {
+                // Clicking outside the manager approval modal should also close it and cancel the action
+                toggleModal(managerApprovalModal, false);
+                showToast('Manager approval cancelled.', 'info');
+                // No need to execute pendingAction here as it was cancelled
+            }
+        });
+
+        // Manager Approval Modal Input Enter Key
+        managerCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                approveAction(); // Call the new approval function
+            }
+        });
         
-        // Initial Load Logic
+        // Admin Panel Button
+        adminPanelBtn.addEventListener('click', () => {
+            resetInactivityTimer();
+            window.location.href = 'admin.html'; // This will navigate to admin.html in a real browser
+        });
+
+        // Logout Button
+        logoutBtn.addEventListener('click', cashierLogout);
+
+        // Cancel Sale Button
+        cancelSaleBtn.addEventListener('click', () => {
+            resetInactivityTimer();
+            if (cart.length === 0) {
+                showToast("Cart is empty. Nothing to cancel.", "warning");
+                return;
+            }
+            pendingApprovalAction = cancelCurrentSale;
+            pendingApprovalActionDetails = { action: 'Cancel Sale', itemName: 'All Items in Cart' };
+            requestManagerApproval();
+        });
+
+        // Refund Sale Button
+        refundSaleBtn.addEventListener('click', () => {
+            resetInactivityTimer();
+            // This is a placeholder for actual refund logic.
+            // A real refund would likely involve selecting a past sale to refund.
+            pendingApprovalAction = processRefund;
+            pendingApprovalActionDetails = { action: 'Process Refund', itemName: 'Past Sale (Placeholder)' };
+            requestManagerApproval();
+        });
+
+
+        // Cashier Login Input (Enter key)
+        cashierCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission behavior
+                cashierLogin();
+            }
+        });
+
+        // --- Inactivity Timer Events ---
+        document.addEventListener('mousemove', resetInactivityTimer);
+        document.addEventListener('keypress', resetInactivityTimer);
+        document.addEventListener('click', resetInactivityTimer);
+
+
+        // --- Keyboard Shortcuts ---
+        document.addEventListener('keydown', (event) => {
+            resetInactivityTimer();
+            // Only allow POS shortcuts if cashier is logged in
+            if (!currentCashier) return;
+
+            // Enter to add item (from search bar)
+            if (event.key === 'Enter' && productSearchInput === document.activeElement) {
+                const visibleResults = productResultsList.querySelectorAll('.add-to-cart-btn');
+                if (visibleResults.length > 0) {
+                    visibleResults[0].click(); // Simulate click on the first "Add" button
+                    event.preventDefault(); // Prevent default Enter key behavior (e.g., form submission)
+                }
+            }
+
+            // Ctrl + P to print
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault(); // Prevent browser's default print dialog
+                printReceipt();
+            }
+
+            // F2 to focus payment input (cash received)
+            if (event.key === 'F2') {
+                event.preventDefault(); // Prevent default F2 behavior
+                payCashBtn.click(); // Simulate clicking cash button to reveal input
+                setTimeout(() => cashReceivedInput.focus(), 100); // Wait for input to be visible
+            }
+        });
+
+
+        // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            const storedAdmin = localStorage.getItem("currentAdmin");
-            if (storedAdmin) {
-                currentAdmin = JSON.parse(storedAdmin);
-                closeModal('adminLoginModal');
-                adminPanel.classList.remove("hidden");
-                initializeAdminPanel();
+            // Keep input focused for USB barcode scanner entry
+            const input = document.getElementById("cashierCode");
+            input.focus();
+            input.addEventListener("blur", () => setTimeout(() => input.focus(), 100));
+            vatRateDisplay.textContent = vatRate * 100;
+
+            // Check for a logged-in cashier in localStorage
+            const storedCashier = localStorage.getItem("currentCashier");
+            if (storedCashier) {
+                currentCashier = JSON.parse(storedCashier);
+                cashierNameDisplay.textContent = currentCashier.name;
+                cashierLoginDiv.classList.add("hidden"); // Hide login screen if already logged in
+                mainPosContent.classList.remove("hidden"); // Show main POS content
+                resetInactivityTimer();
+                // Setup real-time listener for products after successful login
+                productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
+                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log("Products updated in real-time:", products);
+                    updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
+                    calculateTotals();   // Re-calculate totals
+                }, (error) => {
+                    console.error("Error listening to products collection:", error);
+                    showToast("Failed to get real-time product updates. Please check console.", "error");
+                });
             } else {
-                openModal('adminLoginModal');
-                adminCodeInput.focus();
-                // Keep login input focused for USB barcode scanner entry
-                adminCodeInput.addEventListener("blur", () => setTimeout(() => adminCodeInput.focus(), 100));
+                cashierLoginDiv.classList.remove("hidden"); // Show login screen
+                mainPosContent.classList.add("hidden"); // Hide main POS content
+                cashierNameDisplay.textContent = "Please Log In";
+                cashierCodeInput.focus();
             }
         });
-
-        // Expose functions to the global scope for inline HTML event handlers
-        window.adminLogin = adminLogin;
-        window.adminLogout = adminLogout;
-        window.showSection = showSection;
-        window.openModal = openModal;
-        window.closeModal = closeModal;
-        window.editProduct = editProduct;
-        window.deleteProduct = deleteProduct;
-        window.editUser = editUser;
-        window.deleteUser = deleteUser;
-
     </script>
 </body>
 </html>
