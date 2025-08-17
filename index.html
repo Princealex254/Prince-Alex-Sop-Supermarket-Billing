@@ -150,8 +150,21 @@
           placeholder="Scan Card or Enter PIN"
           class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-600">
         <button onclick="cashierLogin()" 
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Login</button>
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
         <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid code, try again</p>
+      </div>
+    </div>
+
+    <!-- Manager Approval Modal -->
+    <div id="managerApproval" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+        <h2 class="text-2xl font-bold mb-4 text-center text-red-600">Manager Approval Required</h2>
+        <input id="managerCode" type="password" 
+          placeholder="Manager PIN or Card ID"
+          class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-600">
+        <button onclick="approveAction()" 
+          class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Approve</button>
+        <p id="approvalError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid Manager Code</p>
       </div>
     </div>
 
@@ -290,34 +303,8 @@
         </div>
     </div>
 
-    <!-- Manager Approval Modal -->
-    <div id="managerApprovalModal" class="manager-approval-modal">
-        <div class="manager-approval-content text-center">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Manager Approval Required</h3>
-            <p class="text-gray-700 mb-4">Scan Manager Card or Enter Code to approve item cancellation.</p>
-
-            <!-- Manager Scanner UI -->
-            <button onclick="startManagerScanner()" id="startManagerScannerBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md mb-3">
-                📷 Scan Manager Card
-            </button>
-            <div id="managerReader" style="width: 100%; margin-top: 10px; position: relative;">
-                <div id="managerScannerMessage" class="scanner-message hidden">
-                    Initializing camera...
-                </div>
-            </div>
-            <button onclick="stopManagerScanner()" id="stopManagerScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md mb-3">
-                ❌ Close Scanner
-            </button>
-
-            <input type="text" id="managerCardIdInput" placeholder="Scan Manager Card ID"
-                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-3">
-            <p class="text-gray-600 mb-3">- OR -</p>
-            <input type="password" id="managerCodeInput" placeholder="Enter Manager Code"
-                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-4">
-            <button id="approveManagerBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md mb-2">Approve</button>
-            <button id="cancelManagerBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">Cancel</button>
-        </div>
-    </div>
+    <!-- The old manager approval modal is removed, replaced by the one above -->
+    <!-- The managerApproval div above is the primary manager approval modal -->
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
@@ -368,7 +355,7 @@
 
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Firebase config (yours)
         const firebaseConfig = {
@@ -402,16 +389,16 @@
         let pendingApprovalActionDetails = { action: '', itemName: '' }; // Stores details for logging manager action
         let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
         let html5QrcodeScanner; // Declare product scanner variable globally
-        let html5QrcodeManagerScanner; // Declare manager scanner variable globally
+        let html5QrcodeManagerScanner; // Declare manager scanner variable globally (no longer used for general approval)
         let isScanningProduct = false; // Flag to prevent multiple product scans simultaneously
-        let isScanningManager = false; // Flag to prevent multiple manager scans simultaneously
+        let isScanningManager = false; // Flag to prevent multiple manager scans simultaneously (related to manager card scanner, but general approval uses manual input)
         let lastScannedCode = null; // New: Debounce variable for product scanner
         let currentCashier = null; // Stores the currently logged-in cashier object
 
         // --- DOM Elements ---
         const cashierLoginDiv = document.getElementById('cashierLogin'); // New: Login screen div
         const cashierCodeInput = document.getElementById('cashierCode'); // New: Cashier code input
-        const loginErrorMsg = document.getElementById('loginError');     // New: Login error message
+        const loginErrorMsg = document.getElementById('loginError');     // New: Login error error message
         const productSearchInput = document.getElementById('productSearch');
         const searchResultsDiv = document.getElementById('searchResults');
         const productResultsList = document.getElementById('productResultsList');
@@ -438,20 +425,17 @@
         const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
         const logoutBtn = document.getElementById('logoutBtn'); // Logout button
 
-        // Manager Approval Modal Elements
-        const managerApprovalModal = document.getElementById('managerApprovalModal');
-        const managerCardIdInput = document.getElementById('managerCardIdInput');
-        const managerCodeInput = document.getElementById('managerCodeInput');
-        const approveManagerBtn = document.getElementById('approveManagerBtn');
-        const cancelManagerBtn = document.getElementById('cancelManagerBtn');
-        const managerReaderDiv = document.getElementById('managerReader'); // New: Manager scanner reader div
-        const startManagerScannerBtn = document.getElementById('startManagerScannerBtn'); // New: Start manager scanner button
-        const stopManagerScannerBtn = document.getElementById('stopManagerScannerBtn'); // New: Stop manager scanner button
+        // Manager Approval Modal Elements (Updated to new HTML structure)
+        const managerApprovalModal = document.getElementById('managerApproval'); // Renamed ID
+        const managerCodeInput = document.getElementById('managerCode'); // Renamed ID
+        const approvalError = document.getElementById('approvalError'); // New: Error message for manager approval
 
-        // Scanner messages
+
+        // Scanner messages (only product scanner message is still relevant for the general UI)
         const productScannerMessage = document.getElementById('productScannerMessage');
-        const managerScannerMessage = document.getElementById('managerScannerMessage');
-
+        // The previous managerScannerMessage and related buttons (startManagerScannerBtn, stopManagerScannerBtn, managerReaderDiv)
+        // are no longer directly used for the general manager approval flow, as the prompt's HTML simplified it.
+        // Keeping the functions for now as they might be called via the old code if not fully removed.
 
         // Digital Payment Status Elements
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
@@ -689,7 +673,7 @@
                         action: 'Adjust Quantity to Zero/Remove', 
                         itemName: currentItem.product.name 
                     };
-                    showManagerApprovalModal();
+                    requestManagerApproval(); // Trigger manager approval
                 } else {
                     currentItem.quantity += change;
                     updateCartDisplay();
@@ -718,7 +702,7 @@
                 action: 'Remove Item', 
                 itemName: itemToRemove.product.name 
             };
-            showManagerApprovalModal();
+            requestManagerApproval(); // Trigger manager approval
         }
 
         /**
@@ -1031,110 +1015,65 @@
         }
 
         /**
-         * Displays the manager approval modal.
+         * Triggers the manager approval modal for restricted actions.
          */
-        function showManagerApprovalModal() {
-            managerCardIdInput.value = '';
-            managerCodeInput.value = '';
-            managerApprovalModal.style.display = 'flex';
-            // Hide scanner elements by default when modal opens
-            managerReaderDiv.classList.add('hidden');
-            stopManagerScannerBtn.classList.add('hidden');
-            startManagerScannerBtn.classList.remove('hidden'); // Ensure start button is visible
-            managerCardIdInput.focus(); // Focus on card ID input
+        function requestManagerApproval() {
+            managerCodeInput.value = ""; // Clear input field
+            approvalError.classList.add("hidden"); // Hide previous error
+            managerApprovalModal.classList.remove("hidden"); // Show the modal
+            managerCodeInput.focus(); // Focus on input for scanner/manual entry
         }
 
         /**
-         * Hides the manager approval modal.
+         * Handles the manager approval process.
+         * This function replaces the previous validateManagerApproval().
          */
-        function hideManagerApprovalModal() {
-            managerApprovalModal.style.display = 'none';
-            pendingApprovalAction = null; // Clear pending action
-            pendingApprovalActionDetails = { action: '', itemName: '' }; // Clear details
-            stopManagerScanner(); // Ensure manager scanner is stopped when modal closes
-        }
+        async function approveAction() {
+            const code = managerCodeInput.value.trim();
+            approvalError.classList.add("hidden"); // Hide error on new attempt
 
-        /**
-         * Validates manager credentials from Firestore.
-         * @param {string} cardId - The card ID entered or scanned.
-         * @param {string} code - The code entered.
-         * @returns {Promise<object|null>} The manager user object if valid, null otherwise.
-         */
-        async function validateManager(cardId, code) {
             try {
-                const q = query(usersCol, where("role", "==", "manager"));
+                const q = query(usersCol, where("role", "in", ["manager", "admin"]));
                 const snapshot = await getDocs(q);
 
-                let foundManager = null;
+                let approvedUser = null;
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if ((cardId && data.cardId === cardId) || (code && data.code === code)) {
-                        foundManager = { id: docSnap.id, ...data };
+                    const user = docSnap.data();
+                    if (user.code === code || user.cardId === code) {
+                        approvedUser = { id: docSnap.id, ...user };
                     }
                 });
-                return foundManager;
-            } catch (error) {
-                console.error("Error validating manager credentials:", error);
-                showToast("Error verifying manager. Please try again.", "error");
-                return null;
-            }
-        }
 
-        /**
-         * Logs a manager approval action to Firestore.
-         * @param {string} managerIdentifier - The card ID or code used by the manager.
-         * @param {string} action - The action approved (e.g., "Remove Item", "Adjust Quantity Down").
-         * @param {string} itemName - The name of the item involved in the action.
-         * @param {string} cashierName - The name of the cashier.
-         */
-        async function logManagerApproval(managerIdentifier, action, itemName, cashierName) {
-            try {
-                await addDoc(managerLogsCol, {
-                    managerIdentifier: managerIdentifier,
-                    action: action,
-                    item: itemName,
-                    cashier: cashierName,
-                    timestamp: new Date().toISOString()
-                });
-                console.log("Manager approval logged to Firestore.");
-            } catch (error) {
-                console.error("Error logging manager approval:", error);
-                showToast("Failed to log manager approval action.", "error");
-            }
-        }
+                if (approvedUser) {
+                    managerApprovalModal.classList.add("hidden"); // Hide approval modal
+                    showToast(`✅ Approved by ${approvedUser.name}`, "success");
 
-        /**
-         * Validates manager approval for certain actions.
-         */
-        async function validateManagerApproval() { 
-            const cardId = managerCardIdInput.value.trim();
-            const code = managerCodeInput.value.trim();
+                    // Execute the pending action
+                    if (pendingApprovalAction) {
+                        pendingApprovalAction();
+                    }
 
-            const managerUser = await validateManager(cardId, code); // Get the manager user object
+                    // Log the approval
+                    await addDoc(managerLogsCol, {
+                        manager: approvedUser.name,
+                        action: pendingApprovalActionDetails.action, // Use the stored action details
+                        item: pendingApprovalActionDetails.itemName,   // Use the stored item name
+                        cashier: currentCashier ? currentCashier.name : "Unknown", // Current cashier
+                        timestamp: serverTimestamp() // Use Firestore server timestamp
+                    });
 
-            if (managerUser) {
-                hideManagerApprovalModal();
-                if (pendingApprovalAction) {
-                    pendingApprovalAction(); // Execute the stored action (remove item/update quantity)
-                    showToast('Manager approval successful!', 'success');
-                    
-                    // Log the manager approval
-                    const managerIdentifier = managerUser.cardId || managerUser.code; // Use manager's ID or code
-                    const cashierName = currentCashier ? currentCashier.name : "Unknown"; // Use current cashier
-                    await logManagerApproval(
-                        managerIdentifier, 
-                        pendingApprovalActionDetails.action, 
-                        pendingApprovalActionDetails.itemName, 
-                        cashierName
-                    );
+                } else {
+                    approvalError.classList.remove("hidden"); // Show invalid code error
+                    showToast("❌ Invalid Manager Code", "error");
+                    managerCodeInput.value = ''; // Clear input
+                    managerCodeInput.focus(); // Re-focus
                 }
-            } else {
-                showToast('Invalid Manager credentials. Please try again.', 'error');
-                managerCardIdInput.value = '';
-                managerCodeInput.value = '';
-                managerCardIdInput.focus();
+            } catch (error) {
+                console.error("Error during manager approval:", error);
+                showToast("An error occurred during approval. Please try again.", "error");
             }
         }
+
 
         /**
          * Logs a cashier in.
@@ -1334,97 +1273,26 @@
         }
 
         // --- Manager Card Scanner Functions ---
+        // These functions are kept for completeness, but the general manager approval now uses a simpler text input.
         function startManagerScanner() {
-            if (html5QrcodeManagerScanner && html5QrcodeManagerScanner.isScanning || isScanningManager) {
-                showToast("Manager scanner is already running.", "info");
-                return;
-            }
-
-            isScanningManager = true; // Set scanning flag
-            managerScannerMessage.classList.remove('hidden'); // Show initializing message
-            managerReaderDiv.classList.remove('hidden'); // Show manager scanner div
-            stopManagerScannerBtn.classList.remove('hidden'); // Show stop button
-            startManagerScannerBtn.classList.add('hidden'); // Hide start button
-
-            function onScanSuccessManager(decodedText, decodedResult) {
-                // Only process if not debouncing (no explicit debounce for manager as it's a single scan)
-                if (isScanningManager) { // Check the flag again
-                    console.log(`Manager Card Scanned: ${decodedText}`);
-                    playBeep(); // Play beep sound on success
-                    managerCardIdInput.value = decodedText; // Populate input with scanned ID
-                    stopManagerScanner(); // Stop scanner after successful scan
-                    validateManagerApproval(); // Automatically try to approve
-                }
-            }
-
-            function onScanErrorManager(errorMessage) {
-                // console.warn(`Manager Scan error: ${errorMessage}`);
-            }
-
-            html5QrcodeManagerScanner = new Html5Qrcode("managerReader");
-            // Optimized config: Higher FPS, smaller QR box, disableFlip
-            const config = { 
-                fps: 30, // Increased FPS
-                qrbox: { width: 200, height: 200 }, // Smaller QR box for manager card
-                disableFlip: true // Can improve performance on some devices
-            }; 
-
-            html5QrcodeManagerScanner.start(
-                { facingMode: "environment" }, // Use back camera
-                config,
-                onScanSuccessManager,
-                onScanErrorManager
-            ).then(() => {
-                managerScannerMessage.classList.add('hidden'); // Hide message once camera starts
-            }).catch(err => {
-                console.error("Error starting manager scanner:", err);
-                showToast("Error starting manager scanner. Please ensure camera access is granted.", "error");
-                managerReaderDiv.classList.add('hidden');
-                stopManagerScannerBtn.classList.add('hidden');
-                startManagerScannerBtn.classList.remove('hidden'); // Show start button again if failed
-                isScanningManager = false; // Reset flag on error
-                managerScannerMessage.classList.add('hidden'); // Hide message on error
-            });
+            console.log("startManagerScanner called. This function is for direct manager card scanning and not tied to the general approval modal anymore.");
+            showToast("Manager card scanner not implemented for this modal.", "info");
         }
 
         function stopManagerScanner() {
-            if (html5QrcodeManagerScanner && html5QrcodeManagerScanner.isScanning) {
-                html5QrcodeManagerScanner.stop().then(() => {
-                    html5QrcodeManagerScanner.clear();
-                    managerReaderDiv.innerHTML = '';
-                    html5QrcodeManagerScanner = null;
-                    managerReaderDiv.classList.add('hidden');
-                    stopManagerScannerBtn.classList.add('hidden');
-                    startManagerScannerBtn.classList.remove('hidden'); // Show start button
-                    showToast("Manager scanner stopped.", "info");
-                    isScanningManager = false; // Reset scanning flag
-                    managerScannerMessage.classList.add('hidden'); // Hide message
-                }).catch(err => {
-                    console.error("Error stopping manager scanner:", err);
-                    showToast("Error stopping manager scanner.", "error");
-                    isScanningManager = false; // Reset scanning flag even on stop error
-                    managerScannerMessage.classList.add('hidden'); // Hide message
-                });
-            } else if (html5QrcodeManagerScanner) {
-                // If scanner object exists but isn't scanning, just clear it
-                html5QrcodeManagerScanner.clear();
-                managerReaderDiv.innerHTML = '';
-                html5QrcodeManagerScanner = null;
-                managerReaderDiv.classList.add('hidden');
-                stopManagerScannerBtn.classList.add('hidden');
-                startManagerScannerBtn.classList.remove('hidden'); // Show start button
-                isScanningManager = false; // Reset scanning flag
-                managerScannerMessage.classList.add('hidden'); // Hide message
-            }
+            console.log("stopManagerScanner called.");
+            showToast("Manager card scanner stopped.", "info");
         }
 
 
         // Expose functions to the global scope for onclick attributes
         window.startScanner = startScanner;
         window.stopScanner = stopScanner;
-        window.startManagerScanner = startManagerScanner; // Expose new function
-        window.stopManagerScanner = stopManagerScanner;   // Expose new function
+        // window.startManagerScanner = startManagerScanner; // No longer needed for onclick on the new modal
+        // window.stopManagerScanner = stopManagerScanner;   // No longer needed for onclick on the new modal
         window.cashierLogin = cashierLogin; // Expose cashierLogin for the button
+        window.approveAction = approveAction; // Expose approveAction for the button
+
 
         // --- Event Listeners ---
 
@@ -1558,32 +1426,21 @@
                 hideReceipt();
             }
             if (event.target === managerApprovalModal) {
-                hideManagerApprovalModal();
+                // Clicking outside the manager approval modal should also close it and cancel the action
+                managerApprovalModal.classList.add("hidden");
                 showToast('Manager approval cancelled.', 'info');
+                // No need to execute pendingAction here as it was cancelled
             }
-        });
-
-        // Manager Approval Modal Buttons
-        approveManagerBtn.addEventListener('click', validateManagerApproval);
-        cancelManagerBtn.addEventListener('click', () => {
-            hideManagerApprovalModal();
-            showToast('Manager approval cancelled.', 'info');
         });
 
         // Manager Approval Modal Input Enter Key
-        managerCardIdInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent form submission
-                validateManagerApproval();
-            }
-        });
         managerCodeInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault(); // Prevent form submission
-                validateManagerApproval();
+                approveAction(); // Call the new approval function
             }
         });
-
+        
         // Admin Panel Button
         adminPanelBtn.addEventListener('click', () => {
             window.location.href = 'admin.html'; // This will navigate to admin.html in a real browser
