@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prince Alex Store Admin</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -107,32 +109,11 @@
             -moz-appearance: textfield;
         }
 
-        /* Sidebar responsive styles */
-        .sidebar {
-            position: fixed; /* Use fixed position for mobile */
-            left: 0;
-            top: 0;
-            z-index: 1000;
-            height: 100vh;
-            overflow-y: auto;
-            transition: transform 0.3s ease-in-out;
-        }
-        /* Overlay for when the sidebar is open on mobile */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
     </style>
 </head>
 <body class="bg-gray-100 flex min-h-screen">
 
+    <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[1002]">
         <div class="bg-white p-6 rounded-xl shadow-lg w-96">
             <h2 class="text-2xl font-bold mb-4 text-center text-red-700">Admin Login</h2>
@@ -145,20 +126,16 @@
         </div>
     </div>
     
+    <!-- Toast Container -->
     <div id="toast-container"></div>
 
+    <!-- Main Admin Panel (Hidden until login) -->
     <div id="adminPanel" class="hidden flex w-full">
-        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4 transition-transform transform -translate-x-full md:translate-x-0" id="sidebar">
-            <div class="flex items-center justify-between p-6 border-b border-gray-700">
-                <div class="flex items-center">
-                    <img src="https://placehold.co/40x40/fff/000?text=A" alt="Admin Icon" class="rounded-full mr-2">
-                    <span class="text-lg font-bold">Admin Panel</span>
-                </div>
-                <button id="hamburgerBtn" class="md:hidden text-gray-400 hover:text-white focus:outline-none" aria-label="Toggle navigation menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4">
+            <div class="flex items-center justify-center p-6 border-b border-gray-700">
+                <img src="https://placehold.co/40x40/fff/000?text=A" alt="Admin Icon" class="rounded-full mr-2">
+                <span class="text-lg font-bold">Admin Panel</span>
             </div>
             <nav class="flex-1 mt-6 space-y-2">
                 <a href="#" class="flex items-center space-x-3 active" data-section="dashboard">
@@ -191,12 +168,9 @@
             </div>
         </aside>
 
-        <main class="flex-1 p-6 relative">
-            <button id="mainHamburgerBtn" class="absolute top-4 left-4 z-50 md:hidden text-gray-800 focus:outline-none hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6">
+            <!-- Dashboard Section -->
             <section id="dashboard" class="main-content">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -215,6 +189,7 @@
                 </div>
             </section>
 
+            <!-- Products Management Section -->
             <section id="products" class="main-content hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Products Management</h2>
@@ -243,6 +218,7 @@
                 </div>
             </section>
 
+            <!-- Users Management Section -->
             <section id="users" class="main-content hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Users Management</h2>
@@ -270,6 +246,7 @@
                 </div>
             </section>
 
+            <!-- Sales Reports Section -->
             <section id="sales" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Sales Reports</h2>
                 <div class="flex items-center space-x-4 mb-6">
@@ -300,6 +277,7 @@
                 </div>
             </section>
 
+            <!-- Manager Approvals Section -->
             <section id="manager-logs" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Manager Approvals</h2>
                 <div class="table-container bg-white rounded-lg shadow-md">
@@ -322,6 +300,7 @@
                 </div>
             </section>
             
+            <!-- Audit Logs Section -->
             <section id="audit-logs" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Audit Logs</h2>
                 <div class="table-container bg-white rounded-lg shadow-md">
@@ -346,6 +325,9 @@
         </main>
     </div>
 
+    <!-- Modals for Products and Users Management -->
+
+    <!-- Product Modal -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <h3 id="productModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add Product</h3>
@@ -379,6 +361,7 @@
         </div>
     </div>
 
+    <!-- User Modal -->
     <div id="userModal" class="modal">
         <div class="modal-content">
             <h3 id="userModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add User</h3>
@@ -454,11 +437,6 @@
         const sidebarLinks = document.querySelectorAll('.sidebar a');
         const sections = document.querySelectorAll('.main-content');
         const toastContainer = document.getElementById('toast-container');
-        
-        // Sidebar Toggling
-        const sidebar = document.getElementById('sidebar');
-        const mainHamburgerBtn = document.getElementById('mainHamburgerBtn');
-        const sidebarHamburgerBtn = document.getElementById('hamburgerBtn'); // Inside sidebar
 
         // Dashboard Elements
         const salesTodaySpan = document.getElementById('salesToday');
@@ -529,7 +507,6 @@
                 link.classList.remove('active');
             });
             document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-            toggleSidebar(); // Close sidebar on section change
         }
 
         function openModal(modalId) {
@@ -549,27 +526,6 @@
             return date.toLocaleString();
         }
 
-        // --- Sidebar Toggling ---
-        function createSidebarOverlay() {
-            const overlay = document.createElement('div');
-            overlay.id = 'sidebar-overlay';
-            overlay.className = 'sidebar-overlay';
-            document.body.appendChild(overlay);
-            overlay.addEventListener('click', () => {
-                toggleSidebar();
-            });
-        }
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('-translate-x-full');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                if (overlay) overlay.style.display = 'none';
-            } else {
-                if (overlay) overlay.style.display = 'block';
-            }
-        }
-        
         // --- Authentication ---
         async function adminLogin() {
             const code = adminCodeInput.value.trim();
@@ -639,17 +595,6 @@
             if (salesUnsubscribe) salesUnsubscribe();
             if (managerLogsUnsubscribe) managerLogsUnsubscribe();
             if (auditLogsUnsubscribe) auditLogsUnsubscribe();
-
-            // Hide the hamburger button on logout
-            if (mainHamburgerBtn) {
-                mainHamburgerBtn.classList.add('hidden');
-            }
-            // Also ensure sidebar is hidden on logout
-            sidebar.classList.add('-translate-x-full');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
         }
         
         // Unsubscribe functions for real-time listeners
@@ -682,11 +627,6 @@
                 auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderAuditLogs();
             });
-            
-            // Show the hamburger button once the admin panel is visible
-            if (mainHamburgerBtn) {
-                mainHamburgerBtn.classList.remove('hidden');
-            }
 
             showSection('dashboard');
         }
@@ -1018,14 +958,6 @@
             });
         });
         
-        // Hamburger buttons
-        if (mainHamburgerBtn) {
-            mainHamburgerBtn.addEventListener('click', toggleSidebar);
-        }
-        if (sidebarHamburgerBtn) {
-            sidebarHamburgerBtn.addEventListener('click', toggleSidebar);
-        }
-
         // Modals
         window.onclick = function(event) {
             if (event.target === productModal) {
@@ -1066,19 +998,15 @@
         
         // Initial Load Logic
         document.addEventListener('DOMContentLoaded', () => {
-            createSidebarOverlay();
-            
             const storedAdmin = localStorage.getItem("currentAdmin");
             if (storedAdmin) {
                 currentAdmin = JSON.parse(storedAdmin);
                 adminLoginModal.classList.add("hidden");
                 adminPanel.classList.remove("hidden");
-                // Ensure hamburger is visible after login
-                if(mainHamburgerBtn) mainHamburgerBtn.classList.remove('hidden');
                 initializeAdminPanel();
             } else {
                 adminCodeInput.focus();
-                if(mainHamburgerBtn) mainHamburgerBtn.classList.add('hidden');
+                // Keep login input focused for USB barcode scanner entry
                 adminCodeInput.addEventListener("blur", () => setTimeout(() => adminCodeInput.focus(), 100));
             }
         });
