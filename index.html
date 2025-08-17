@@ -501,13 +501,28 @@
         }
 
         /**
+         * Calculates VAT based on price and VAT rate.
+         * Assumes VAT Exclusive pricing (price in DB excludes VAT).
+         * @param {number} price - The price of the item (or subtotal of items).
+         * @param {number} vatRate - The VAT rate (e.g., 0.16 for 16%).
+         * @returns {{netPrice: number, vatAmount: number, total: number}} Object containing net price, VAT amount, and total.
+         */
+        function calculateVAT(price, vatRate) {
+            // Price is VAT Exclusive, add it
+            const vatAmount = price * vatRate;
+            const total = price + vatAmount;
+            return { netPrice: price, vatAmount, total };
+        }
+
+        /**
          * Calculates VAT for a single item.
          * @param {object} product - The product object.
          * @param {number} quantity - The quantity of the product.
          * @returns {number} The calculated VAT amount.
          */
         function calculateItemVat(product, quantity) {
-            return product.price * quantity * product.vatRate;
+            const { vatAmount } = calculateVAT(product.price * quantity, product.vatRate);
+            return vatAmount;
         }
 
         /**
@@ -517,7 +532,8 @@
          * @returns {number} The calculated item subtotal.
          */
         function calculateItemSubtotal(product, quantity) {
-            return (product.price * quantity) + calculateItemVat(product, quantity);
+            const { total } = calculateVAT(product.price * quantity, product.vatRate);
+            return total;
         }
 
         /**
@@ -525,12 +541,15 @@
          * Also controls the complete sale button's disabled state.
          */
         function calculateTotals() {
-            let totalBeforeVat = 0;
+            let totalBeforeVat = 0; // This will be the net amount
             let totalVatAmount = 0;
 
             cart.forEach(item => {
-                totalBeforeVat += item.product.price * item.quantity;
-                totalVatAmount += calculateItemVat(item.product, item.quantity);
+                const itemNetPrice = item.product.price * item.quantity;
+                const { vatAmount } = calculateVAT(itemNetPrice, item.product.vatRate);
+                
+                totalBeforeVat += itemNetPrice;
+                totalVatAmount += vatAmount;
             });
 
             const grandTotal = totalBeforeVat + totalVatAmount;
@@ -789,11 +808,10 @@
 
 
             cart.forEach(item => {
-                const itemVat = calculateItemVat(item.product, item.quantity);
-                const itemPriceExclVat = item.product.price * item.quantity;
-                const itemAmountInclVat = itemPriceExclVat + itemVat;
+                const itemNetPrice = item.product.price * item.quantity;
+                const { vatAmount, total: itemAmountInclVat } = calculateVAT(itemNetPrice, item.product.vatRate);
 
-                grossSaleValue += itemPriceExclVat;
+                grossSaleValue += itemNetPrice; // Sum of net prices
 
                 itemsTableRows += `
                     <tr>
@@ -806,6 +824,7 @@
                 `;
             });
 
+            // These values are already updated by calculateTotals() based on the new logic
             const totalBeforeVat = parseFloat(totalBeforeVatSpan.textContent.replace('KSh ', ''));
             const vatAmount = parseFloat(vatAmountSpan.textContent.replace('KSh ', ''));
             const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
@@ -828,8 +847,8 @@
                 tillNumber: tillNumber,
                 cartItems: salesCartItems, // Store the simplified cart items
                 paymentMethod: selectedPaymentMethod,
-                grossSaleValue: grossSaleValue,
-                totalBeforeVat: totalBeforeVat,
+                grossSaleValue: grossSaleValue, // This is the Net Amount before VAT
+                totalBeforeVat: totalBeforeVat, // This should be the same as grossSaleValue now
                 vatAmount: vatAmount,
                 grandTotal: grandTotal,
                 receivedAmount: cashReceived,
@@ -872,8 +891,8 @@
                                 <th class="py-1 px-2 text-left">Item</th>
                                 <th class="py-1 px-2 text-center">Barcode</th>
                                 <th class="py-1 px-2 text-center">Qty</th>
-                                <th class="py-1 px-2 text-right">Price</th>
-                                <th class="py-1 px-2 text-right">Amount</th>
+                                <th class="py-1 px-2 text-right">Unit Price</th>
+                                <th class="py-1 px-2 text-right">Amount (Incl. VAT)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -884,22 +903,26 @@
                 <hr>
                 <div class="my-4 text-gray-800">
                     <div class="flex justify-between mb-1">
-                        <span>Gross Sale Value:</span>
-                        <span>${formatCurrency(grossSaleValue)}</span>
-                    </div>
-                    <div class="flex justify-between mb-1">
-                        <span>Net Payable:</span>
+                        <span>Net Amount (Before VAT):</span>
                         <span>${formatCurrency(totalBeforeVat)}</span>
                     </div>
                     <div class="flex justify-between mb-1">
+                        <span>VAT (16%):</span>
+                        <span>${formatCurrency(vatAmount)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold mt-2">
+                        <span>Grand Total:</span>
+                        <span>${formatCurrency(grandTotal)}</span>
+                    </div>
+                    <div class="flex justify-between mb-1 mt-2">
                         <span>Received Amount:</span>
                         <span>${formatCurrency(cashReceived)}</span>
                     </div>
                     <div class="flex justify-between mb-1">
-                        <span>Balance Paid:</span>
+                        <span>Change:</span>
                         <span>${formatCurrency(balance)}</span>
                     </div>
-                    <div class="flex justify-between text-lg font-bold mt-2">
+                     <div class="flex justify-between text-lg font-bold mt-2">
                         <span>Total Savings:</span>
                         <span>${formatCurrency(totalSavings)}</span>
                     </div>
@@ -913,8 +936,7 @@
                 <div class="my-4 text-gray-800">
                     <h3 class="font-bold text-lg mb-2">Tax Summary:</h3>
                     <div class="flex justify-between mb-1">
-                        <span>VAT (16%):</span>
-                        <span>${formatCurrency(totalBeforeVat)}</span>
+                        <span>VAT (16% of ${formatCurrency(totalBeforeVat)}):</span>
                         <span>${formatCurrency(vatAmount)}</span>
                     </div>
                 </div>
@@ -1436,7 +1458,7 @@
             // Simulate sale completion
             showToast(`Sale Completed! Total: ${formatCurrency(grandTotal)}`, 'success');
             await showReceipt(); // Show receipt after sale completion
-            resetPOS(); // Reset POS for next transaction -- MOVED THIS LINE HERE
+            resetPOS(); // Reset POS for next transaction 
         });
 
         // Print Receipt Button (main UI)
