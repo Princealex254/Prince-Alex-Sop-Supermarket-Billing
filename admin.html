@@ -3,28 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prince Alex Store Admin Panel</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Prince Alex Store Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6; /* Light gray background */
         }
-        .admin-container {
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
         }
-        .tab-button.active {
-            background-color: #1a56db; /* Blue-700 */
-            color: white;
+        .table-container {
+            overflow-x: auto;
+            max-height: 70vh; /* Limits height for scrolling */
         }
+        table {
+            min-width: 100%;
+        }
+        .sidebar {
+            width: 280px;
+            background-color: #1a202c; /* Dark gray for a professional look */
+        }
+        .sidebar a {
+            padding: 1rem 1.5rem;
+            border-left: 4px solid transparent;
+            color: #d1d5db; /* Light gray text */
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar a:hover {
+            background-color: #2d3748;
+        }
+        .sidebar a.active {
+            background-color: #2d3748;
+            border-left-color: #3b82f6; /* Blue-500 */
+            color: #ffffff;
+        }
+
+        /* Modal Styles */
         .modal {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -37,23 +59,15 @@
             align-items: center;
         }
         .modal-content {
-            background-color: #fefefe;
-            margin: auto;
+            background-color: #fff;
             padding: 2rem;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             position: relative;
         }
-        .close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
+
         /* Toast Alert Styling */
         #toast-container {
             position: fixed;
@@ -82,244 +96,294 @@
         .toast.error { background-color: #EF4444; /* Red-500 */ }
         .toast.info { background-color: #3B82F6; /* Blue-500 */ }
         .toast.warning { background-color: #F59E0B; /* Yellow-500 */ }
+
+        /* Hide the spinner from number inputs */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
     </style>
 </head>
-<body class="bg-gray-100 flex flex-col min-h-screen">
-    <!-- Top Bar -->
-    <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
-        <h1 class="text-xl font-bold">Prince Alex Store Admin Panel</h1>
-        <div class="flex items-center space-x-4">
-            <button id="posPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">POS Panel</button>
-            <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
+<body class="bg-gray-100 flex min-h-screen">
+
+    <div id="adminLoginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[1002]">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4 text-center text-red-700">Admin Login</h2>
+            <input id="adminCode" type="password" 
+                placeholder="Scan Card or Enter PIN"
+                class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-600">
+            <button onclick="adminLogin()" 
+                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
+            <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid code or insufficient permissions.</p>
         </div>
-    </header>
+    </div>
+    
+    <div id="toast-container"></div>
 
-    <!-- Main Admin Panel -->
-    <main class="flex-1 p-6 flex justify-center items-start">
-        <div class="admin-container w-full max-w-6xl p-6">
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-gray-200 mb-6">
-                <button id="productsTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 active transition duration-200 rounded-t-lg">
-                    📊 Products Management
-                </button>
-                <button id="salesTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
-                    📈 Sales History
-                </button>
-                <button id="managersTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
-                    👥 Managers
-                </button>
-                <button id="reportsTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
-                    📄 Reports
-                </button>
+    <div id="adminPanel" class="hidden flex w-full">
+        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4">
+            <div class="flex items-center justify-center p-6 border-b border-gray-700">
+                <img src="https://placehold.co/40x40/fff/000?text=A" alt="Admin Icon" class="rounded-full mr-2">
+                <span class="text-lg font-bold">Admin Panel</span>
             </div>
+            <nav class="flex-1 mt-6 space-y-2">
+                <a href="#" class="flex items-center space-x-3 active" data-section="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM6 10a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" /></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3" data-section="products">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM6 10a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" /></svg>
+                    <span>Products Management</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3" data-section="users">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                    <span>Users Management</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3" data-section="sales">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.171 1.341l.244-.122a1.002 1.002 0 00.933-.42l4.98-9.96-2.5-1.25a1 1 0 00-.777 1.87L9 15l2.223-1.111a1 1 0 00.554-1.87l-2.5-1.25 4.98-9.96a1.002 1.002 0 00.933.42l.244.122a1 1 0 001.171-1.341l-7-14z" /></svg>
+                    <span>Sales Reports</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3" data-section="manager-logs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-1 1v1h2V3a1 1 0 10-2 0zm-2 2h6l.5 1h-7l.5-1zM4 6a2 2 0 012-2h8a2 2 0 012 2v2H4V6zm14 3h-2v1h2v1h-2v1h2v-3zm-2-2h2v1h-2v-1zm-2 5a2 2 0 01-2 2H6a2 2 0 01-2-2V8h12v4z" clip-rule="evenodd" /></svg>
+                    <span>Manager Approvals</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3" data-section="audit-logs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 002 0v-2a1 1 0 10-2 0v2zm1 4a1 1 0 100 2 1 1 0 000-2z" /></svg>
+                    <span>Audit Logs</span>
+                </a>
+            </nav>
+            <div class="mt-auto p-4 border-t border-gray-700">
+                <button onclick="adminLogout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Logout</button>
+            </div>
+        </aside>
 
-            <!-- Products Management Section -->
-            <div id="productsSection" class="tab-content">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Products Management</h2>
+        <main class="flex-1 p-6">
+            <section id="dashboard" class="main-content">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-100 p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-blue-800">Sales Today</h3>
+                        <p id="salesToday" class="text-4xl font-bold text-blue-900 mt-2">KSh 0.00</p>
+                    </div>
+                    <div class="bg-green-100 p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-green-800">Active Cashiers</h3>
+                        <p id="activeCashiers" class="text-4xl font-bold text-green-900 mt-2">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-yellow-800">Low Stock Alerts</h3>
+                        <p id="lowStockAlerts" class="text-4xl font-bold text-yellow-900 mt-2">0</p>
+                    </div>
+                </div>
+            </section>
 
+            <section id="products" class="main-content hidden">
                 <div class="flex justify-between items-center mb-6">
-                    <input type="text" id="productSearchAdmin" placeholder="Search products by ID or name..."
-                           class="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
-                    <button id="addProductBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
-                        ➕ Add New Product
+                    <h2 class="text-3xl font-bold text-gray-800">Products Management</h2>
+                    <button id="addProductBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                        + Add New Product
                     </button>
                 </div>
-
-                <div class="overflow-x-auto rounded-lg shadow-md">
-                    <table class="min-w-full bg-white">
-                        <thead class="bg-blue-600 text-white">
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white sticky top-0">
                             <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Product ID</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Barcode</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Product Name</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Price (KSh)</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">VAT Rate (%)</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Stock</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">VAT Rate</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="productsTableBody" class="divide-y divide-gray-200">
-                            <!-- Products will be dynamically inserted here -->
-                            <tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading products...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Sales History Section -->
-            <div id="salesSection" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Sales History</h2>
-                <div class="flex justify-between items-center mb-6">
-                    <input type="text" id="saleSearchAdmin" placeholder="Search sales by Invoice No, Cashier..."
-                           class="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
-                    <input type="date" id="saleDateFilter"
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
-                </div>
-                <div class="overflow-x-auto rounded-lg shadow-md">
-                    <table class="min-w-full bg-white">
-                        <thead class="bg-blue-600 text-white">
                             <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Invoice No</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Date & Time</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Payment Method</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Total (KSh)</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Details</th>
+                                <td colspan="6" class="py-4 text-center text-gray-500">Loading products...</td>
                             </tr>
-                        </thead>
-                        <tbody id="salesTableBody" class="divide-y divide-gray-200">
-                            <tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading sales data...</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
-            <!-- Managers Section -->
-            <div id="managersSection" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Managers Management</h2>
-                <div class="flex justify-end items-center mb-6">
-                    <button id="addManagerBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
-                        ➕ Add New Manager
+            <section id="users" class="main-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Users Management</h2>
+                    <button id="addUserBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                        + Add New User
                     </button>
                 </div>
-                <div class="overflow-x-auto rounded-lg shadow-md">
-                    <table class="min-w-full bg-white">
-                        <thead class="bg-blue-600 text-white">
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white sticky top-0">
                             <tr>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Manager ID</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Role</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Card ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">PIN</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="managersTableBody" class="divide-y divide-gray-200">
-                            <tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">Loading managers...</td></tr>
+                        <tbody id="usersTableBody" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-gray-500">Loading users...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
-            <!-- Reports Section -->
-            <div id="reportsSection" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Reports</h2>
-                <p class="text-gray-700">Detailed reports on sales, stock levels, and manager actions will be available here.</p>
-                <div class="mt-6 p-4 bg-blue-100 border border-blue-200 rounded-lg text-blue-800">
-                    <p class="font-semibold">Coming Soon:</p>
-                    <ul class="list-disc list-inside mt-2">
-                        <li>Daily/Weekly/Monthly Sales Summaries</li>
-                        <li>Top Selling Products</li>
-                        <li>Low Stock Alerts</li>
-                        <li>Manager Activity Logs</li>
-                    </ul>
+            <section id="sales" class="main-content hidden">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Sales Reports</h2>
+                <div class="flex items-center space-x-4 mb-6">
+                    <input type="date" id="saleStartDate" class="border rounded-lg p-2">
+                    <input type="date" id="saleEndDate" class="border rounded-lg p-2">
+                    <input type="text" id="saleSearchInput" placeholder="Search by cashier/product..." class="border rounded-lg p-2 flex-1">
+                    <button id="filterSalesBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Filter</button>
+                    <button id="exportSalesBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Export CSV</button>
                 </div>
-            </div>
-        </div>
-    </main>
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white sticky top-0">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Invoice No.</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Date</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Grand Total</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Payment Method</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="6" class="py-4 text-center text-gray-500">No sales data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <!-- Modals -->
+            <section id="manager-logs" class="main-content hidden">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Manager Approvals</h2>
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white sticky top-0">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Timestamp</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Manager</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Item</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managerLogsTableBody" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-gray-500">No approval logs.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section id="audit-logs" class="main-content hidden">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Audit Logs</h2>
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white sticky top-0">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tl-lg">Timestamp</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">User</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Details</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogsTableBody" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-gray-500">No audit logs.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 
-    <!-- Product Modal (Add/Edit) -->
     <div id="productModal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="closeProductModal">&times;</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-6" id="productModalTitle">Add New Product</h3>
+            <h3 id="productModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add Product</h3>
             <form id="productForm">
+                <input type="hidden" id="productId">
                 <div class="mb-4">
-                    <label for="productId" class="block text-gray-700 text-sm font-bold mb-2">Product ID (Barcode):</label>
-                    <input type="text" id="productId" name="id" placeholder="Enter unique product ID or barcode"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
-                </div>
-                <div class="mb-4">
-                    <label for="productName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
-                    <input type="text" id="productName" name="name" placeholder="Enter product name"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                    <label for="productBarcode" class="block text-gray-700 text-sm font-bold mb-2">Barcode</label>
+                    <input type="text" id="productBarcode" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label for="productPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
-                    <input type="number" id="productPrice" name="price" placeholder="Enter price" step="0.01"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                    <label for="productName" class="block text-gray-700 text-sm font-bold mb-2">Product Name</label>
+                    <input type="text" id="productName" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label for="productVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (%):</label>
-                    <input type="number" id="productVatRate" name="vatRate" placeholder="Enter VAT rate (e.g., 0.16 for 16%)" step="0.01"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                    <label for="productPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh)</label>
+                    <input type="number" id="productPrice" step="0.01" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
-                <div class="mb-6">
-                    <label for="productStock" class="block text-gray-700 text-sm font-bold mb-2">Stock Quantity:</label>
-                    <input type="number" id="productStock" name="stock" placeholder="Enter stock quantity"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                <div class="mb-4">
+                    <label for="productStock" class="block text-gray-700 text-sm font-bold mb-2">Stock</label>
+                    <input type="number" id="productStock" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
-                <div class="flex justify-end">
-                    <button type="submit" id="saveProductBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
-                        Save Product
-                    </button>
+                <div class="mb-4">
+                    <label for="productVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16 for 16%)</label>
+                    <input type="number" id="productVatRate" step="0.01" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('productModal')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save Product</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Sales Details Modal -->
-    <div id="saleDetailsModal" class="modal">
+    <div id="userModal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="closeSaleDetailsModal">&times;</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">Sale Details - Invoice #<span id="saleInvoiceNo"></span></h3>
-            <div id="saleDetailsContent" class="text-gray-700 text-sm leading-relaxed">
-                <!-- Sale details will be loaded here -->
-            </div>
-            <div class="flex justify-end mt-6">
-                <button id="printSaleDetailsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">
-                    Print Details
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manager Modal (Add/Edit) -->
-    <div id="managerModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="closeManagerModal">&times;</span>
-            <h3 class="text-2xl font-bold text-gray-800 mb-6" id="managerModalTitle">Add New Manager</h3>
-            <form id="managerForm">
+            <h3 id="userModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add User</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
                 <div class="mb-4">
-                    <label for="managerId" class="block text-gray-700 text-sm font-bold mb-2">Manager User ID:</label>
-                    <input type="text" id="managerId" name="id" placeholder="Auto-generated or entered (if new)"
-                           class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:outline-none text-lg shadow-sm" readonly>
+                    <label for="userName" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
+                    <input type="text" id="userName" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label for="managerName" class="block text-gray-700 text-sm font-bold mb-2">Manager Name:</label>
-                    <input type="text" id="managerName" name="name" placeholder="Enter manager's name"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                    <label for="userRole" class="block text-gray-700 text-sm font-bold mb-2">Role</label>
+                    <select id="userRole" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
+                        <option value="cashier">Cashier</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
                 </div>
                 <div class="mb-4">
-                    <label for="managerCardId" class="block text-gray-700 text-sm font-bold mb-2">Manager Card ID (for scanning):</label>
-                    <input type="text" id="managerCardId" name="cardId" placeholder="Enter unique card ID for approval scans"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                    <label for="userCardId" class="block text-gray-700 text-sm font-bold mb-2">Card ID (Optional)</label>
+                    <input type="text" id="userCardId" class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
-                <div class="mb-6">
-                    <label for="managerCode" class="block text-gray-700 text-sm font-bold mb-2">Manager Code (4-digit PIN):</label>
-                    <input type="password" id="managerCode" name="code" placeholder="Enter 4-digit PIN" maxlength="4"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                <div class="mb-4">
+                    <label for="userPin" class="block text-gray-700 text-sm font-bold mb-2">PIN</label>
+                    <input type="password" id="userPin" required class="w-full p-2 border rounded-lg focus:ring-blue-500">
                 </div>
-                <div class="flex justify-end">
-                    <button type="submit" id="saveManagerBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
-                        Save Manager
-                    </button>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('userModal')" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save User</button>
                 </div>
             </form>
         </div>
     </div>
-
-
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
-
+    
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-        // Firebase config (from your index.html)
+        // Firebase config (from index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyAUNs3WYS2mkvPvzRDfhyZFUbP2XpZjDQg",
             authDomain: "retailflow-pos-11726.firebaseapp.com",
@@ -332,160 +396,227 @@
         // Initialize Firebase + Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
 
         // Firestore collection references
         const productsCol = collection(db, "products");
         const salesCol = collection(db, "sales");
-        const usersCol = collection(db, "users"); // This collection will store both cashiers and managers
+        const usersCol = collection(db, "users");
+        const managerLogsCol = collection(db, "managerLogs");
+        const auditLogsCol = collection(db, "auditLogs"); // New Audit Logs collection
+
+        // --- Global Variables ---
+        let products = [];
+        let users = [];
+        let sales = [];
+        let managerLogs = [];
+        let auditLogs = [];
+        let currentAdmin = null;
 
         // --- DOM Elements ---
-        const productsTabBtn = document.getElementById('productsTabBtn');
-        const salesTabBtn = document.getElementById('salesTabBtn');
-        const managersTabBtn = document.getElementById('managersTabBtn');
-        const reportsTabBtn = document.getElementById('reportsTabBtn');
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const adminCodeInput = document.getElementById('adminCode');
+        const loginErrorMsg = document.getElementById('loginError');
+        const adminPanel = document.getElementById('adminPanel');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        const sections = document.querySelectorAll('.main-content');
+        const toastContainer = document.getElementById('toast-container');
 
-        const productsSection = document.getElementById('productsSection');
-        const salesSection = document.getElementById('salesSection');
-        const managersSection = document.getElementById('managersSection');
-        const reportsSection = document.getElementById('reportsSection');
+        // Dashboard Elements
+        const salesTodaySpan = document.getElementById('salesToday');
+        const activeCashiersSpan = document.getElementById('activeCashiers');
+        const lowStockAlertsSpan = document.getElementById('lowStockAlerts');
 
-        const productSearchAdminInput = document.getElementById('productSearchAdmin');
-        const addProductBtn = document.getElementById('addProductBtn');
+        // Products Management Elements
         const productsTableBody = document.getElementById('productsTableBody');
-
-        const saleSearchAdminInput = document.getElementById('saleSearchAdmin');
-        const saleDateFilterInput = document.getElementById('saleDateFilter');
-        const salesTableBody = document.getElementById('salesTableBody');
-
-        const addManagerBtn = document.getElementById('addManagerBtn');
-        const managersTableBody = document.getElementById('managersTableBody');
-
-        const posPanelBtn = document.getElementById('posPanelBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        // Product Modal Elements
+        const addProductBtn = document.getElementById('addProductBtn');
         const productModal = document.getElementById('productModal');
-        const closeProductModalBtn = document.getElementById('closeProductModal');
         const productModalTitle = document.getElementById('productModalTitle');
         const productForm = document.getElementById('productForm');
         const productIdInput = document.getElementById('productId');
+        const productBarcodeInput = document.getElementById('productBarcode');
         const productNameInput = document.getElementById('productName');
         const productPriceInput = document.getElementById('productPrice');
-        const productVatRateInput = document.getElementById('productVatRate');
         const productStockInput = document.getElementById('productStock');
-        const saveProductBtn = document.getElementById('saveProductBtn');
+        const productVatRateInput = document.getElementById('productVatRate');
 
-        // Sale Details Modal Elements
-        const saleDetailsModal = document.getElementById('saleDetailsModal');
-        const closeSaleDetailsModalBtn = document.getElementById('closeSaleDetailsModal');
-        const saleInvoiceNoSpan = document.getElementById('saleInvoiceNo');
-        const saleDetailsContentDiv = document.getElementById('saleDetailsContent');
-        const printSaleDetailsBtn = document.getElementById('printSaleDetailsBtn');
+        // Users Management Elements
+        const usersTableBody = document.getElementById('usersTableBody');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const userModal = document.getElementById('userModal');
+        const userModalTitle = document.getElementById('userModalTitle');
+        const userForm = document.getElementById('userForm');
+        const userIdInput = document.getElementById('userId');
+        const userNameInput = document.getElementById('userName');
+        const userRoleInput = document.getElementById('userRole');
+        const userCardIdInput = document.getElementById('userCardId');
+        const userPinInput = document.getElementById('userPin');
 
+        // Sales Reports Elements
+        const salesTableBody = document.getElementById('salesTableBody');
+        const saleStartDateInput = document.getElementById('saleStartDate');
+        const saleEndDateInput = document.getElementById('saleEndDate');
+        const saleSearchInput = document.getElementById('saleSearchInput');
+        const filterSalesBtn = document.getElementById('filterSalesBtn');
+        const exportSalesBtn = document.getElementById('exportSalesBtn');
 
-        // Manager Modal Elements
-        const managerModal = document.getElementById('managerModal');
-        const closeManagerModalBtn = document.getElementById('closeManagerModal');
-        const managerModalTitle = document.getElementById('managerModalTitle');
-        const managerForm = document.getElementById('managerForm');
-        const managerIdInput = document.getElementById('managerId');
-        const managerNameInput = document.getElementById('managerName');
-        const managerCardIdInput = document.getElementById('managerCardId');
-        const managerCodeInput = document.getElementById('managerCode');
-        const saveManagerBtn = document.getElementById('saveManagerBtn');
-
-        const toastContainer = document.getElementById('toast-container');
-
-        // Global variables for editing
-        let editingProduct = null;
-        let editingManager = null;
+        // Manager Logs Elements
+        const managerLogsTableBody = document.getElementById('managerLogsTableBody');
+        
+        // Audit Logs Elements
+        const auditLogsTableBody = document.getElementById('auditLogsTableBody');
 
 
         // --- Helper Functions ---
-
-        /**
-         * Displays a toast notification.
-         * @param {string} message - The message to display.
-         * @param {'success'|'error'|'info'|'warning'} type - The type of toast (for styling).
-         * @param {number} duration - How long the toast should be visible in ms.
-         */
+        
         function showToast(message, type = 'info', duration = 3000) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
             toastContainer.appendChild(toast);
-
-            // Trigger reflow to ensure transition plays
             void toast.offsetWidth;
-
             toast.classList.add('show');
-
             setTimeout(() => {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove(), { once: true });
             }, duration);
         }
 
-        /**
-         * Formats a number to currency string (KSh).
-         * @param {number} amount - The amount to format.
-         * @returns {string} Formatted currency string.
-         */
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
         function formatCurrency(amount) {
             return `KSh ${parseFloat(amount).toFixed(2)}`;
         }
 
-        /**
-         * Switches between admin panel tabs.
-         * @param {HTMLElement} activeTabButton - The button of the tab to activate.
-         * @param {HTMLElement} activeTabSection - The content section of the tab to show.
-         * @param {Function} [loadDataFunction] - Optional function to load data for the active tab.
-         */
-        async function switchTab(activeTabButton, activeTabSection, loadDataFunction) {
-            // Deactivate all tab buttons and hide all content sections
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
-
-            // Activate the selected tab button and show its content section
-            activeTabButton.classList.add('active');
-            activeTabSection.classList.remove('hidden');
-
-            // Load data if a function is provided
-            if (loadDataFunction) {
-                await loadDataFunction();
-            }
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
         }
 
-        // --- Product Management Functions ---
+        // --- Authentication ---
 
-        /**
-         * Loads and displays products from Firestore.
-         */
-        async function loadProductsAdmin() {
-            productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading products...</td></tr>';
+        async function adminLogin() {
+            const code = adminCodeInput.value.trim();
+            loginErrorMsg.classList.add("hidden");
+            
             try {
-                const snapshot = await getDocs(productsCol);
-                const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProductsAdmin(products);
+                const q = query(usersCol, where("role", "==", "admin"));
+                const snapshot = await getDocs(q);
+                let found = null;
+                snapshot.forEach(docSnap => {
+                    const user = docSnap.data();
+                    if (user.code === code || user.cardId === code) {
+                        found = { id: docSnap.id, ...user };
+                    }
+                });
+
+                if (found) {
+                    currentAdmin = found;
+                    localStorage.setItem("currentAdmin", JSON.stringify(found));
+                    adminLoginModal.classList.add("hidden");
+                    adminPanel.classList.remove("hidden");
+                    showToast(`✅ Welcome, ${currentAdmin.name}!`, "success");
+                    initializeAdminPanel();
+                } else {
+                    loginErrorMsg.classList.remove("hidden");
+                    showToast("❌ Invalid Admin PIN or Card ID.", "error");
+                    adminCodeInput.value = '';
+                    adminCodeInput.focus();
+                }
             } catch (error) {
-                console.error("Error loading products for admin:", error);
-                productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-red-500">Failed to load products.</td></tr>';
-                showToast("Failed to load products.", "error");
+                console.error("Error during admin login:", error);
+                showToast("Login failed. Please check console.", "error");
             }
         }
+        
+        function adminLogout() {
+            currentAdmin = null;
+            localStorage.removeItem("currentAdmin");
+            showToast("Logged out successfully.", "info");
+            adminPanel.classList.add("hidden");
+            adminLoginModal.classList.remove("hidden");
+            adminCodeInput.value = '';
+            adminCodeInput.focus();
+            
+            // Stop all listeners on logout
+            if (productsUnsubscribe) productsUnsubscribe();
+            if (usersUnsubscribe) usersUnsubscribe();
+            if (salesUnsubscribe) salesUnsubscribe();
+            if (managerLogsUnsubscribe) managerLogsUnsubscribe();
+            if (auditLogsUnsubscribe) auditLogsUnsubscribe();
+        }
+        
+        // Unsubscribe functions for real-time listeners
+        let productsUnsubscribe, usersUnsubscribe, salesUnsubscribe, managerLogsUnsubscribe, auditLogsUnsubscribe;
 
-        /**
-         * Renders products in the admin table.
-         * @param {Array<object>} products - Products to display.
-         */
-        function renderProductsAdmin(products) {
+        // --- Data Fetching and Rendering ---
+
+        function initializeAdminPanel() {
+            // Setup real-time listeners for all collections
+            productsUnsubscribe = onSnapshot(productsCol, (snapshot) => {
+                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts();
+                updateDashboard();
+            });
+            usersUnsubscribe = onSnapshot(usersCol, (snapshot) => {
+                users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsers();
+                updateDashboard();
+            });
+            salesUnsubscribe = onSnapshot(salesCol, (snapshot) => {
+                sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSales(sales); // Initial render
+                updateDashboard();
+            });
+            managerLogsUnsubscribe = onSnapshot(managerLogsCol, (snapshot) => {
+                managerLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderManagerLogs();
+            });
+            auditLogsUnsubscribe = onSnapshot(auditLogsCol, (snapshot) => {
+                auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAuditLogs();
+            });
+
+            showSection('dashboard');
+        }
+
+        // --- Dashboard Functions ---
+        async function updateDashboard() {
+            // Sales Today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const salesToday = sales.filter(s => new Date(s.timestamp) >= today);
+            const totalSalesToday = salesToday.reduce((sum, s) => sum + s.grandTotal, 0);
+            salesTodaySpan.textContent = formatCurrency(totalSalesToday);
+
+            // Active Cashiers (placeholder, based on last login or a specific field)
+            const activeCashierCount = users.filter(u => u.role === 'cashier').length;
+            activeCashiersSpan.textContent = activeCashierCount;
+
+            // Low Stock Alerts
+            const lowStockCount = products.filter(p => p.stock < 10).length;
+            lowStockAlertsSpan.textContent = lowStockCount;
+        }
+
+        // --- Products Management Functions ---
+        function renderProducts() {
             productsTableBody.innerHTML = '';
-            if (products.length === 0) {
-                productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">No products found.</td></tr>';
-                return;
-            }
-
             products.forEach(product => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
@@ -493,562 +624,357 @@
                     <td class="py-3 px-4 text-gray-800">${product.id}</td>
                     <td class="py-3 px-4 text-gray-800">${product.name}</td>
                     <td class="py-3 px-4 text-gray-700">${formatCurrency(product.price)}</td>
-                    <td class="py-3 px-4 text-gray-700">${(product.vatRate * 100).toFixed(0)}%</td>
                     <td class="py-3 px-4 text-gray-700">${product.stock}</td>
+                    <td class="py-3 px-4 text-gray-700">${(product.vatRate * 100).toFixed(0)}%</td>
                     <td class="py-3 px-4">
-                        <button data-id="${product.id}" class="edit-product-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold py-1 px-3 rounded-lg mr-2 transition duration-200">Edit</button>
-                        <button data-id="${product.id}" class="delete-product-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">Delete</button>
+                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                        <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800">Delete</button>
                     </td>
                 `;
                 productsTableBody.appendChild(row);
             });
-
-            // Attach event listeners
-            document.querySelectorAll('.edit-product-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => openProductModalForEdit(e.target.dataset.id));
-            });
-            document.querySelectorAll('.delete-product-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => deleteProduct(e.target.dataset.id));
-            });
-        }
-
-        /**
-         * Opens the product modal for adding a new product.
-         */
-        function openAddProductModal() {
-            productModalTitle.textContent = 'Add New Product';
-            productForm.reset();
-            productIdInput.readOnly = false; // Allow editing ID for new product
-            productIdInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            editingProduct = null;
-            productModal.style.display = 'flex';
-        }
-
-        /**
-         * Opens the product modal for editing an existing product.
-         * @param {string} productId - The ID of the product to edit.
-         */
-        async function openProductModalForEdit(productId) {
-            productModalTitle.textContent = 'Edit Product';
-            try {
-                const docRef = doc(db, "products", productId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    editingProduct = { id: docSnap.id, ...docSnap.data() };
-                    productIdInput.value = editingProduct.id;
-                    productNameInput.value = editingProduct.name;
-                    productPriceInput.value = editingProduct.price;
-                    productVatRateInput.value = editingProduct.vatRate;
-                    productStockInput.value = editingProduct.stock;
-
-                    productIdInput.readOnly = true; // Prevent editing ID of existing product
-                    productIdInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    productModal.style.display = 'flex';
-                } else {
-                    showToast("Product not found!", "error");
-                }
-            } catch (error) {
-                console.error("Error fetching product for edit:", error);
-                showToast("Error loading product for edit.", "error");
+            if (products.length === 0) {
+                productsTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500">No products found.</td></tr>`;
             }
         }
 
-        /**
-         * Saves (adds or updates) a product to Firestore.
-         * @param {Event} e - The form submission event.
-         */
-        async function saveProduct(e) {
-            e.preventDefault();
-            const productData = {
-                id: productIdInput.value.trim(),
-                name: productNameInput.value.trim(),
-                price: parseFloat(productPriceInput.value),
-                vatRate: parseFloat(productVatRateInput.value),
-                stock: parseInt(productStockInput.value)
-            };
+        async function saveProduct() {
+            const id = productIdInput.value.trim();
+            const barcode = productBarcodeInput.value.trim();
+            const name = productNameInput.value.trim();
+            const price = parseFloat(productPriceInput.value);
+            const stock = parseInt(productStockInput.value, 10);
+            const vatRate = parseFloat(productVatRateInput.value);
 
-            if (!productData.id || !productData.name || isNaN(productData.price) || isNaN(productData.vatRate) || isNaN(productData.stock)) {
-                showToast("Please fill all product fields correctly.", "warning");
+            if (!barcode || !name || isNaN(price) || isNaN(stock) || isNaN(vatRate)) {
+                showToast("Please fill all required fields correctly.", "error");
                 return;
             }
 
             try {
-                if (editingProduct) {
-                    // Update existing product
-                    const productRef = doc(db, "products", editingProduct.id);
-                    await updateDoc(productRef, productData);
+                if (id) {
+                    await updateDoc(doc(db, "products", id), {
+                        barcode, name, price, stock, vatRate
+                    });
                     showToast("Product updated successfully!", "success");
+                    logAudit("Update Product", `Updated product: ${name} (ID: ${id})`);
                 } else {
-                    // Add new product
-                    const productRef = doc(db, "products", productData.id);
-                    const docSnap = await getDoc(productRef);
-                    if (docSnap.exists()) {
-                        showToast("Product ID already exists. Please use a unique ID.", "error");
-                        return;
-                    }
-                    await setDoc(productRef, productData); // Use setDoc with ID
+                    const newProductRef = doc(productsCol);
+                    await setDoc(newProductRef, {
+                        id: newProductRef.id, // Use the generated ID
+                        barcode, name, price, stock, vatRate
+                    });
                     showToast("Product added successfully!", "success");
+                    logAudit("Add Product", `Added new product: ${name}`);
                 }
-                productModal.style.display = 'none';
-                await loadProductsAdmin(); // Reload products
-            } catch (error) {
-                console.error("Error saving product:", error);
-                showToast("Error saving product.", "error");
+                closeModal('productModal');
+            } catch (e) {
+                console.error("Error saving product:", e);
+                showToast("Failed to save product. Check console for details.", "error");
+            }
+        }
+        
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                productModalTitle.textContent = "Edit Product";
+                productIdInput.value = product.id;
+                productBarcodeInput.value = product.barcode;
+                productNameInput.value = product.name;
+                productPriceInput.value = product.price;
+                productStockInput.value = product.stock;
+                productVatRateInput.value = product.vatRate;
+                openModal('productModal');
             }
         }
 
-        /**
-         * Deletes a product from Firestore.
-         * @param {string} productId - The ID of the product to delete.
-         */
         async function deleteProduct(productId) {
-            if (!confirm(`Are you sure you want to delete product "${productId}"? This action cannot be undone.`)) {
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, "products", productId));
-                showToast("Product deleted successfully!", "success");
-                await loadProductsAdmin(); // Reload products
-            } catch (error) {
-                console.error("Error deleting product:", error);
-                showToast("Error deleting product.", "error");
-            }
-        }
-
-        // --- Sales History Functions ---
-
-        /**
-         * Loads and displays sales from Firestore.
-         */
-        async function loadSalesAdmin() {
-            salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading sales data...</td></tr>';
-            try {
-                let salesQuery = query(salesCol);
-                // Apply date filter if set
-                const selectedDate = saleDateFilterInput.value;
-                if (selectedDate) {
-                    const startOfDay = new Date(selectedDate);
-                    startOfDay.setHours(0, 0, 0, 0);
-                    const endOfDay = new Date(selectedDate);
-                    endOfDay.setHours(23, 59, 59, 999);
-
-                    salesQuery = query(salesCol, 
-                        where("timestamp", ">=", Timestamp.fromDate(startOfDay).toISOString()), 
-                        where("timestamp", "<=", Timestamp.fromDate(endOfDay).toISOString())
-                    );
+            if (confirm("Are you sure you want to delete this product?")) {
+                try {
+                    await deleteDoc(doc(db, "products", productId));
+                    showToast("Product deleted successfully!", "success");
+                    logAudit("Delete Product", `Deleted product with ID: ${productId}`);
+                } catch (e) {
+                    console.error("Error deleting product:", e);
+                    showToast("Failed to delete product. Check console.", "error");
                 }
-
-                const snapshot = await getDocs(salesQuery);
-                const sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                // Client-side filtering for search term as Firestore doesn't support full-text search directly
-                const searchTerm = saleSearchAdminInput.value.toLowerCase();
-                const filteredSales = sales.filter(sale =>
-                    sale.invoiceNo.toLowerCase().includes(searchTerm) ||
-                    sale.cashierName.toLowerCase().includes(searchTerm) ||
-                    sale.paymentMethod.toLowerCase().includes(searchTerm)
-                );
-
-                renderSalesAdmin(filteredSales);
-            } catch (error) {
-                console.error("Error loading sales for admin:", error);
-                salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-red-500">Failed to load sales data.</td></tr>';
-                showToast("Failed to load sales data.", "error");
             }
         }
 
+        // --- Users Management Functions ---
+        function renderUsers() {
+            usersTableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-gray-800">${user.name}</td>
+                    <td class="py-3 px-4 text-gray-800">${user.role}</td>
+                    <td class="py-3 px-4 text-gray-700">${user.cardId || 'N/A'}</td>
+                    <td class="py-3 px-4 text-gray-700">${user.code || 'N/A'}</td>
+                    <td class="py-3 px-4">
+                        <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                        <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                    </td>
+                `;
+                usersTableBody.appendChild(row);
+            });
+            if (users.length === 0) {
+                usersTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No users found.</td></tr>`;
+            }
+        }
 
-        /**
-         * Renders sales in the admin table.
-         * @param {Array<object>} sales - Sales to display.
-         */
-        function renderSalesAdmin(sales) {
-            salesTableBody.innerHTML = '';
-            if (sales.length === 0) {
-                salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">No sales found.</td></tr>';
+        async function saveUser() {
+            const id = userIdInput.value.trim();
+            const name = userNameInput.value.trim();
+            const role = userRoleInput.value;
+            const cardId = userCardIdInput.value.trim() || null;
+            const code = userPinInput.value.trim();
+
+            if (!name || !role || !code) {
+                showToast("Please fill all required fields correctly.", "error");
                 return;
             }
+            if (code.length !== 4) {
+                 showToast("PIN must be exactly 4 digits.", "error");
+                 return;
+            }
 
-            sales.forEach(sale => {
-                const saleDate = new Date(sale.timestamp);
+            try {
+                const userData = { name, role, cardId, code };
+                if (id) {
+                    await updateDoc(doc(db, "users", id), userData);
+                    showToast("User updated successfully!", "success");
+                    logAudit("Update User", `Updated user: ${name} (${role})`);
+                } else {
+                    const newUserRef = doc(usersCol);
+                    await setDoc(newUserRef, { id: newUserRef.id, ...userData });
+                    showToast("User added successfully!", "success");
+                    logAudit("Add User", `Added new user: ${name} (${role})`);
+                }
+                closeModal('userModal');
+            } catch (e) {
+                console.error("Error saving user:", e);
+                showToast("Failed to save user. Check console.", "error");
+            }
+        }
+        
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                userModalTitle.textContent = "Edit User";
+                userIdInput.value = user.id;
+                userNameInput.value = user.name;
+                userRoleInput.value = user.role;
+                userCardIdInput.value = user.cardId || '';
+                userPinInput.value = user.code;
+                openModal('userModal');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (confirm("Are you sure you want to delete this user?")) {
+                try {
+                    await deleteDoc(doc(db, "users", userId));
+                    showToast("User deleted successfully!", "success");
+                    logAudit("Delete User", `Deleted user with ID: ${userId}`);
+                } catch (e) {
+                    console.error("Error deleting user:", e);
+                    showToast("Failed to delete user. Check console.", "error");
+                }
+            }
+        }
+
+        // --- Sales Reports Functions ---
+        function renderSales(salesData) {
+            salesTableBody.innerHTML = '';
+            salesData.forEach(sale => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
                     <td class="py-3 px-4 text-gray-800">${sale.invoiceNo}</td>
-                    <td class="py-3 px-4 text-gray-800">${saleDate.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-gray-700">${formatDate(sale.timestamp)}</td>
                     <td class="py-3 px-4 text-gray-700">${sale.cashierName}</td>
+                    <td class="py-3 px-4 text-gray-700">${formatCurrency(sale.grandTotal)}</td>
                     <td class="py-3 px-4 text-gray-700">${sale.paymentMethod}</td>
-                    <td class="py-3 px-4 text-gray-900 font-semibold">${formatCurrency(sale.grandTotal)}</td>
                     <td class="py-3 px-4">
-                        <button data-id="${sale.id}" class="view-sale-details-btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">View</button>
+                        <button onclick="showSaleDetails('${sale.id}')" class="text-blue-600 hover:text-blue-800">View Details</button>
                     </td>
                 `;
                 salesTableBody.appendChild(row);
             });
+            if (salesData.length === 0) {
+                salesTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500">No sales data.</td></tr>`;
+            }
+        }
 
-            // Attach event listeners
-            document.querySelectorAll('.view-sale-details-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => viewSaleDetails(e.target.dataset.id));
+        function filterSales() {
+            const startDate = saleStartDateInput.value ? new Date(saleStartDateInput.value).getTime() : 0;
+            const endDate = saleEndDateInput.value ? new Date(saleEndDateInput.value).getTime() + 86399999 : Infinity; // End of day
+            const searchTerm = saleSearchInput.value.toLowerCase();
+            
+            const filtered = sales.filter(sale => {
+                const saleDate = new Date(sale.timestamp).getTime();
+                const matchesDate = saleDate >= startDate && saleDate <= endDate;
+                
+                const matchesSearch = !searchTerm || 
+                    sale.cashierName.toLowerCase().includes(searchTerm) ||
+                    sale.cartItems.some(item => item.name.toLowerCase().includes(searchTerm));
+                
+                return matchesDate && matchesSearch;
             });
+            
+            renderSales(filtered);
+            showToast(`Found ${filtered.length} sales.`, 'info');
         }
 
-        /**
-         * Displays a modal with detailed information about a sale.
-         * @param {string} saleId - The ID of the sale to display.
-         */
-        async function viewSaleDetails(saleId) {
-            try {
-                const docRef = doc(db, "sales", saleId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const sale = docSnap.data();
-                    saleInvoiceNoSpan.textContent = sale.invoiceNo;
-                    let detailsHtml = `
-                        <p><strong>Date & Time:</strong> ${new Date(sale.timestamp).toLocaleString()}</p>
-                        <p><strong>Cashier:</strong> ${sale.cashierName}</p>
-                        <p><strong>Till Number:</strong> ${sale.tillNumber}</p>
-                        <p><strong>Payment Method:</strong> ${sale.paymentMethod}</p>
-                        <hr class="my-3 border-gray-300">
-                        <h4 class="font-bold mb-2">Items:</h4>
-                        <table class="w-full text-left text-sm mb-3">
-                            <thead>
-                                <tr class="border-b border-gray-300">
-                                    <th class="py-1">Item</th>
-                                    <th class="py-1 text-center">Qty</th>
-                                    <th class="py-1 text-right">Unit Price</th>
-                                    <th class="py-1 text-right">Amount (Incl. VAT)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${sale.cartItems.map(item => `
-                                    <tr>
-                                        <td>${item.name}</td>
-                                        <td class="text-center">${item.quantity}</td>
-                                        <td class="text-right">${formatCurrency(item.price)}</td>
-                                        <td class="text-right">${formatCurrency(item.amount)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <hr class="my-3 border-gray-300">
-                        <p><strong>Gross Sale Value:</strong> ${formatCurrency(sale.grossSaleValue)}</p>
-                        <p><strong>Total Before VAT:</strong> ${formatCurrency(sale.totalBeforeVat)}</p>
-                        <p><strong>VAT Amount:</strong> ${formatCurrency(sale.vatAmount)}</p>
-                        <p class="text-lg font-bold"><strong>Grand Total:</strong> ${formatCurrency(sale.grandTotal)}</p>
-                        <p><strong>Received Amount:</strong> ${formatCurrency(sale.receivedAmount)}</p>
-                        <p><strong>Balance Paid:</strong> ${formatCurrency(sale.balancePaid)}</p>
-                        <p><strong>Total Savings:</strong> ${formatCurrency(sale.totalSavings)}</p>
-                    `;
-                    saleDetailsContentDiv.innerHTML = detailsHtml;
-                    saleDetailsModal.style.display = 'flex';
-                } else {
-                    showToast("Sale details not found!", "error");
-                }
-            } catch (error) {
-                console.error("Error fetching sale details:", error);
-                showToast("Error loading sale details.", "error");
-            }
+        function exportSalesToCSV() {
+            const header = ["Invoice No.", "Date", "Time", "Cashier", "Grand Total", "Payment Method", "Items"];
+            const rows = sales.map(sale => {
+                const date = new Date(sale.timestamp);
+                const itemsList = sale.cartItems.map(item => `${item.name} (x${item.quantity})`).join("; ");
+                return [
+                    sale.invoiceNo,
+                    date.toLocaleDateString(),
+                    date.toLocaleTimeString(),
+                    sale.cashierName,
+                    sale.grandTotal,
+                    sale.paymentMethod,
+                    `"${itemsList}"`
+                ];
+            });
+            
+            const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Sales data exported to CSV!", "success");
         }
 
-        /**
-         * Prints the content of the sale details modal.
-         */
-        function printSaleDetails() {
-            const printContents = saleDetailsContentDiv.innerHTML;
-            const originalContents = document.body.innerHTML;
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Sale Details</title>');
-            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">');
-            printWindow.document.write('<style>');
-            printWindow.document.write(`
-                body { font-family: 'Inter', sans-serif; margin: 0; padding: 1rem; }
-                .modal-content { width: 100%; max-width: 600px; margin: 0 auto; padding: 0; }
-                hr { border-top: 1px dashed #cbd5e0; margin: 1rem 0; }
-                p { margin-bottom: 0.5rem; }
-                strong { font-weight: 700; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #eee; }
-                th { text-align: left; }
-                td { text-align: right; }
-                td:first-child { text-align: left; }
-                .text-center { text-align: center; }
-                .text-right { text-align: right; }
-                .mb-3 { margin-bottom: 0.75rem; }
-                .text-lg { font-size: 1.125rem; }
-                .font-bold { font-weight: 700; }
-                .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
-            `);
-            printWindow.document.write('</style></head><body>');
-            printWindow.document.write('<div class="modal-content">');
-            printWindow.document.write('<h3 class="text-2xl font-bold text-gray-800 mb-6">Sale Details - Invoice #' + saleInvoiceNoSpan.textContent + '</h3>');
-            printWindow.document.write(printContents);
-            printWindow.document.write('</div></body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        }
-
-
-        // --- Manager Management Functions ---
-
-        /**
-         * Loads and displays managers from Firestore.
-         */
-        async function loadManagersAdmin() {
-            managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">Loading managers...</td></tr>';
-            try {
-                const q = query(usersCol, where("role", "==", "manager"));
-                const snapshot = await getDocs(q);
-                const managers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderManagersAdmin(managers);
-            } catch (error) {
-                console.error("Error loading managers for admin:", error);
-                managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-red-500">Failed to load managers.</td></tr>';
-                showToast("Failed to load managers.", "error");
-            }
-        }
-
-        /**
-         * Renders managers in the admin table.
-         * @param {Array<object>} managers - Managers to display.
-         */
-        function renderManagersAdmin(managers) {
-            managersTableBody.innerHTML = '';
-            if (managers.length === 0) {
-                managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">No managers found.</td></tr>';
-                return;
-            }
-
-            managers.forEach(manager => {
+        // --- Manager Approvals Functions ---
+        function renderManagerLogs() {
+            managerLogsTableBody.innerHTML = '';
+            managerLogs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Sort by most recent
+            managerLogs.forEach(log => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${manager.id}</td>
-                    <td class="py-3 px-4 text-gray-800">${manager.name}</td>
-                    <td class="py-3 px-4 text-gray-700">${manager.cardId || 'N/A'}</td>
-                    <td class="py-3 px-4">
-                        <button data-id="${manager.id}" class="edit-manager-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold py-1 px-3 rounded-lg mr-2 transition duration-200">Edit</button>
-                        <button data-id="${manager.id}" class="delete-manager-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">Delete</button>
-                    </td>
+                    <td class="py-3 px-4 text-gray-800">${log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.manager}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.cashier}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.action}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.item}</td>
                 `;
-                managersTableBody.appendChild(row);
+                managerLogsTableBody.appendChild(row);
             });
+            if (managerLogs.length === 0) {
+                managerLogsTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No manager approval logs.</td></tr>`;
+            }
+        }
 
-            // Attach event listeners
-            document.querySelectorAll('.edit-manager-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => openManagerModalForEdit(e.target.dataset.id));
+        // --- Audit Logs Functions ---
+        async function logAudit(action, details) {
+            try {
+                await addDoc(auditLogsCol, {
+                    user: currentAdmin ? currentAdmin.name : "Unknown",
+                    action: action,
+                    details: details,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error("Error logging audit action:", e);
+            }
+        }
+
+        function renderAuditLogs() {
+            auditLogsTableBody.innerHTML = '';
+            auditLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            auditLogs.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-gray-800">${new Date(log.timestamp).toLocaleString()}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.user}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.action}</td>
+                    <td class="py-3 px-4 text-gray-700">${log.details}</td>
+                    <td class="py-3 px-4 text-gray-700">Success</td>
+                `;
+                auditLogsTableBody.appendChild(row);
             });
-            document.querySelectorAll('.delete-manager-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => deleteManager(e.target.dataset.id));
-            });
-        }
-
-        /**
-         * Opens the manager modal for adding a new manager.
-         */
-        function openAddManagerModal() {
-            managerModalTitle.textContent = 'Add New Manager';
-            managerForm.reset();
-            managerIdInput.value = ''; // Clear existing ID
-            managerIdInput.classList.remove('bg-gray-100', 'cursor-not-allowed'); // Make editable
-            managerIdInput.readOnly = false; // Allow manual ID entry for new managers
-            editingManager = null;
-            managerModal.style.display = 'flex';
-        }
-
-        /**
-         * Opens the manager modal for editing an existing manager.
-         * @param {string} managerId - The ID of the manager to edit.
-         */
-        async function openManagerModalForEdit(managerId) {
-            managerModalTitle.textContent = 'Edit Manager';
-            try {
-                const docRef = doc(db, "users", managerId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    editingManager = { id: docSnap.id, ...docSnap.data() };
-                    managerIdInput.value = editingManager.id;
-                    managerNameInput.value = editingManager.name;
-                    managerCardIdInput.value = editingManager.cardId || '';
-                    managerCodeInput.value = editingManager.code; // Pre-fill current code
-
-                    managerIdInput.readOnly = true; // Prevent editing ID of existing manager
-                    managerIdInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                    managerModal.style.display = 'flex';
-                } else {
-                    showToast("Manager not found!", "error");
-                }
-            } catch (error) {
-                console.error("Error fetching manager for edit:", error);
-                showToast("Error loading manager for edit.", "error");
-            }
-        }
-
-        /**
-         * Saves (adds or updates) a manager to Firestore.
-         * @param {Event} e - The form submission event.
-         */
-        async function saveManager(e) {
-            e.preventDefault();
-            const managerData = {
-                id: managerIdInput.value.trim(),
-                name: managerNameInput.value.trim(),
-                cardId: managerCardIdInput.value.trim() || null, // Can be empty
-                code: managerCodeInput.value.trim(),
-                role: 'manager' // Ensure role is set to manager
-            };
-
-            if (!managerData.name || !managerData.code || managerData.code.length !== 4) {
-                showToast("Please provide manager name and a 4-digit code.", "warning");
-                return;
-            }
-
-            try {
-                if (editingManager) {
-                    // Update existing manager
-                    const managerRef = doc(db, "users", editingManager.id);
-                    await updateDoc(managerRef, managerData);
-                    showToast("Manager updated successfully!", "success");
-                } else {
-                    // Add new manager
-                    // If no ID provided, generate one
-                    if (!managerData.id) {
-                         // Generate a simple unique ID for new managers (e.g., MG-timestamp)
-                        managerData.id = `MG-${Date.now()}`;
-                    }
-
-                    const managerRef = doc(db, "users", managerData.id);
-                    const docSnap = await getDoc(managerRef);
-                    if (docSnap.exists()) {
-                        showToast("Manager ID already exists. Please use a unique ID.", "error");
-                        return;
-                    }
-
-                    await setDoc(managerRef, managerData); // Use setDoc with ID
-                    showToast("Manager added successfully!", "success");
-                }
-                managerModal.style.display = 'none';
-                await loadManagersAdmin(); // Reload managers
-            } catch (error) {
-                console.error("Error saving manager:", error);
-                showToast("Error saving manager.", "error");
-            }
-        }
-
-        /**
-         * Deletes a manager from Firestore.
-         * @param {string} managerId - The ID of the manager to delete.
-         */
-        async function deleteManager(managerId) {
-            if (!confirm(`Are you sure you want to delete manager "${managerId}"? This action cannot be undone.`)) {
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, "users", managerId));
-                showToast("Manager deleted successfully!", "success");
-                await loadManagersAdmin(); // Reload managers
-            } catch (error) {
-                console.error("Error deleting manager:", error);
-                showToast("Error deleting manager.", "error");
-            }
-        }
-
-
-        // --- Authentication & Initial Load ---
-        async function authenticateAndLoad() {
-            try {
-                // Sign in anonymously if no __initial_auth_token is provided (for testing in development)
-                // In a real deployed environment, you'd handle proper user authentication (e.g., email/password)
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                console.log("Firebase authenticated successfully.");
-                // Load products section by default on page load
-                switchTab(productsTabBtn, productsSection, loadProductsAdmin);
-            } catch (error) {
-                console.error("Firebase authentication failed:", error);
-                showToast("Authentication failed. Please check console.", "error");
-                // Potentially redirect to login page or show error message
+            if (auditLogs.length === 0) {
+                auditLogsTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No audit logs.</td></tr>`;
             }
         }
 
 
         // --- Event Listeners ---
-
-        // Tab Navigation
-        productsTabBtn.addEventListener('click', () => switchTab(productsTabBtn, productsSection, loadProductsAdmin));
-        salesTabBtn.addEventListener('click', () => switchTab(salesTabBtn, salesSection, loadSalesAdmin));
-        managersTabBtn.addEventListener('click', () => switchTab(managersTabBtn, managersSection, loadManagersAdmin));
-        reportsTabBtn.addEventListener('click', () => switchTab(reportsTabBtn, reportsSection, null)); // No data loading for reports yet
-
-        // Product Management
-        addProductBtn.addEventListener('click', openAddProductModal);
-        closeProductModalBtn.addEventListener('click', () => productModal.style.display = 'none');
-        productForm.addEventListener('submit', saveProduct);
-        productSearchAdminInput.addEventListener('input', async (event) => {
-            const searchTerm = event.target.value.toLowerCase();
-            if (searchTerm.length > 0) {
-                const snapshot = await getDocs(productsCol);
-                const allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const filtered = allProducts.filter(product =>
-                    product.name.toLowerCase().includes(searchTerm) ||
-                    product.id.toLowerCase().includes(searchTerm)
-                );
-                renderProductsAdmin(filtered);
-            } else {
-                await loadProductsAdmin(); // Reload all if search is cleared
-            }
+        
+        // Navigation links
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                showSection(sectionId);
+            });
         });
         
-        // Sales History
-        saleSearchAdminInput.addEventListener('input', loadSalesAdmin); // Reload sales on search input
-        saleDateFilterInput.addEventListener('change', loadSalesAdmin); // Reload sales on date change
-
-        // Sale Details Modal
-        closeSaleDetailsModalBtn.addEventListener('click', () => saleDetailsModal.style.display = 'none');
-        printSaleDetailsBtn.addEventListener('click', printSaleDetails);
-
-        // Manager Management
-        addManagerBtn.addEventListener('click', openAddManagerModal);
-        closeManagerModalBtn.addEventListener('click', () => managerModal.style.display = 'none');
-        managerForm.addEventListener('submit', saveManager);
-
-        // Navigate to POS Panel
-        posPanelBtn.addEventListener('click', () => {
-            window.location.href = 'index.html'; // Navigate back to the POS page
-        });
-
-        // Basic Logout (for demonstration, a full auth system would be needed)
-        logoutBtn.addEventListener('click', () => {
-            alert('Logout functionality not fully implemented. In a real app, this would sign out the user.');
-            // Implement Firebase signOut here if proper auth is used
-            // signOut(auth).then(() => {
-            //     window.location.href = 'login.html'; // Redirect to login page
-            // }).catch((error) => {
-            //     console.error("Logout error:", error);
-            //     showToast("Logout failed.", "error");
-            // });
-        });
-
-        // Close modals when clicking outside
-        window.addEventListener('click', (event) => {
+        // Modals
+        window.onclick = function(event) {
             if (event.target === productModal) {
-                productModal.style.display = 'none';
+                closeModal('productModal');
             }
-            if (event.target === saleDetailsModal) {
-                saleDetailsModal.style.display = 'none';
+            if (event.target === userModal) {
+                closeModal('userModal');
             }
-            if (event.target === managerModal) {
-                managerModal.style.display = 'none';
+        };
+
+        // Product Modal
+        addProductBtn.addEventListener('click', () => {
+            productModalTitle.textContent = "Add New Product";
+            productForm.reset();
+            productIdInput.value = '';
+            openModal('productModal');
+        });
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveProduct();
+        });
+
+        // User Modal
+        addUserBtn.addEventListener('click', () => {
+            userModalTitle.textContent = "Add New User";
+            userForm.reset();
+            userIdInput.value = '';
+            openModal('userModal');
+        });
+        userForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveUser();
+        });
+
+        // Sales Reports
+        filterSalesBtn.addEventListener('click', filterSales);
+        exportSalesBtn.addEventListener('click', exportSalesToCSV);
+        
+        // Initial Load Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedAdmin = localStorage.getItem("currentAdmin");
+            if (storedAdmin) {
+                currentAdmin = JSON.parse(storedAdmin);
+                adminLoginModal.classList.add("hidden");
+                adminPanel.classList.remove("hidden");
+                initializeAdminPanel();
+            } else {
+                adminCodeInput.focus();
+                // Keep login input focused for USB barcode scanner entry
+                adminCodeInput.addEventListener("blur", () => setTimeout(() => adminCodeInput.focus(), 100));
             }
         });
 
-        // Initial Authentication and Load
-        document.addEventListener('DOMContentLoaded', authenticateAndLoad);
     </script>
 </body>
 </html>
