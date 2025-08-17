@@ -141,11 +141,25 @@
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <!-- Cashier Login Screen -->
+    <div id="cashierLogin" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-[1002]">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-80">
+            <h2 class="text-xl font-bold mb-4 text-center">Cashier Login</h2>
+            <input id="cashierCode" type="password" placeholder="Enter PIN or Scan Card"
+                class="w-full border rounded-lg px-3 py-2 mb-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="cashierLogin()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
+            <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">Invalid code, please try again.</p>
+        </div>
+    </div>
+
+
     <!-- Top Bar -->
     <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
         <h1 class="text-xl font-bold">Prince Alex Store POS</h1>
         <div class="flex items-center space-x-4">
-            <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Prince Alex</span></span>
+            <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Loading...</span></span>
             <button id="adminPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Admin Panel</button>
             <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
         </div>
@@ -391,8 +405,12 @@
         let isScanningProduct = false; // Flag to prevent multiple product scans simultaneously
         let isScanningManager = false; // Flag to prevent multiple manager scans simultaneously
         let lastScannedCode = null; // New: Debounce variable for product scanner
+        let currentCashier = null; // Stores the currently logged-in cashier object
 
         // --- DOM Elements ---
+        const cashierLoginDiv = document.getElementById('cashierLogin'); // New: Login screen div
+        const cashierCodeInput = document.getElementById('cashierCode'); // New: Cashier code input
+        const loginErrorMsg = document.getElementById('loginError');     // New: Login error message
         const productSearchInput = document.getElementById('productSearch');
         const searchResultsDiv = document.getElementById('searchResults');
         const productResultsList = document.getElementById('productResultsList');
@@ -417,6 +435,7 @@
         const cashierNameDisplay = document.getElementById('cashierNameDisplay');
         const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
         const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
+        const logoutBtn = document.getElementById('logoutBtn'); // Logout button
 
         // Manager Approval Modal Elements
         const managerApprovalModal = document.getElementById('managerApprovalModal');
@@ -764,7 +783,7 @@
             const storeName = "Prince Alex Store";
             const storeAddress = "123 Market Street, Nairobi, Kenya";
             const storeEmail = "info@princealexstore.com";
-            const cashierName = cashierNameDisplay.textContent; // Get from display
+            const cashierName = currentCashier ? currentCashier.name : "Unknown"; // Use currentCashier
             const tillNumber = "001"; 
             const serialNumber = "SN-POS-2024-001"; // Placeholder
             const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
@@ -1038,25 +1057,25 @@
          * Validates manager credentials from Firestore.
          * @param {string} cardId - The card ID entered or scanned.
          * @param {string} code - The code entered.
-         * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
+         * @returns {Promise<object|null>} The manager user object if valid, null otherwise.
          */
         async function validateManager(cardId, code) {
             try {
                 const q = query(usersCol, where("role", "==", "manager"));
                 const snapshot = await getDocs(q);
 
-                let approved = false;
+                let foundManager = null;
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     if ((cardId && data.cardId === cardId) || (code && data.code === code)) {
-                        approved = true;
+                        foundManager = { id: docSnap.id, ...data };
                     }
                 });
-                return approved;
+                return foundManager;
             } catch (error) {
                 console.error("Error validating manager credentials:", error);
                 showToast("Error verifying manager. Please try again.", "error");
-                return false;
+                return null;
             }
         }
 
@@ -1090,17 +1109,17 @@
             const cardId = managerCardIdInput.value.trim();
             const code = managerCodeInput.value.trim();
 
-            const approved = await validateManager(cardId, code);
+            const managerUser = await validateManager(cardId, code); // Get the manager user object
 
-            if (approved) {
+            if (managerUser) {
                 hideManagerApprovalModal();
                 if (pendingApprovalAction) {
                     pendingApprovalAction(); // Execute the stored action (remove item/update quantity)
                     showToast('Manager approval successful!', 'success');
                     
                     // Log the manager approval
-                    const managerIdentifier = cardId || code; // Use whichever was provided
-                    const cashierName = cashierNameDisplay.textContent;
+                    const managerIdentifier = managerUser.cardId || managerUser.code; // Use manager's ID or code
+                    const cashierName = currentCashier ? currentCashier.name : "Unknown"; // Use current cashier
                     await logManagerApproval(
                         managerIdentifier, 
                         pendingApprovalActionDetails.action, 
@@ -1114,6 +1133,61 @@
                 managerCodeInput.value = '';
                 managerCardIdInput.focus();
             }
+        }
+
+        /**
+         * Logs a cashier in.
+         */
+        async function cashierLogin() {
+            const code = cashierCodeInput.value.trim();
+            loginErrorMsg.classList.add("hidden"); // Hide previous error
+
+            try {
+                const q = query(usersCol, where("role", "==", "cashier"));
+                const snapshot = await getDocs(q);
+
+                let found = null;
+                snapshot.forEach(docSnap => {
+                    const user = docSnap.data();
+                    if (user.code === code || user.cardId === code) {
+                        found = { id: docSnap.id, ...user };
+                    }
+                });
+
+                if (found) {
+                    currentCashier = found;
+                    // For persistence, we'll use localStorage (adjust for real auth)
+                    localStorage.setItem("currentCashier", JSON.stringify(found)); 
+                    cashierLoginDiv.classList.add("hidden"); // Hide login screen
+                    cashierNameDisplay.textContent = currentCashier.name; // Update display
+                    showToast(`Welcome, ${currentCashier.name}!`, "success");
+                    loadProducts(); // Load products and initialize POS after login
+                } else {
+                    loginErrorMsg.classList.remove("hidden"); // Show error
+                    showToast("Invalid PIN or Card ID.", "error");
+                    cashierCodeInput.value = '';
+                    cashierCodeInput.focus();
+                }
+            } catch (error) {
+                console.error("Error during cashier login:", error);
+                showToast("Login failed. Please try again later.", "error");
+            }
+        }
+
+        /**
+         * Handles cashier logout.
+         */
+        function cashierLogout() {
+            currentCashier = null;
+            localStorage.removeItem("currentCashier");
+            cashierNameDisplay.textContent = "Logged Out";
+            showToast("Logged out successfully.", "info");
+            // Reset POS state
+            resetPOS(); 
+            // Show login screen
+            cashierLoginDiv.classList.remove("hidden");
+            cashierCodeInput.value = '';
+            cashierCodeInput.focus();
         }
 
         /**
@@ -1161,6 +1235,8 @@
          */
         async function saveSaleToFirestore(saleData) {
             try {
+                // Use the name from the currentCashier object
+                saleData.cashierName = currentCashier ? currentCashier.name : "Unknown"; 
                 await addDoc(salesCol, saleData);
                 console.log("Sale saved to Firestore:", saleData);
             } catch (error) {
@@ -1368,7 +1444,7 @@
         window.stopScanner = stopScanner;
         window.startManagerScanner = startManagerScanner; // Expose new function
         window.stopManagerScanner = stopManagerScanner;   // Expose new function
-
+        window.cashierLogin = cashierLogin; // Expose cashierLogin for the button
 
         // --- Event Listeners ---
 
@@ -1533,9 +1609,23 @@
             window.location.href = 'admin.html'; // This will navigate to admin.html in a real browser
         });
 
+        // Logout Button
+        logoutBtn.addEventListener('click', cashierLogout);
+
+        // Cashier Login Input (Enter key)
+        cashierCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission behavior
+                cashierLogin();
+            }
+        });
+
 
         // --- Keyboard Shortcuts ---
         document.addEventListener('keydown', (event) => {
+            // Only allow POS shortcuts if cashier is logged in
+            if (!currentCashier) return;
+
             // Enter to add item (from search bar)
             if (event.key === 'Enter' && productSearchInput === document.activeElement) {
                 const visibleResults = productResultsList.querySelectorAll('.add-to-cart-btn');
@@ -1562,7 +1652,18 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadProducts(); // Load products from Firestore
+            // Check for a logged-in cashier in localStorage
+            const storedCashier = localStorage.getItem("currentCashier");
+            if (storedCashier) {
+                currentCashier = JSON.parse(storedCashier);
+                cashierNameDisplay.textContent = currentCashier.name;
+                cashierLoginDiv.classList.add("hidden"); // Hide login screen if already logged in
+                loadProducts(); // Load products and initialize POS
+            } else {
+                cashierLoginDiv.classList.remove("hidden"); // Show login screen
+                cashierNameDisplay.textContent = "Please Log In";
+                cashierCodeInput.focus();
+            }
         });
     </script>
 </body>
