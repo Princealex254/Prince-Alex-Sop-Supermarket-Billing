@@ -11,360 +11,413 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* Light gray background */
         }
-        .admin-layout {
-            display: flex;
-            min-height: calc(100vh - 4rem); /* Full height minus header */
+        .admin-container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
         }
-        .sidebar {
-            width: 250px;
-            background-color: #1f2937; /* Gray-800 */
+        .tab-button.active {
+            background-color: #1a56db; /* Blue-700 */
             color: white;
-            padding: 1.5rem;
-            transition: width 0.3s ease-in-out;
-            flex-shrink: 0;
-            position: sticky;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
             top: 0;
-            height: calc(100vh - 4rem); /* Stick to top, full height */
-            overflow-y: auto;
-        }
-        .sidebar.collapsed {
-            width: 64px; /* Tailwind w-16 */
-        }
-        .sidebar.collapsed .menu-text,
-        .sidebar.collapsed .sidebar-header h2 {
-            display: none;
-        }
-        .sidebar.collapsed .sidebar-header {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
             justify-content: center;
+            align-items: center;
         }
-        .sidebar.collapsed .menu-item {
-            justify-content: center;
-            padding-left: 0;
-            padding-right: 0;
-        }
-        .main-content {
-            flex-grow: 1;
-            padding: 1.5rem;
-            background-color: #f3f4f6;
-            overflow-x: hidden; /* Prevent horizontal scroll */
-        }
-        .section-header {
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-        .data-card {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 2rem;
             border-radius: 0.75rem;
-            padding: 1.5rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
         }
-        .data-card .value {
-            font-size: 2.25rem;
-            font-weight: 700;
-            color: #1a202c;
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .data-card .label {
-            font-size: 1rem;
-            color: #4a5568;
-            margin-top: 0.5rem;
+        /* Toast Alert Styling */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        .data-table th, .data-table td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .data-table th {
-            background-color: #edf2f7;
+        .toast {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            color: white;
             font-weight: 600;
-            color: #2d3748;
-            text-transform: uppercase;
-            font-size: 0.875rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
         }
-        .data-table tbody tr:hover {
-            background-color: #f0f4f8;
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
         }
-        .data-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        /* Hidden by default for sections */
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
-        }
-        .edit-product-form {
-            display: none;
-            background-color: #fff;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-top: 1.5rem;
-        }
-        .edit-product-form.active {
-            display: block;
-        }
+        .toast.success { background-color: #10B981; /* Green-500 */ }
+        .toast.error { background-color: #EF4444; /* Red-500 */ }
+        .toast.info { background-color: #3B82F6; /* Blue-500 */ }
+        .toast.warning { background-color: #F59E0B; /* Yellow-500 */ }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
     <!-- Top Bar -->
     <header class="bg-blue-700 text-white p-4 flex items-center justify-between shadow-md">
-        <div class="flex items-center">
-            <button id="sidebarToggle" class="mr-4 p-2 rounded-md hover:bg-blue-600 transition duration-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-            <h1 class="text-xl font-bold">Prince Alex Store Admin Panel</h1>
-        </div>
+        <h1 class="text-xl font-bold">Prince Alex Store Admin Panel</h1>
         <div class="flex items-center space-x-4">
-            <span class="text-lg">Admin User: <span id="adminUserName" class="font-semibold">Admin</span></span>
+            <button id="posPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">POS Panel</button>
             <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
         </div>
     </header>
 
-    <div class="admin-layout">
-        <!-- Sidebar Menu -->
-        <nav id="sidebar" class="sidebar">
-            <div class="sidebar-header flex items-center mb-6">
-                <h2 class="text-2xl font-bold menu-text">Admin Menu</h2>
+    <!-- Main Admin Panel -->
+    <main class="flex-1 p-6 flex justify-center items-start">
+        <div class="admin-container w-full max-w-6xl p-6">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 mb-6">
+                <button id="productsTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 active transition duration-200 rounded-t-lg">
+                    📊 Products Management
+                </button>
+                <button id="salesTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
+                    📈 Sales History
+                </button>
+                <button id="managersTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
+                    👥 Managers
+                </button>
+                <button id="reportsTabBtn" class="tab-button py-3 px-6 text-lg font-medium text-gray-700 hover:text-blue-700 transition duration-200 rounded-t-lg">
+                    📄 Reports
+                </button>
             </div>
-            <ul class="space-y-3">
-                <li>
-                    <a href="#" id="menuSalesOverview" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-                        <span class="menu-text">Sales Overview</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="menuSalesHistory" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        <span class="menu-text">Sales History</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="menuCashierSales" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H2v-2a3 3 0 015.356-1.857M17 20v-9a2 2 0 00-2-2H7a2 2 0 00-2 2v9m4 0h6m-6 0h-2M9 13h6m-6 4h6"></path></svg>
-                        <span class="menu-text">Cashier Sales</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="menuProductManagement" class="menu-item flex items-center py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                        <span class="menu-text">Product Management</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
 
-        <!-- Main Content Area -->
-        <div class="main-content">
-            <!-- Sales Overview Section -->
-            <section id="salesOverviewSection" class="content-section active">
-                <h2 class="text-3xl font-bold text-gray-800 section-header">Sales Overview</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="data-card">
-                        <div class="value" id="totalSalesValue">KSh 0.00</div>
-                        <div class="label">Total Sales (Grand Total)</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="value" id="totalVatValue">KSh 0.00</div>
-                        <div class="label">Total VAT Collected</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="value" id="totalTransactionsValue">0</div>
-                        <div class="label">Total Transactions</div>
-                    </div>
+            <!-- Products Management Section -->
+            <div id="productsSection" class="tab-content">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Products Management</h2>
+
+                <div class="flex justify-between items-center mb-6">
+                    <input type="text" id="productSearchAdmin" placeholder="Search products by ID or name..."
+                           class="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                    <button id="addProductBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
+                        ➕ Add New Product
+                    </button>
                 </div>
-            </section>
+
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Product ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Price (KSh)</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">VAT Rate (%)</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Stock</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody" class="divide-y divide-gray-200">
+                            <!-- Products will be dynamically inserted here -->
+                            <tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading products...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <!-- Sales History Section -->
-            <section id="salesHistorySection" class="content-section">
-                <h2 class="text-3xl font-bold text-gray-800 section-header">Sales History</h2>
-                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-                    <table class="min-w-full bg-white data-table">
-                        <thead>
+            <div id="salesSection" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Sales History</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <input type="text" id="saleSearchAdmin" placeholder="Search sales by Invoice No, Cashier..."
+                           class="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                    <input type="date" id="saleDateFilter"
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                </div>
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-blue-600 text-white">
                             <tr>
-                                <th>Invoice No</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Cashier</th>
-                                <th>Items</th>
-                                <th>Payment Method</th>
-                                <th>Grand Total</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Invoice No</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Date & Time</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Payment Method</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Total (KSh)</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Details</th>
                             </tr>
                         </thead>
-                        <tbody id="salesTableBody">
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-gray-500">No sales transactions found.</td>
-                            </tr>
+                        <tbody id="salesTableBody" class="divide-y divide-gray-200">
+                            <tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading sales data...</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </div>
 
-            <!-- Cashier Sales Summary Section -->
-            <section id="cashierSalesSection" class="content-section">
-                <h2 class="text-3xl font-bold text-gray-800 section-header">Cashier Sales Summary</h2>
-                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-                    <table class="min-w-full bg-white data-table">
-                        <thead>
+            <!-- Managers Section -->
+            <div id="managersSection" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Managers Management</h2>
+                <div class="flex justify-end items-center mb-6">
+                    <button id="addManagerBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
+                        ➕ Add New Manager
+                    </button>
+                </div>
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-blue-600 text-white">
                             <tr>
-                                <th>Cashier Name</th>
-                                <th>Total Sales</th>
-                                <th>Total VAT</th>
-                                <th>Total Transactions</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Manager ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium">Card ID</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="cashierSalesTableBody">
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-gray-500">No cashier sales data found.</td>
-                            </tr>
+                        <tbody id="managersTableBody" class="divide-y divide-gray-200">
+                            <tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">Loading managers...</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </div>
 
-            <!-- Product Management Section -->
-            <section id="productManagementSection" class="content-section">
-                <h2 class="text-3xl font-bold text-gray-800 section-header">Product Management</h2>
-
-                <!-- Add New Product Form -->
-                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Add New Product</h3>
-                    <form id="addProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="newProductId" class="block text-gray-700 text-sm font-bold mb-2">Product ID:</label>
-                            <input type="text" id="newProductId" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="newProductName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
-                            <input type="text" id="newProductName" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="newProductPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
-                            <input type="number" id="newProductPrice" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="newProductVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16):</label>
-                            <input type="number" id="newProductVatRate" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="newProductStock" class="block text-gray-700 text-sm font-bold mb-2">Stock:</label>
-                            <input type="number" id="newProductStock" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div class="md:col-span-2 flex justify-end">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Add Product</button>
-                        </div>
-                    </form>
+            <!-- Reports Section -->
+            <div id="reportsSection" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Reports</h2>
+                <p class="text-gray-700">Detailed reports on sales, stock levels, and manager actions will be available here.</p>
+                <div class="mt-6 p-4 bg-blue-100 border border-blue-200 rounded-lg text-blue-800">
+                    <p class="font-semibold">Coming Soon:</p>
+                    <ul class="list-disc list-inside mt-2">
+                        <li>Daily/Weekly/Monthly Sales Summaries</li>
+                        <li>Top Selling Products</li>
+                        <li>Low Stock Alerts</li>
+                        <li>Manager Activity Logs</li>
+                    </ul>
                 </div>
-
-                <!-- Product List Table -->
-                <h3 class="text-xl font-semibold text-gray-700 mb-4">Existing Products</h3>
-                <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-                    <table class="min-w-full bg-white data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>VAT Rate</th>
-                                <th>Stock</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody">
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-gray-500">No products found.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Edit Product Form (hidden by default) -->
-                <div id="editProductForm" class="edit-product-form">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Edit Product</h3>
-                    <form id="updateProductForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="hidden" id="editProductIdHidden">
-                        <div>
-                            <label for="editProductName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
-                            <input type="text" id="editProductName" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="editProductPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
-                            <input type="number" id="editProductPrice" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="editProductVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (e.g., 0.16):</label>
-                            <input type="number" id="editProductVatRate" step="0.01" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div>
-                            <label for="editProductStock" class="block text-gray-700 text-sm font-bold mb-2">Stock:</label>
-                            <input type="number" id="editProductStock" class="w-full p-2 border border-gray-300 rounded-md" required>
-                        </div>
-                        <div class="md:col-span-2 flex justify-end space-x-2">
-                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Update Product</button>
-                            <button type="button" id="cancelEditProductBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </section>
+            </div>
         </div>
     </main>
 
-    <script>
-        // --- Global Variables ---
-        const LOCAL_STORAGE_SALES_KEY = 'princeAlexPOS_sales_history';
-        const LOCAL_STORAGE_PRODUCTS_KEY = 'princeAlexPOS_products';
+    <!-- Modals -->
 
-        let products = []; // Will be loaded from localStorage
+    <!-- Product Modal (Add/Edit) -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeProductModal">&times;</span>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6" id="productModalTitle">Add New Product</h3>
+            <form id="productForm">
+                <div class="mb-4">
+                    <label for="productId" class="block text-gray-700 text-sm font-bold mb-2">Product ID (Barcode):</label>
+                    <input type="text" id="productId" name="id" placeholder="Enter unique product ID or barcode"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label for="productName" class="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
+                    <input type="text" id="productName" name="name" placeholder="Enter product name"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label for="productPrice" class="block text-gray-700 text-sm font-bold mb-2">Price (KSh):</label>
+                    <input type="number" id="productPrice" name="price" placeholder="Enter price" step="0.01"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label for="productVatRate" class="block text-gray-700 text-sm font-bold mb-2">VAT Rate (%):</label>
+                    <input type="number" id="productVatRate" name="vatRate" placeholder="Enter VAT rate (e.g., 0.16 for 16%)" step="0.01"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="mb-6">
+                    <label for="productStock" class="block text-gray-700 text-sm font-bold mb-2">Stock Quantity:</label>
+                    <input type="number" id="productStock" name="stock" placeholder="Enter stock quantity"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="saveProductBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
+                        Save Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Details Modal -->
+    <div id="saleDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeSaleDetailsModal">&times;</span>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Sale Details - Invoice #<span id="saleInvoiceNo"></span></h3>
+            <div id="saleDetailsContent" class="text-gray-700 text-sm leading-relaxed">
+                <!-- Sale details will be loaded here -->
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="printSaleDetailsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-md">
+                    Print Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager Modal (Add/Edit) -->
+    <div id="managerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeManagerModal">&times;</span>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6" id="managerModalTitle">Add New Manager</h3>
+            <form id="managerForm">
+                <div class="mb-4">
+                    <label for="managerId" class="block text-gray-700 text-sm font-bold mb-2">Manager User ID:</label>
+                    <input type="text" id="managerId" name="id" placeholder="Auto-generated or entered (if new)"
+                           class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:outline-none text-lg shadow-sm" readonly>
+                </div>
+                <div class="mb-4">
+                    <label for="managerName" class="block text-gray-700 text-sm font-bold mb-2">Manager Name:</label>
+                    <input type="text" id="managerName" name="name" placeholder="Enter manager's name"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label for="managerCardId" class="block text-gray-700 text-sm font-bold mb-2">Manager Card ID (for scanning):</label>
+                    <input type="text" id="managerCardId" name="cardId" placeholder="Enter unique card ID for approval scans"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                </div>
+                <div class="mb-6">
+                    <label for="managerCode" class="block text-gray-700 text-sm font-bold mb-2">Manager Code (4-digit PIN):</label>
+                    <input type="password" id="managerCode" name="code" placeholder="Enter 4-digit PIN" maxlength="4"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" required>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="saveManagerBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md">
+                        Save Manager
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+        // Firebase config (from your index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUNs3WYS2mkvPvzRDfhyZFUbP2XpZjDQg",
+            authDomain: "retailflow-pos-11726.firebaseapp.com",
+            projectId: "retailflow-pos-11726",
+            storageBucket: "retailflow-pos-11726.firebasestorage.app",
+            messagingSenderId: "309314798354",
+            appId: "1:309314798354:web:30784c2b2e7e42168629cb"
+        };
+
+        // Initialize Firebase + Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Firestore collection references
+        const productsCol = collection(db, "products");
+        const salesCol = collection(db, "sales");
+        const usersCol = collection(db, "users"); // This collection will store both cashiers and managers
 
         // --- DOM Elements ---
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const menuItems = document.querySelectorAll('.menu-item');
-        const contentSections = document.querySelectorAll('.content-section');
+        const productsTabBtn = document.getElementById('productsTabBtn');
+        const salesTabBtn = document.getElementById('salesTabBtn');
+        const managersTabBtn = document.getElementById('managersTabBtn');
+        const reportsTabBtn = document.getElementById('reportsTabBtn');
 
-        const totalSalesValue = document.getElementById('totalSalesValue');
-        const totalVatValue = document.getElementById('totalVatValue');
-        const totalTransactionsValue = document.getElementById('totalTransactionsValue');
-        const salesTableBody = document.getElementById('salesTableBody');
-        const cashierSalesTableBody = document.getElementById('cashierSalesTableBody');
+        const productsSection = document.getElementById('productsSection');
+        const salesSection = document.getElementById('salesSection');
+        const managersSection = document.getElementById('managersSection');
+        const reportsSection = document.getElementById('reportsSection');
 
-        const addProductForm = document.getElementById('addProductForm');
-        const newProductIdInput = document.getElementById('newProductId');
-        const newProductNameInput = document.getElementById('newProductName');
-        const newProductPriceInput = document.getElementById('newProductPrice');
-        const newProductVatRateInput = document.getElementById('newProductVatRate');
-        const newProductStockInput = document.getElementById('newProductStock');
+        const productSearchAdminInput = document.getElementById('productSearchAdmin');
+        const addProductBtn = document.getElementById('addProductBtn');
         const productsTableBody = document.getElementById('productsTableBody');
 
-        const editProductForm = document.getElementById('editProductForm');
-        const updateProductForm = document.getElementById('updateProductForm');
-        const editProductIdHidden = document.getElementById('editProductIdHidden');
-        const editProductNameInput = document.getElementById('editProductName');
-        const editProductPriceInput = document.getElementById('editProductPrice');
-        const editProductVatRateInput = document.getElementById('editProductVatRate');
-        const editProductStockInput = document.getElementById('editProductStock');
-        const cancelEditProductBtn = document.getElementById('cancelEditProductBtn');
+        const saleSearchAdminInput = document.getElementById('saleSearchAdmin');
+        const saleDateFilterInput = document.getElementById('saleDateFilter');
+        const salesTableBody = document.getElementById('salesTableBody');
+
+        const addManagerBtn = document.getElementById('addManagerBtn');
+        const managersTableBody = document.getElementById('managersTableBody');
+
+        const posPanelBtn = document.getElementById('posPanelBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Product Modal Elements
+        const productModal = document.getElementById('productModal');
+        const closeProductModalBtn = document.getElementById('closeProductModal');
+        const productModalTitle = document.getElementById('productModalTitle');
+        const productForm = document.getElementById('productForm');
+        const productIdInput = document.getElementById('productId');
+        const productNameInput = document.getElementById('productName');
+        const productPriceInput = document.getElementById('productPrice');
+        const productVatRateInput = document.getElementById('productVatRate');
+        const productStockInput = document.getElementById('productStock');
+        const saveProductBtn = document.getElementById('saveProductBtn');
+
+        // Sale Details Modal Elements
+        const saleDetailsModal = document.getElementById('saleDetailsModal');
+        const closeSaleDetailsModalBtn = document.getElementById('closeSaleDetailsModal');
+        const saleInvoiceNoSpan = document.getElementById('saleInvoiceNo');
+        const saleDetailsContentDiv = document.getElementById('saleDetailsContent');
+        const printSaleDetailsBtn = document.getElementById('printSaleDetailsBtn');
+
+
+        // Manager Modal Elements
+        const managerModal = document.getElementById('managerModal');
+        const closeManagerModalBtn = document.getElementById('closeManagerModal');
+        const managerModalTitle = document.getElementById('managerModalTitle');
+        const managerForm = document.getElementById('managerForm');
+        const managerIdInput = document.getElementById('managerId');
+        const managerNameInput = document.getElementById('managerName');
+        const managerCardIdInput = document.getElementById('managerCardId');
+        const managerCodeInput = document.getElementById('managerCode');
+        const saveManagerBtn = document.getElementById('saveManagerBtn');
+
+        const toastContainer = document.getElementById('toast-container');
+
+        // Global variables for editing
+        let editingProduct = null;
+        let editingManager = null;
+
 
         // --- Helper Functions ---
 
+        /**
+         * Displays a toast notification.
+         * @param {string} message - The message to display.
+         * @param {'success'|'error'|'info'|'warning'} type - The type of toast (for styling).
+         * @param {number} duration - How long the toast should be visible in ms.
+         */
         function showToast(message, type = 'info', duration = 3000) {
-            const toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) { // Create if not exists (for admin page)
-                const newToastContainer = document.createElement('div');
-                newToastContainer.id = 'toast-container';
-                document.body.appendChild(newToastContainer);
-            }
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
-            document.getElementById('toast-container').appendChild(toast);
+            toastContainer.appendChild(toast);
 
-            void toast.offsetWidth; // Trigger reflow
+            // Trigger reflow to ensure transition plays
+            void toast.offsetWidth;
 
             toast.classList.add('show');
 
@@ -374,337 +427,628 @@
             }, duration);
         }
 
+        /**
+         * Formats a number to currency string (KSh).
+         * @param {number} amount - The amount to format.
+         * @returns {string} Formatted currency string.
+         */
         function formatCurrency(amount) {
             return `KSh ${parseFloat(amount).toFixed(2)}`;
         }
 
         /**
-         * Loads data from Local Storage.
-         * @returns {object} An object containing sales history and products.
+         * Switches between admin panel tabs.
+         * @param {HTMLElement} activeTabButton - The button of the tab to activate.
+         * @param {HTMLElement} activeTabSection - The content section of the tab to show.
+         * @param {Function} [loadDataFunction] - Optional function to load data for the active tab.
          */
-        function loadDataFromLocalStorage() {
-            const salesHistory = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SALES_KEY) || '[]');
-            const storedProducts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY) || '[]');
-            
-            // If no products are stored, use the initial hardcoded list from POS
-            if (storedProducts.length === 0) {
-                // This initial list should ideally be synced from a central source
-                // For this demo, we'll use a hardcoded list if localStorage is empty.
-                // In a real app, products would also be managed via a backend.
-                products = [
-                    { id: '12345', name: 'Milk (1L)', price: 120.00, vatRate: 0.16, stock: 50 },
-                    { id: '67890', name: 'Bread (500g)', price: 60.00, vatRate: 0.16, stock: 100 },
-                    { id: '11223', name: 'Sugar (1kg)', price: 180.00, vatRate: 0.16, stock: 75 },
-                    { id: '44556', name: 'Cooking Oil (2L)', price: 350.00, vatRate: 0.16, stock: 30 },
-                    { id: '77889', name: 'Rice (2kg)', price: 250.00, vatRate: 0.16, stock: 60 },
-                    { id: '99001', name: 'Eggs (Tray of 30)', price: 400.00, vatRate: 0.16, stock: 40 },
-                    { id: '23456', name: 'Tomatoes (1kg)', price: 80.00, vatRate: 0.16, stock: 20 },
-                    { id: '78901', name: 'Potatoes (1kg)', price: 70.00, vatRate: 0.16, stock: 35 },
-                    { id: '34567', name: 'Soap Bar', price: 50.00, vatRate: 0.16, stock: 120 },
-                    { id: '89012', name: 'Toothpaste', price: 110.00, vatRate: 0.16, stock: 90 },
-                    { id: '56789', name: 'Coffee (250g)', price: 220.00, vatRate: 0.16, stock: 55 },
-                    { id: '01234', name: 'Tea Leaves (200g)', price: 150.00, vatRate: 0.16, stock: 80 },
-                    { id: '54321', name: 'Juice (1L)', price: 130.00, vatRate: 0.16, stock: 45 },
-                    { id: '98765', name: 'Yogurt (500ml)', price: 90.00, vatRate: 0.16, stock: 70 },
-                    { id: '43210', name: 'Cereal (500g)', price: 280.00, vatRate: 0.16, stock: 25 },
-                ];
-                localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products)); // Save initial products
-            } else {
-                products = storedProducts;
+        async function switchTab(activeTabButton, activeTabSection, loadDataFunction) {
+            // Deactivate all tab buttons and hide all content sections
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
+
+            // Activate the selected tab button and show its content section
+            activeTabButton.classList.add('active');
+            activeTabSection.classList.remove('hidden');
+
+            // Load data if a function is provided
+            if (loadDataFunction) {
+                await loadDataFunction();
             }
-
-            return { salesHistory, products };
         }
 
-        /**
-         * Saves products array to local storage.
-         */
-        function saveProductsToLocalStorage() {
-            localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products));
-            renderProductsTable(); // Re-render product table after changes
-        }
+        // --- Product Management Functions ---
 
         /**
-         * Displays the selected content section and hides others.
-         * @param {string} sectionId - The ID of the section to display.
+         * Loads and displays products from Firestore.
          */
-        function showSection(sectionId) {
-            contentSections.forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionId).classList.add('active');
-        }
-
-        /**
-         * Renders the Sales Overview summary cards.
-         * @param {Array<object>} salesHistory - The sales data.
-         */
-        function renderSalesOverview(salesHistory) {
-            let totalSales = 0;
-            let totalVat = 0;
-            let totalTransactions = salesHistory.length;
-
-            salesHistory.forEach(sale => {
-                totalSales += sale.grandTotal || 0;
-                totalVat += sale.vatAmount || 0;
-            });
-
-            totalSalesValue.textContent = formatCurrency(totalSales);
-            totalVatValue.textContent = formatCurrency(totalVat);
-            totalTransactionsValue.textContent = totalTransactions;
-        }
-
-        /**
-         * Renders the Sales History table.
-         * @param {Array<object>} salesHistory - The sales data.
-         */
-        function renderSalesHistory(salesHistory) {
-            salesTableBody.innerHTML = '';
-            if (salesHistory.length === 0) {
-                salesTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">No sales transactions found.</td></tr>';
-                return;
-            }
-
-            // Sort sales by timestamp descending
-            const sortedSales = [...salesHistory].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            sortedSales.forEach(sale => {
-                const saleDate = new Date(sale.timestamp);
-                const date = saleDate.toLocaleDateString();
-                const time = saleDate.toLocaleTimeString();
-                const itemsList = sale.cartItems ? sale.cartItems.map(item => `${item.name} (x${item.quantity})`).join(', ') : 'N/A';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${sale.invoiceNo || 'N/A'}</td>
-                    <td>${date}</td>
-                    <td>${time}</td>
-                    <td>${sale.cashierName || 'N/A'}</td>
-                    <td>${itemsList}</td>
-                    <td>${sale.paymentMethod || 'N/A'}</td>
-                    <td class="font-semibold">${formatCurrency(sale.grandTotal || 0)}</td>
-                `;
-                salesTableBody.appendChild(row);
-            });
-        }
-
-        /**
-         * Renders the Cashier Sales Summary table.
-         * @param {Array<object>} salesHistory - The sales data.
-         */
-        function renderCashierSalesSummary(salesHistory) {
-            cashierSalesTableBody.innerHTML = '';
-            if (salesHistory.length === 0) {
-                cashierSalesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">No cashier sales data found.</td></tr>';
-                return;
-            }
-
-            const cashierSummary = {}; // { 'Cashier Name': { totalSales: 0, totalVat: 0, totalTransactions: 0 } }
-
-            salesHistory.forEach(sale => {
-                const cashier = sale.cashierName || 'Unknown Cashier';
-                if (!cashierSummary[cashier]) {
-                    cashierSummary[cashier] = { totalSales: 0, totalVat: 0, totalTransactions: 0 };
-                }
-                cashierSummary[cashier].totalSales += sale.grandTotal || 0;
-                cashierSummary[cashier].totalVat += sale.vatAmount || 0;
-                cashierSummary[cashier].totalTransactions++;
-            });
-
-            for (const cashierName in cashierSummary) {
-                const summary = cashierSummary[cashierName];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${cashierName}</td>
-                    <td class="font-semibold">${formatCurrency(summary.totalSales)}</td>
-                    <td>${formatCurrency(summary.totalVat)}</td>
-                    <td>${summary.totalTransactions}</td>
-                `;
-                cashierSalesTableBody.appendChild(row);
+        async function loadProductsAdmin() {
+            productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading products...</td></tr>';
+            try {
+                const snapshot = await getDocs(productsCol);
+                const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProductsAdmin(products);
+            } catch (error) {
+                console.error("Error loading products for admin:", error);
+                productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-red-500">Failed to load products.</td></tr>';
+                showToast("Failed to load products.", "error");
             }
         }
 
         /**
-         * Renders the Product Management table.
+         * Renders products in the admin table.
+         * @param {Array<object>} products - Products to display.
          */
-        function renderProductsTable() {
+        function renderProductsAdmin(products) {
             productsTableBody.innerHTML = '';
             if (products.length === 0) {
-                productsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No products found. Add some above!</td></tr>';
+                productsTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">No products found.</td></tr>';
                 return;
             }
 
             products.forEach(product => {
                 const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
-                    <td>${product.id}</td>
-                    <td>${product.name}</td>
-                    <td>${formatCurrency(product.price)}</td>
-                    <td>${(product.vatRate * 100).toFixed(0)}%</td>
-                    <td>${product.stock}</td>
-                    <td class="flex space-x-2">
-                        <button data-product-id="${product.id}" class="edit-product-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm py-1 px-3 rounded-md shadow-sm">Edit</button>
-                        <button data-product-id="${product.id}" class="delete-product-btn bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-3 rounded-md shadow-sm">Delete</button>
+                    <td class="py-3 px-4 text-gray-800">${product.id}</td>
+                    <td class="py-3 px-4 text-gray-800">${product.name}</td>
+                    <td class="py-3 px-4 text-gray-700">${formatCurrency(product.price)}</td>
+                    <td class="py-3 px-4 text-gray-700">${(product.vatRate * 100).toFixed(0)}%</td>
+                    <td class="py-3 px-4 text-gray-700">${product.stock}</td>
+                    <td class="py-3 px-4">
+                        <button data-id="${product.id}" class="edit-product-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold py-1 px-3 rounded-lg mr-2 transition duration-200">Edit</button>
+                        <button data-id="${product.id}" class="delete-product-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">Delete</button>
                     </td>
                 `;
                 productsTableBody.appendChild(row);
             });
 
-            // Attach event listeners for edit and delete buttons
-            document.querySelectorAll('.edit-product-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const productId = event.target.dataset.productId;
-                    editProduct(productId);
-                });
+            // Attach event listeners
+            document.querySelectorAll('.edit-product-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => openProductModalForEdit(e.target.dataset.id));
             });
-            document.querySelectorAll('.delete-product-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const productId = event.target.dataset.productId;
-                    deleteProduct(productId);
-                });
+            document.querySelectorAll('.delete-product-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => deleteProduct(e.target.dataset.id));
             });
         }
 
         /**
-         * Handles adding a new product.
+         * Opens the product modal for adding a new product.
          */
-        addProductForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const newProduct = {
-                id: newProductIdInput.value.trim(),
-                name: newProductNameInput.value.trim(),
-                price: parseFloat(newProductPriceInput.value),
-                vatRate: parseFloat(newProductVatRateInput.value),
-                stock: parseInt(newProductStockInput.value)
-            };
-
-            if (products.some(p => p.id === newProduct.id)) {
-                showToast('Product with this ID already exists!', 'error');
-                return;
-            }
-            if (isNaN(newProduct.price) || isNaN(newProduct.vatRate) || isNaN(newProduct.stock)) {
-                showToast('Please enter valid numbers for price, VAT rate, and stock.', 'error');
-                return;
-            }
-
-            products.push(newProduct);
-            saveProductsToLocalStorage();
-            addProductForm.reset();
-            showToast('Product added successfully!', 'success');
-        });
+        function openAddProductModal() {
+            productModalTitle.textContent = 'Add New Product';
+            productForm.reset();
+            productIdInput.readOnly = false; // Allow editing ID for new product
+            productIdInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            editingProduct = null;
+            productModal.style.display = 'flex';
+        }
 
         /**
-         * Populates the edit form with product data.
+         * Opens the product modal for editing an existing product.
          * @param {string} productId - The ID of the product to edit.
          */
-        function editProduct(productId) {
-            const productToEdit = products.find(p => p.id === productId);
-            if (productToEdit) {
-                editProductIdHidden.value = productToEdit.id;
-                editProductNameInput.value = productToEdit.name;
-                editProductPriceInput.value = productToEdit.price;
-                editProductVatRateInput.value = productToEdit.vatRate;
-                editProductStockInput.value = productToEdit.stock;
-                editProductForm.classList.add('active'); // Show the edit form
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); // Scroll to form
+        async function openProductModalForEdit(productId) {
+            productModalTitle.textContent = 'Edit Product';
+            try {
+                const docRef = doc(db, "products", productId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    editingProduct = { id: docSnap.id, ...docSnap.data() };
+                    productIdInput.value = editingProduct.id;
+                    productNameInput.value = editingProduct.name;
+                    productPriceInput.value = editingProduct.price;
+                    productVatRateInput.value = editingProduct.vatRate;
+                    productStockInput.value = editingProduct.stock;
+
+                    productIdInput.readOnly = true; // Prevent editing ID of existing product
+                    productIdInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    productModal.style.display = 'flex';
+                } else {
+                    showToast("Product not found!", "error");
+                }
+            } catch (error) {
+                console.error("Error fetching product for edit:", error);
+                showToast("Error loading product for edit.", "error");
             }
         }
 
         /**
-         * Handles updating an existing product.
+         * Saves (adds or updates) a product to Firestore.
+         * @param {Event} e - The form submission event.
          */
-        updateProductForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const productId = editProductIdHidden.value;
-            const productIndex = products.findIndex(p => p.id === productId);
+        async function saveProduct(e) {
+            e.preventDefault();
+            const productData = {
+                id: productIdInput.value.trim(),
+                name: productNameInput.value.trim(),
+                price: parseFloat(productPriceInput.value),
+                vatRate: parseFloat(productVatRateInput.value),
+                stock: parseInt(productStockInput.value)
+            };
 
-            if (productIndex > -1) {
-                const updatedProduct = {
-                    id: productId,
-                    name: editProductNameInput.value.trim(),
-                    price: parseFloat(editProductPriceInput.value),
-                    vatRate: parseFloat(editProductVatRateInput.value),
-                    stock: parseInt(editProductStockInput.value)
-                };
-
-                if (isNaN(updatedProduct.price) || isNaN(updatedProduct.vatRate) || isNaN(updatedProduct.stock)) {
-                    showToast('Please enter valid numbers for price, VAT rate, and stock.', 'error');
-                    return;
-                }
-
-                products[productIndex] = updatedProduct;
-                saveProductsToLocalStorage();
-                editProductForm.classList.remove('active'); // Hide the edit form
-                showToast('Product updated successfully!', 'success');
-            } else {
-                showToast('Product not found for update.', 'error');
+            if (!productData.id || !productData.name || isNaN(productData.price) || isNaN(productData.vatRate) || isNaN(productData.stock)) {
+                showToast("Please fill all product fields correctly.", "warning");
+                return;
             }
-        });
+
+            try {
+                if (editingProduct) {
+                    // Update existing product
+                    const productRef = doc(db, "products", editingProduct.id);
+                    await updateDoc(productRef, productData);
+                    showToast("Product updated successfully!", "success");
+                } else {
+                    // Add new product
+                    const productRef = doc(db, "products", productData.id);
+                    const docSnap = await getDoc(productRef);
+                    if (docSnap.exists()) {
+                        showToast("Product ID already exists. Please use a unique ID.", "error");
+                        return;
+                    }
+                    await setDoc(productRef, productData); // Use setDoc with ID
+                    showToast("Product added successfully!", "success");
+                }
+                productModal.style.display = 'none';
+                await loadProductsAdmin(); // Reload products
+            } catch (error) {
+                console.error("Error saving product:", error);
+                showToast("Error saving product.", "error");
+            }
+        }
 
         /**
-         * Handles deleting a product.
+         * Deletes a product from Firestore.
          * @param {string} productId - The ID of the product to delete.
          */
-        function deleteProduct(productId) {
-            if (confirm('Are you sure you want to delete this product? This cannot be undone.')) {
-                products = products.filter(p => p.id !== productId);
-                saveProductsToLocalStorage();
-                showToast('Product deleted successfully!', 'success');
-                editProductForm.classList.remove('active'); // Hide edit form if the deleted product was being edited
+        async function deleteProduct(productId) {
+            if (!confirm(`Are you sure you want to delete product "${productId}"? This action cannot be undone.`)) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, "products", productId));
+                showToast("Product deleted successfully!", "success");
+                await loadProductsAdmin(); // Reload products
+            } catch (error) {
+                console.error("Error deleting product:", error);
+                showToast("Error deleting product.", "error");
             }
         }
 
-        // Cancel Edit Product
-        cancelEditProductBtn.addEventListener('click', () => {
-            editProductForm.classList.remove('active');
-        });
+        // --- Sales History Functions ---
+
+        /**
+         * Loads and displays sales from Firestore.
+         */
+        async function loadSalesAdmin() {
+            salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Loading sales data...</td></tr>';
+            try {
+                let salesQuery = query(salesCol);
+                // Apply date filter if set
+                const selectedDate = saleDateFilterInput.value;
+                if (selectedDate) {
+                    const startOfDay = new Date(selectedDate);
+                    startOfDay.setHours(0, 0, 0, 0);
+                    const endOfDay = new Date(selectedDate);
+                    endOfDay.setHours(23, 59, 59, 999);
+
+                    salesQuery = query(salesCol, 
+                        where("timestamp", ">=", Timestamp.fromDate(startOfDay).toISOString()), 
+                        where("timestamp", "<=", Timestamp.fromDate(endOfDay).toISOString())
+                    );
+                }
+
+                const snapshot = await getDocs(salesQuery);
+                const sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Client-side filtering for search term as Firestore doesn't support full-text search directly
+                const searchTerm = saleSearchAdminInput.value.toLowerCase();
+                const filteredSales = sales.filter(sale =>
+                    sale.invoiceNo.toLowerCase().includes(searchTerm) ||
+                    sale.cashierName.toLowerCase().includes(searchTerm) ||
+                    sale.paymentMethod.toLowerCase().includes(searchTerm)
+                );
+
+                renderSalesAdmin(filteredSales);
+            } catch (error) {
+                console.error("Error loading sales for admin:", error);
+                salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-red-500">Failed to load sales data.</td></tr>';
+                showToast("Failed to load sales data.", "error");
+            }
+        }
+
+
+        /**
+         * Renders sales in the admin table.
+         * @param {Array<object>} sales - Sales to display.
+         */
+        function renderSalesAdmin(sales) {
+            salesTableBody.innerHTML = '';
+            if (sales.length === 0) {
+                salesTableBody.innerHTML = '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">No sales found.</td></tr>';
+                return;
+            }
+
+            sales.forEach(sale => {
+                const saleDate = new Date(sale.timestamp);
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-gray-800">${sale.invoiceNo}</td>
+                    <td class="py-3 px-4 text-gray-800">${saleDate.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-gray-700">${sale.cashierName}</td>
+                    <td class="py-3 px-4 text-gray-700">${sale.paymentMethod}</td>
+                    <td class="py-3 px-4 text-gray-900 font-semibold">${formatCurrency(sale.grandTotal)}</td>
+                    <td class="py-3 px-4">
+                        <button data-id="${sale.id}" class="view-sale-details-btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">View</button>
+                    </td>
+                `;
+                salesTableBody.appendChild(row);
+            });
+
+            // Attach event listeners
+            document.querySelectorAll('.view-sale-details-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => viewSaleDetails(e.target.dataset.id));
+            });
+        }
+
+        /**
+         * Displays a modal with detailed information about a sale.
+         * @param {string} saleId - The ID of the sale to display.
+         */
+        async function viewSaleDetails(saleId) {
+            try {
+                const docRef = doc(db, "sales", saleId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const sale = docSnap.data();
+                    saleInvoiceNoSpan.textContent = sale.invoiceNo;
+                    let detailsHtml = `
+                        <p><strong>Date & Time:</strong> ${new Date(sale.timestamp).toLocaleString()}</p>
+                        <p><strong>Cashier:</strong> ${sale.cashierName}</p>
+                        <p><strong>Till Number:</strong> ${sale.tillNumber}</p>
+                        <p><strong>Payment Method:</strong> ${sale.paymentMethod}</p>
+                        <hr class="my-3 border-gray-300">
+                        <h4 class="font-bold mb-2">Items:</h4>
+                        <table class="w-full text-left text-sm mb-3">
+                            <thead>
+                                <tr class="border-b border-gray-300">
+                                    <th class="py-1">Item</th>
+                                    <th class="py-1 text-center">Qty</th>
+                                    <th class="py-1 text-right">Unit Price</th>
+                                    <th class="py-1 text-right">Amount (Incl. VAT)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sale.cartItems.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td class="text-center">${item.quantity}</td>
+                                        <td class="text-right">${formatCurrency(item.price)}</td>
+                                        <td class="text-right">${formatCurrency(item.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <hr class="my-3 border-gray-300">
+                        <p><strong>Gross Sale Value:</strong> ${formatCurrency(sale.grossSaleValue)}</p>
+                        <p><strong>Total Before VAT:</strong> ${formatCurrency(sale.totalBeforeVat)}</p>
+                        <p><strong>VAT Amount:</strong> ${formatCurrency(sale.vatAmount)}</p>
+                        <p class="text-lg font-bold"><strong>Grand Total:</strong> ${formatCurrency(sale.grandTotal)}</p>
+                        <p><strong>Received Amount:</strong> ${formatCurrency(sale.receivedAmount)}</p>
+                        <p><strong>Balance Paid:</strong> ${formatCurrency(sale.balancePaid)}</p>
+                        <p><strong>Total Savings:</strong> ${formatCurrency(sale.totalSavings)}</p>
+                    `;
+                    saleDetailsContentDiv.innerHTML = detailsHtml;
+                    saleDetailsModal.style.display = 'flex';
+                } else {
+                    showToast("Sale details not found!", "error");
+                }
+            } catch (error) {
+                console.error("Error fetching sale details:", error);
+                showToast("Error loading sale details.", "error");
+            }
+        }
+
+        /**
+         * Prints the content of the sale details modal.
+         */
+        function printSaleDetails() {
+            const printContents = saleDetailsContentDiv.innerHTML;
+            const originalContents = document.body.innerHTML;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Sale Details</title>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            printWindow.document.write(`
+                body { font-family: 'Inter', sans-serif; margin: 0; padding: 1rem; }
+                .modal-content { width: 100%; max-width: 600px; margin: 0 auto; padding: 0; }
+                hr { border-top: 1px dashed #cbd5e0; margin: 1rem 0; }
+                p { margin-bottom: 0.5rem; }
+                strong { font-weight: 700; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #eee; }
+                th { text-align: left; }
+                td { text-align: right; }
+                td:first-child { text-align: left; }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .mb-3 { margin-bottom: 0.75rem; }
+                .text-lg { font-size: 1.125rem; }
+                .font-bold { font-weight: 700; }
+                .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+            `);
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<div class="modal-content">');
+            printWindow.document.write('<h3 class="text-2xl font-bold text-gray-800 mb-6">Sale Details - Invoice #' + saleInvoiceNoSpan.textContent + '</h3>');
+            printWindow.document.write(printContents);
+            printWindow.document.write('</div></body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+
+
+        // --- Manager Management Functions ---
+
+        /**
+         * Loads and displays managers from Firestore.
+         */
+        async function loadManagersAdmin() {
+            managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">Loading managers...</td></tr>';
+            try {
+                const q = query(usersCol, where("role", "==", "manager"));
+                const snapshot = await getDocs(q);
+                const managers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderManagersAdmin(managers);
+            } catch (error) {
+                console.error("Error loading managers for admin:", error);
+                managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-red-500">Failed to load managers.</td></tr>';
+                showToast("Failed to load managers.", "error");
+            }
+        }
+
+        /**
+         * Renders managers in the admin table.
+         * @param {Array<object>} managers - Managers to display.
+         */
+        function renderManagersAdmin(managers) {
+            managersTableBody.innerHTML = '';
+            if (managers.length === 0) {
+                managersTableBody.innerHTML = '<tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">No managers found.</td></tr>';
+                return;
+            }
+
+            managers.forEach(manager => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-gray-800">${manager.id}</td>
+                    <td class="py-3 px-4 text-gray-800">${manager.name}</td>
+                    <td class="py-3 px-4 text-gray-700">${manager.cardId || 'N/A'}</td>
+                    <td class="py-3 px-4">
+                        <button data-id="${manager.id}" class="edit-manager-btn bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold py-1 px-3 rounded-lg mr-2 transition duration-200">Edit</button>
+                        <button data-id="${manager.id}" class="delete-manager-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition duration-200">Delete</button>
+                    </td>
+                `;
+                managersTableBody.appendChild(row);
+            });
+
+            // Attach event listeners
+            document.querySelectorAll('.edit-manager-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => openManagerModalForEdit(e.target.dataset.id));
+            });
+            document.querySelectorAll('.delete-manager-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => deleteManager(e.target.dataset.id));
+            });
+        }
+
+        /**
+         * Opens the manager modal for adding a new manager.
+         */
+        function openAddManagerModal() {
+            managerModalTitle.textContent = 'Add New Manager';
+            managerForm.reset();
+            managerIdInput.value = ''; // Clear existing ID
+            managerIdInput.classList.remove('bg-gray-100', 'cursor-not-allowed'); // Make editable
+            managerIdInput.readOnly = false; // Allow manual ID entry for new managers
+            editingManager = null;
+            managerModal.style.display = 'flex';
+        }
+
+        /**
+         * Opens the manager modal for editing an existing manager.
+         * @param {string} managerId - The ID of the manager to edit.
+         */
+        async function openManagerModalForEdit(managerId) {
+            managerModalTitle.textContent = 'Edit Manager';
+            try {
+                const docRef = doc(db, "users", managerId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    editingManager = { id: docSnap.id, ...docSnap.data() };
+                    managerIdInput.value = editingManager.id;
+                    managerNameInput.value = editingManager.name;
+                    managerCardIdInput.value = editingManager.cardId || '';
+                    managerCodeInput.value = editingManager.code; // Pre-fill current code
+
+                    managerIdInput.readOnly = true; // Prevent editing ID of existing manager
+                    managerIdInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    managerModal.style.display = 'flex';
+                } else {
+                    showToast("Manager not found!", "error");
+                }
+            } catch (error) {
+                console.error("Error fetching manager for edit:", error);
+                showToast("Error loading manager for edit.", "error");
+            }
+        }
+
+        /**
+         * Saves (adds or updates) a manager to Firestore.
+         * @param {Event} e - The form submission event.
+         */
+        async function saveManager(e) {
+            e.preventDefault();
+            const managerData = {
+                id: managerIdInput.value.trim(),
+                name: managerNameInput.value.trim(),
+                cardId: managerCardIdInput.value.trim() || null, // Can be empty
+                code: managerCodeInput.value.trim(),
+                role: 'manager' // Ensure role is set to manager
+            };
+
+            if (!managerData.name || !managerData.code || managerData.code.length !== 4) {
+                showToast("Please provide manager name and a 4-digit code.", "warning");
+                return;
+            }
+
+            try {
+                if (editingManager) {
+                    // Update existing manager
+                    const managerRef = doc(db, "users", editingManager.id);
+                    await updateDoc(managerRef, managerData);
+                    showToast("Manager updated successfully!", "success");
+                } else {
+                    // Add new manager
+                    // If no ID provided, generate one
+                    if (!managerData.id) {
+                         // Generate a simple unique ID for new managers (e.g., MG-timestamp)
+                        managerData.id = `MG-${Date.now()}`;
+                    }
+
+                    const managerRef = doc(db, "users", managerData.id);
+                    const docSnap = await getDoc(managerRef);
+                    if (docSnap.exists()) {
+                        showToast("Manager ID already exists. Please use a unique ID.", "error");
+                        return;
+                    }
+
+                    await setDoc(managerRef, managerData); // Use setDoc with ID
+                    showToast("Manager added successfully!", "success");
+                }
+                managerModal.style.display = 'none';
+                await loadManagersAdmin(); // Reload managers
+            } catch (error) {
+                console.error("Error saving manager:", error);
+                showToast("Error saving manager.", "error");
+            }
+        }
+
+        /**
+         * Deletes a manager from Firestore.
+         * @param {string} managerId - The ID of the manager to delete.
+         */
+        async function deleteManager(managerId) {
+            if (!confirm(`Are you sure you want to delete manager "${managerId}"? This action cannot be undone.`)) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, "users", managerId));
+                showToast("Manager deleted successfully!", "success");
+                await loadManagersAdmin(); // Reload managers
+            } catch (error) {
+                console.error("Error deleting manager:", error);
+                showToast("Error deleting manager.", "error");
+            }
+        }
+
+
+        // --- Authentication & Initial Load ---
+        async function authenticateAndLoad() {
+            try {
+                // Sign in anonymously if no __initial_auth_token is provided (for testing in development)
+                // In a real deployed environment, you'd handle proper user authentication (e.g., email/password)
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Firebase authenticated successfully.");
+                // Load products section by default on page load
+                switchTab(productsTabBtn, productsSection, loadProductsAdmin);
+            } catch (error) {
+                console.error("Firebase authentication failed:", error);
+                showToast("Authentication failed. Please check console.", "error");
+                // Potentially redirect to login page or show error message
+            }
+        }
 
 
         // --- Event Listeners ---
 
-        // Sidebar Toggle
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
+        // Tab Navigation
+        productsTabBtn.addEventListener('click', () => switchTab(productsTabBtn, productsSection, loadProductsAdmin));
+        salesTabBtn.addEventListener('click', () => switchTab(salesTabBtn, salesSection, loadSalesAdmin));
+        managersTabBtn.addEventListener('click', () => switchTab(managersTabBtn, managersSection, loadManagersAdmin));
+        reportsTabBtn.addEventListener('click', () => switchTab(reportsTabBtn, reportsSection, null)); // No data loading for reports yet
+
+        // Product Management
+        addProductBtn.addEventListener('click', openAddProductModal);
+        closeProductModalBtn.addEventListener('click', () => productModal.style.display = 'none');
+        productForm.addEventListener('submit', saveProduct);
+        productSearchAdminInput.addEventListener('input', async (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            if (searchTerm.length > 0) {
+                const snapshot = await getDocs(productsCol);
+                const allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const filtered = allProducts.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.id.toLowerCase().includes(searchTerm)
+                );
+                renderProductsAdmin(filtered);
+            } else {
+                await loadProductsAdmin(); // Reload all if search is cleared
+            }
+        });
+        
+        // Sales History
+        saleSearchAdminInput.addEventListener('input', loadSalesAdmin); // Reload sales on search input
+        saleDateFilterInput.addEventListener('change', loadSalesAdmin); // Reload sales on date change
+
+        // Sale Details Modal
+        closeSaleDetailsModalBtn.addEventListener('click', () => saleDetailsModal.style.display = 'none');
+        printSaleDetailsBtn.addEventListener('click', printSaleDetails);
+
+        // Manager Management
+        addManagerBtn.addEventListener('click', openAddManagerModal);
+        closeManagerModalBtn.addEventListener('click', () => managerModal.style.display = 'none');
+        managerForm.addEventListener('submit', saveManager);
+
+        // Navigate to POS Panel
+        posPanelBtn.addEventListener('click', () => {
+            window.location.href = 'index.html'; // Navigate back to the POS page
         });
 
-        // Menu Item Navigation
-        document.getElementById('menuSalesOverview').addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('salesOverviewSection');
-            renderSalesOverview(loadDataFromLocalStorage().salesHistory); // Re-render to ensure latest data
-        });
-        document.getElementById('menuSalesHistory').addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('salesHistorySection');
-            renderSalesHistory(loadDataFromLocalStorage().salesHistory); // Re-render
-        });
-        document.getElementById('menuCashierSales').addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('cashierSalesSection');
-            renderCashierSalesSummary(loadDataFromLocalStorage().salesHistory); // Re-render
-        });
-        document.getElementById('menuProductManagement').addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('productManagementSection');
-            renderProductsTable(); // Re-render
-            editProductForm.classList.remove('active'); // Hide edit form initially
+        // Basic Logout (for demonstration, a full auth system would be needed)
+        logoutBtn.addEventListener('click', () => {
+            alert('Logout functionality not fully implemented. In a real app, this would sign out the user.');
+            // Implement Firebase signOut here if proper auth is used
+            // signOut(auth).then(() => {
+            //     window.location.href = 'login.html'; // Redirect to login page
+            // }).catch((error) => {
+            //     console.error("Logout error:", error);
+            //     showToast("Logout failed.", "error");
+            // });
         });
 
-        // Logout functionality (placeholder)
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            // In a real app, this would clear authentication tokens
-            alert("Logging out... (In a real app, this would clear session/tokens)");
-            window.location.reload(); // Simple reload for demo
+        // Close modals when clicking outside
+        window.addEventListener('click', (event) => {
+            if (event.target === productModal) {
+                productModal.style.display = 'none';
+            }
+            if (event.target === saleDetailsModal) {
+                saleDetailsModal.style.display = 'none';
+            }
+            if (event.target === managerModal) {
+                managerModal.style.display = 'none';
+            }
         });
 
-
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const { salesHistory, products: loadedProducts } = loadDataFromLocalStorage();
-            products = loadedProducts; // Ensure global products array is updated
-            renderSalesOverview(salesHistory); // Render initial section
-            showSection('salesOverviewSection'); // Show default section
-        });
+        // Initial Authentication and Load
+        document.addEventListener('DOMContentLoaded', authenticateAndLoad);
     </script>
 </body>
 </html>
