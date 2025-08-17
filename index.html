@@ -288,6 +288,8 @@
                 </div>
 
                 <button id="printReceiptBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">Print Receipt</button>
+                <button id="cancelSaleBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2">Cancel Current Sale</button>
+                <button id="refundSaleBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2">Process Refund</button>
             </div>
         </div>
     </main>
@@ -302,9 +304,6 @@
             <button id="printReceiptFromModalBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4">Print</button>
         </div>
     </div>
-
-    <!-- The old manager approval modal is removed, replaced by the one above -->
-    <!-- The managerApproval div above is the primary manager approval modal -->
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
@@ -375,7 +374,7 @@
         const productsCol = collection(db, "products");
         const salesCol = collection(db, "sales");
         const usersCol = collection(db, "users"); // Users collection reference
-        const managerLogsCol = collection(db, "managerLogs"); // New: Manager Logs collection reference
+        const managerLogsCol = collection(db, "managerLogs"); // New: Manager Logs collection reference (serves as audit trail)
 
         // --- Product Database (Initial Data) ---
         // This will now be loaded from Firestore
@@ -389,9 +388,6 @@
         let pendingApprovalActionDetails = { action: '', itemName: '' }; // Stores details for logging manager action
         let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
         let html5QrcodeScanner; // Declare product scanner variable globally
-        let html5QrcodeManagerScanner; // Declare manager scanner variable globally (no longer used for general approval)
-        let isScanningProduct = false; // Flag to prevent multiple product scans simultaneously
-        let isScanningManager = false; // Flag to prevent multiple manager scans simultaneously (related to manager card scanner, but general approval uses manual input)
         let lastScannedCode = null; // New: Debounce variable for product scanner
         let currentCashier = null; // Stores the currently logged-in cashier object
 
@@ -424,18 +420,21 @@
         const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
         const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
         const logoutBtn = document.getElementById('logoutBtn'); // Logout button
+        const mainPosContent = document.querySelector('main'); // Reference to the main POS content area
 
-        // Manager Approval Modal Elements (Updated to new HTML structure)
-        const managerApprovalModal = document.getElementById('managerApproval'); // Renamed ID
-        const managerCodeInput = document.getElementById('managerCode'); // Renamed ID
-        const approvalError = document.getElementById('approvalError'); // New: Error message for manager approval
+        // Manager Approval Modal Elements
+        const managerApprovalModal = document.getElementById('managerApproval'); 
+        const managerCodeInput = document.getElementById('managerCode'); 
+        const approvalError = document.getElementById('approvalError'); 
+
+        // New buttons for manager actions
+        const cancelSaleBtn = document.getElementById('cancelSaleBtn');
+        const refundSaleBtn = document.getElementById('refundSaleBtn');
 
 
-        // Scanner messages (only product scanner message is still relevant for the general UI)
+        // Scanner messages 
         const productScannerMessage = document.getElementById('productScannerMessage');
-        // The previous managerScannerMessage and related buttons (startManagerScannerBtn, stopManagerScannerBtn, managerReaderDiv)
-        // are no longer directly used for the general manager approval flow, as the prompt's HTML simplified it.
-        // Keeping the functions for now as they might be called via the old code if not fully removed.
+
 
         // Digital Payment Status Elements
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
@@ -1099,6 +1098,7 @@
                     // For persistence, we'll use localStorage
                     localStorage.setItem("currentCashier", JSON.stringify(found)); 
                     cashierLoginDiv.classList.add("hidden"); // Hide login screen
+                    mainPosContent.classList.remove("hidden"); // Show main POS content
                     cashierNameDisplay.textContent = currentCashier.name; // Update display
                     showToast(`✅ Welcome, ${currentCashier.name}!`, "success"); // Use checkmark emoji
 
@@ -1134,6 +1134,8 @@
             showToast("Logged out successfully.", "info");
             // Reset POS state
             resetPOS(); 
+            // Hide main POS content on logout
+            mainPosContent.classList.add("hidden");
             // Show login screen
             cashierLoginDiv.classList.remove("hidden");
             cashierCodeInput.value = '';
@@ -1164,6 +1166,25 @@
             }
         }
 
+        /**
+         * Updates stock in Firestore after a sale.
+         * @param {Array<object>} cartItems - Items in the completed sale.
+         */
+        async function updateStockAfterSale(cartItems) {
+            for (let item of cartItems) {
+                const productRef = doc(db, "products", item.id);
+                const productInDb = products.find(p => p.id === item.id); // Find the current product in our local 'products' array
+                if (productInDb) {
+                    const newStock = productInDb.stock - item.quantity;
+                    await updateDoc(productRef, {
+                        stock: newStock >= 0 ? newStock : 0 // Ensure stock doesn't go negative in DB
+                    });
+                    // Also update the local 'products' array to reflect new stock
+                    productInDb.stock = newStock >= 0 ? newStock : 0;
+                }
+            }
+            console.log("Stock updated in Firestore.");
+        }
 
         /**
          * Resets the POS system to a fresh state after a completed sale.
@@ -1185,15 +1206,34 @@
             calculateTotals();
         }
 
+        /**
+         * Function to handle "Cancel Sale" action, clears the current cart.
+         */
+        function cancelCurrentSale() {
+            cart = []; // Clear the cart
+            resetPOS(); // Reset the POS state
+            showToast("Current sale cancelled.", "info");
+        }
+
+        /**
+         * Function to simulate "Process Refund" action.
+         * In a real system, this would involve selecting a past sale and handling stock/financial reversal.
+         */
+        function processRefund() {
+            showToast("Refund initiated (placeholder: requires selection of a past sale for full functionality).", "info");
+            resetPOS(); // Reset cart as a demonstration of completing the action
+        }
+
+
         // --- Product Barcode Scanner Functions ---
+        // Keeping these functions as they are used, but their related DOM elements in manager approval modal HTML are removed.
         function startScanner() {
             // If scanner already exists or is in a scanning state, don't restart
-            if (html5QrcodeScanner && html5QrcodeScanner.isScanning || isScanningProduct) {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
                 showToast("Product scanner is already running.", "info");
                 return;
             }
 
-            isScanningProduct = true; // Set scanning flag
             productScannerMessage.classList.remove('hidden'); // Show initializing message
             const qrCodeReaderElement = document.getElementById("reader");
             stopScannerBtn.classList.remove('hidden'); // Show the stop button
@@ -1237,7 +1277,6 @@
                 console.error("Error starting scanner:", err);
                 showToast("Error starting scanner. Please ensure camera access is granted.", "error");
                 stopScannerBtn.classList.add('hidden'); // Hide stop button if scanner fails to start
-                isScanningProduct = false; // Reset flag on error
                 productScannerMessage.classList.add('hidden'); // Hide message on error
             });
         }
@@ -1250,13 +1289,11 @@
                     html5QrcodeScanner = null; // Reset scanner instance
                     stopScannerBtn.classList.add('hidden'); // Hide the stop button
                     showToast("Product scanner stopped.", "info");
-                    isScanningProduct = false; // Reset scanning flag
                     productScannerMessage.classList.add('hidden'); // Hide message
                     lastScannedCode = null; // Reset debounce variable when scanner is explicitly stopped
                 }).catch(err => {
                     console.error("Error stopping scanner:", err);
                     showToast("Error stopping scanner.", "error");
-                    isScanningProduct = false; // Reset scanning flag even on stop error
                     productScannerMessage.classList.add('hidden'); // Hide message
                     lastScannedCode = null; // Reset debounce variable on stop error
                 });
@@ -1266,30 +1303,25 @@
                  document.getElementById("reader").innerHTML = '';
                  html5QrcodeScanner = null;
                  stopScannerBtn.classList.add('hidden');
-                 isScanningProduct = false; // Reset scanning flag
                  productScannerMessage.classList.add('hidden'); // Hide message
                  lastScannedCode = null; // Reset debounce variable
             }
         }
 
-        // --- Manager Card Scanner Functions ---
-        // These functions are kept for completeness, but the general manager approval now uses a simpler text input.
+        // --- Manager Card Scanner Functions (Simplified for general approval) ---
+        // These are just placeholder functions now that the general manager approval uses a direct input.
         function startManagerScanner() {
-            console.log("startManagerScanner called. This function is for direct manager card scanning and not tied to the general approval modal anymore.");
-            showToast("Manager card scanner not implemented for this modal.", "info");
+            showToast("Manager card scanner for this modal is not directly implemented, please use the PIN/Card ID input.", "info");
         }
 
         function stopManagerScanner() {
-            console.log("stopManagerScanner called.");
-            showToast("Manager card scanner stopped.", "info");
+            showToast("Manager card scanner operation is not active for this modal.", "info");
         }
 
 
         // Expose functions to the global scope for onclick attributes
         window.startScanner = startScanner;
         window.stopScanner = stopScanner;
-        // window.startManagerScanner = startManagerScanner; // No longer needed for onclick on the new modal
-        // window.stopManagerScanner = stopManagerScanner;   // No longer needed for onclick on the new modal
         window.cashierLogin = cashierLogin; // Expose cashierLogin for the button
         window.approveAction = approveAction; // Expose approveAction for the button
 
@@ -1449,6 +1481,27 @@
         // Logout Button
         logoutBtn.addEventListener('click', cashierLogout);
 
+        // Cancel Sale Button
+        cancelSaleBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                showToast("Cart is empty. Nothing to cancel.", "warning");
+                return;
+            }
+            pendingApprovalAction = cancelCurrentSale;
+            pendingApprovalActionDetails = { action: 'Cancel Sale', itemName: 'All Items in Cart' };
+            requestManagerApproval();
+        });
+
+        // Refund Sale Button
+        refundSaleBtn.addEventListener('click', () => {
+            // This is a placeholder for actual refund logic.
+            // A real refund would likely involve selecting a past sale to refund.
+            pendingApprovalAction = processRefund;
+            pendingApprovalActionDetails = { action: 'Process Refund', itemName: 'Past Sale (Placeholder)' };
+            requestManagerApproval();
+        });
+
+
         // Cashier Login Input (Enter key)
         cashierCodeInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
@@ -1500,6 +1553,7 @@
                 currentCashier = JSON.parse(storedCashier);
                 cashierNameDisplay.textContent = currentCashier.name;
                 cashierLoginDiv.classList.add("hidden"); // Hide login screen if already logged in
+                mainPosContent.classList.remove("hidden"); // Show main POS content
                 // Setup real-time listener for products after successful login
                 productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
                     products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1512,6 +1566,7 @@
                 });
             } else {
                 cashierLoginDiv.classList.remove("hidden"); // Show login screen
+                mainPosContent.classList.add("hidden"); // Hide main POS content
                 cashierNameDisplay.textContent = "Please Log In";
                 cashierCodeInput.focus();
             }
