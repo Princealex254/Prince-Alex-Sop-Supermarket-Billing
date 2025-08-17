@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- html5-qrcode Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-static"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -22,18 +24,18 @@
             overflow: hidden;
             flex: 1; /* Allows it to take up remaining space */
         }
-        .receipt-modal, .manager-approval-modal {
-            display: none; /* Hidden by default */
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
+        /* Perfect centering and transition for modals */
+        .receipt-modal, .manager-approval-modal, #cashierLogin {
+            display: flex; /* Always flex to enable centering */
+            opacity: 0; /* Start hidden for fade-in */
+            pointer-events: none; /* Block interactions when hidden */
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Smooth transition */
+            transform: translateY(-20px); /* Slight slide up for animation */
+        }
+        .receipt-modal.show, .manager-approval-modal.show, #cashierLogin.show {
+            opacity: 1;
+            pointer-events: auto; /* Allow interactions when shown */
+            transform: translateY(0);
         }
         .receipt-content, .manager-approval-content {
             background-color: #fff;
@@ -74,6 +76,9 @@
             opacity: 0;
             transform: translateY(-20px);
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .toast.show {
             opacity: 1;
@@ -96,6 +101,48 @@
             font-weight: 600;
             z-index: 10; /* Above the video feed */
             border-radius: 0.5rem;
+        }
+
+        /* Search input with clear button */
+        .search-input-container {
+            position: relative;
+            width: 100%;
+        }
+        .clear-search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #9ca3af; /* gray-400 */
+            cursor: pointer;
+            visibility: hidden; /* Hidden by default */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+        }
+        .clear-search-btn.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Loading spinner for buttons */
+        .btn-loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            width: 1em;
+            height: 1em;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.5em;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
 
@@ -125,6 +172,7 @@
                 font-size: 0.7rem;
             }
             .receipt-content hr {
+                border-top: 1px dashed #cbd5e0;
                 margin: 0.5rem 0;
             }
             .receipt-content table {
@@ -150,20 +198,24 @@
           placeholder="Scan Card or Enter PIN"
           class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-600">
         <button onclick="cashierLogin()" 
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md flex items-center justify-center">
+            <span id="loginBtnSpinner" class="hidden btn-loading-spinner mr-2"></span>Login
+        </button>
         <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid code, try again</p>
       </div>
     </div>
 
     <!-- Manager Approval Modal -->
-    <div id="managerApproval" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div id="managerApproval" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
       <div class="bg-white p-6 rounded-xl shadow-lg w-96">
         <h2 class="text-2xl font-bold mb-4 text-center text-red-600">Manager Approval Required</h2>
         <input id="managerCode" type="password" 
           placeholder="Manager PIN or Card ID"
           class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-600">
         <button onclick="approveAction()" 
-          class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Approve</button>
+          class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+            <span id="approveBtnSpinner" class="hidden btn-loading-spinner mr-2"></span>Approve
+        </button>
         <p id="approvalError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid Manager Code</p>
       </div>
     </div>
@@ -176,6 +228,9 @@
             <span class="text-lg">Cashier: <span id="cashierNameDisplay" class="font-semibold">Loading...</span></span>
             <button id="adminPanelBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Admin Panel</button>
             <button id="logoutBtn" class="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg transition duration-200 shadow-sm">Logout</button>
+            <button id="settingsBtn" class="bg-blue-800 hover:bg-blue-900 text-white p-2 rounded-full transition duration-200 shadow-sm flex items-center justify-center">
+                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.09.1a2 2 0 0 1 0 2.73l-.09.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.09-.1a2 2 0 0 1 0-2.73l.09-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z'%3E%3C/path%3E%3Ccircle cx='12' cy='12' r='3'%3E%3C/circle%3E%3C/svg%3E" alt="Settings" class="w-6 h-6" />
+            </button>
         </div>
     </header>
 
@@ -188,21 +243,29 @@
 
                 <!-- Search Bar and Scanner Controls -->
                 <div class="mb-6 flex flex-col sm:flex-row items-center gap-3">
-                    <input type="text" id="productSearch" placeholder="Scan or type product barcode/name..."
-                           class="w-full sm:w-2/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
-                    <button onclick="startScanner()" class="w-full sm:w-1/3 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md">
-                        📷 Scan Barcode
+                    <div class="search-input-container w-full sm:w-2/3">
+                        <input type="text" id="productSearch" placeholder="Scan or type product barcode/name..."
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm">
+                        <button id="clearSearchBtn" class="clear-search-btn">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'%3E%3C/path%3E%3Cpath d='m6 6 12 12'%3E%3C/path%3E%3C/svg%3E" alt="Clear" class="w-6 h-6" />
+                        </button>
+                    </div>
+                    <button onclick="startScanner()" class="w-full sm:w-1/3 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z'%3E%3C/path%3E%3Ccircle cx='12' cy='13' r='3'%3E%3C/circle%3E%3C/svg%3E" alt="Scan" class="w-5 h-5 mr-2" /> Scan Barcode
                     </button>
                 </div>
+                <p class="text-sm text-gray-500 mb-4 text-center sm:text-left">
+                    <span class="font-semibold">Keyboard Shortcuts:</span> F2 = Focus Payment, Ctrl+P = Print Receipt, Enter = Add First Search Result.
+                </p>
 
                 <!-- Where the video scanner will appear -->
-                <div id="reader" style="width: 100%; margin-top: 10px; position: relative;">
+                <div id="reader" style="width: 100%; margin-top: 10px; position: relative; min-height: 150px;">
                     <div id="productScannerMessage" class="scanner-message hidden">
-                        Initializing camera...
+                        <div class="btn-loading-spinner mr-3"></div> Initializing camera...
                     </div>
                 </div>
-                <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md">
-                    ❌ Close Scanner
+                <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition duration-200 shadow-md flex items-center justify-center">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="Stop" class="w-5 h-5 mr-2" /> Close Scanner
                 </button>
 
                 <!-- Product Search Results (Hidden until search) -->
@@ -239,7 +302,7 @@
             </div>
 
             <!-- Right Section: Cart Summary & Payment -->
-            <div class="lg:w-1/3 p-4 bg-gray-50 rounded-r-xl lg:rounded-l-none mt-6 lg:mt-0">
+            <div class="lg:w-1/3 p-4 bg-gray-50 rounded-r-xl lg:rounded-l-none mt-6 lg:mt-0 bg-gradient-to-br from-blue-50 to-white shadow-xl">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Order Summary</h2>
 
                 <!-- Cart Summary -->
@@ -263,9 +326,15 @@
                 <div class="bg-white p-6 rounded-lg shadow-md mb-6">
                     <h3 class="text-xl font-semibold text-gray-700 mb-4">Payment Options</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                        <button id="payCashBtn" class="payment-btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>Cash</button>
-                        <button id="payMpesaBtn" class="payment-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>M-PESA</button>
-                        <button id="payCardBtn" class="payment-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" disabled>Card</button>
+                        <button id="payCashBtn" class="payment-btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center" disabled>
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M16 8h-6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h6'%3E%3C/path%3E%3Cpath d='M12 2v20'%3E%3C/path%3E%3Cpath d='M15 11.5a2.5 2.5 0 0 1 0 5H7'%3E%3C/path%3E%3C/svg%3E" alt="Cash" class="w-5 h-5 mr-1"/>Cash
+                        </button>
+                        <button id="payMpesaBtn" class="payment-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center" disabled>
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 20V8H6V4h12a2 2 0 0 1 2 2v14Z'%3E%3C/path%3E%3Cpath d='M6 20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8H6v12Z'%3E%3C/path%3E%3Cpath d='M18 10h-8'%3E%3C/path%3E%3Cpath d='M10 14h6'%3E%3C/path%3E%3Cpath d='M12 18h-.01'%3E%3C/path%3E%3C/svg%3E" alt="Mobile" class="w-5 h-5 mr-1"/>M-PESA
+                        </button>
+                        <button id="payCardBtn" class="payment-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center" disabled>
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'%3E%3C/rect%3E%3Cpath d='M2 10h20'%3E%3C/path%3E%3Cpath d='M7 15h0'%3E%3C/path%3E%3Cpath d='M12 15h5'%3E%3C/path%3E%3C/svg%3E" alt="Card" class="w-5 h-5 mr-1"/>Card
+                        </button>
                     </div>
 
                     <div id="cashPaymentSection" class="hidden">
@@ -273,7 +342,7 @@
                         <input type="number" id="cashReceived" placeholder="Enter amount"
                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm mb-4">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-lg font-medium text-gray-700">Balance:</span>
+                            <span class="text-lg font-medium text-gray-700">Change:</span>
                             <span id="balanceAmount" class="text-xl font-bold text-red-600">KSh 0.00</span>
                         </div>
                     </div>
@@ -287,10 +356,17 @@
                     <button id="completeSaleBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 rounded-lg text-xl transition duration-200 shadow-lg mt-4" disabled>Complete Sale</button>
                 </div>
 
-                <button id="printReceiptBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md">Print Receipt</button>
-                <button id="cancelSaleBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2">Cancel Current Sale</button>
-                <button id="refundSaleBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2">Process Refund</button>
+                <button id="printReceiptBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md flex items-center justify-center">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Cpath d='M18 14V2h-8v12'%3E%3C/path%3E%3Cpath d='M18 18H6a2 2 0 0 0-2 2v4h16v-4a2 2 0 0 0-2-2Z'%3E%3C/path%3E%3Ccircle cx='18' cy='18' r='2'%3E%3C/circle%3E%3C/svg%3E" alt="Print" class="w-5 h-5 mr-2" /> Print Receipt
+                </button>
+                <button id="cancelSaleBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2 flex items-center justify-center">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'%3E%3C/path%3E%3Cpath d='m6 6 12 12'%3E%3C/path%3E%3C/svg%3E" alt="Cancel" class="w-5 h-5 mr-2" /> Cancel Current Sale
+                </button>
+                <button id="refundSaleBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-200 shadow-md mt-2 flex items-center justify-center">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M12 16V8'%3E%3C/path%3E%3Cpath d='m8 12 4-4 4 4'%3E%3C/path%3E%3C/svg%3E" alt="Refund" class="w-5 h-5 mr-2" /> Process Refund
+                </button>
             </div>
+        
         </div>
     </main>
 
@@ -390,12 +466,21 @@
         let html5QrcodeScanner; // Declare product scanner variable globally
         let lastScannedCode = null; // New: Debounce variable for product scanner
         let currentCashier = null; // Stores the currently logged-in cashier object
+        let inactivityTimer; // For auto-logout
+        const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+        // --- Configuration ---
+        const DEFAULT_VAT_RATE = 0.16; // Configurable VAT rate for Kenya
+        // In a real app, this would be fetched from Firestore settings.
 
         // --- DOM Elements ---
         const cashierLoginDiv = document.getElementById('cashierLogin'); // New: Login screen div
         const cashierCodeInput = document.getElementById('cashierCode'); // New: Cashier code input
         const loginErrorMsg = document.getElementById('loginError');     // New: Login error error message
+        const loginBtnSpinner = document.getElementById('loginBtnSpinner');
+
         const productSearchInput = document.getElementById('productSearch');
+        const clearSearchBtn = document.getElementById('clearSearchBtn'); // New: Clear search button
         const searchResultsDiv = document.getElementById('searchResults');
         const productResultsList = document.getElementById('productResultsList');
         const cartItemsTableBody = document.getElementById('cartItems');
@@ -420,12 +505,14 @@
         const stopScannerBtn = document.getElementById('stopScannerBtn'); // Get the new stop scanner button
         const adminPanelBtn = document.getElementById('adminPanelBtn'); // Get the new Admin Panel button
         const logoutBtn = document.getElementById('logoutBtn'); // Logout button
+        const settingsBtn = document.getElementById('settingsBtn'); // New: Settings button
         const mainPosContent = document.querySelector('main'); // Reference to the main POS content area
 
         // Manager Approval Modal Elements
         const managerApprovalModal = document.getElementById('managerApproval'); 
         const managerCodeInput = document.getElementById('managerCode'); 
         const approvalError = document.getElementById('approvalError'); 
+        const approveBtnSpinner = document.getElementById('approveBtnSpinner');
 
         // New buttons for manager actions
         const cancelSaleBtn = document.getElementById('cancelSaleBtn');
@@ -453,7 +540,13 @@
         function showToast(message, type = 'info', duration = 3000) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.textContent = message;
+            let icon = '';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else if (type === 'warning') icon = '⚠️';
+            else if (type === 'info') icon = 'ℹ️';
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
             toastContainer.appendChild(toast);
 
             // Trigger reflow to ensure transition plays
@@ -492,7 +585,7 @@
         }
 
         /**
-         * Formats a number to currency string (KSh).
+         * Formats a number to currency string (KSh) with 2 decimal places.
          * @param {number} amount - The amount to format.
          * @returns {string} Formatted currency string.
          */
@@ -521,7 +614,7 @@
          * @returns {number} The calculated VAT amount.
          */
         function calculateItemVat(product, quantity) {
-            const { vatAmount } = calculateVAT(product.price * quantity, product.vatRate);
+            const { vatAmount } = calculateVAT(product.price * quantity, product.vatRate || DEFAULT_VAT_RATE);
             return vatAmount;
         }
 
@@ -532,7 +625,7 @@
          * @returns {number} The calculated item subtotal.
          */
         function calculateItemSubtotal(product, quantity) {
-            const { total } = calculateVAT(product.price * quantity, product.vatRate);
+            const { total } = calculateVAT(product.price * quantity, product.vatRate || DEFAULT_VAT_RATE);
             return total;
         }
 
@@ -546,7 +639,7 @@
 
             cart.forEach(item => {
                 const itemNetPrice = item.product.price * item.quantity;
-                const { vatAmount } = calculateVAT(itemNetPrice, item.product.vatRate);
+                const { vatAmount } = calculateVAT(itemNetPrice, item.product.vatRate || DEFAULT_VAT_RATE);
                 
                 totalBeforeVat += itemNetPrice;
                 totalVatAmount += vatAmount;
@@ -740,7 +833,10 @@
                     const row = document.createElement('tr');
                     row.className = 'bg-white hover:bg-gray-50';
                     row.innerHTML = `
-                        <td class="py-3 px-4 text-gray-800 font-medium">${item.product.name}</td>
+                        <td class="py-3 px-4 text-gray-800 font-medium flex items-center">
+                            <img src="https://placehold.co/40x40/e2e8f0/4a5568?text=Product" alt="Product Thumbnail" class="w-10 h-10 rounded-full mr-3 object-cover">
+                            ${item.product.name}
+                        </td>
                         <td class="py-3 px-4 text-gray-700">
                             <div class="flex items-center">
                                 <button data-product-id="${item.product.id}" data-change="-1" class="qty-btn bg-red-400 hover:bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm">-</button>
@@ -749,9 +845,9 @@
                                 <button data-product-id="${item.product.id}" class="remove-item-btn ml-3 text-red-600 hover:text-red-800 text-lg">&times;</button>
                             </div>
                         </td>
-                        <td class="py-3 px-4 text-gray-700">KSh ${item.product.price.toFixed(2)}</td>
-                        <td class="py-3 px-4 text-gray-700">KSh ${itemVat.toFixed(2)}</td>
-                        <td class="py-3 px-4 text-gray-900 font-semibold">KSh ${itemSubtotal.toFixed(2)}</td>
+                        <td class="py-3 px-4 text-gray-700">${formatCurrency(item.product.price)}</td>
+                        <td class="py-3 px-4 text-gray-700">${formatCurrency(itemVat)}</td>
+                        <td class="py-3 px-4 text-gray-900 font-semibold">${formatCurrency(itemSubtotal)}</td>
                     `;
                     cartItemsTableBody.appendChild(row);
                 });
@@ -792,6 +888,8 @@
             const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
             const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
             const printedDate = now.toLocaleString();
+            const shiftTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
 
             let itemsTableRows = '';
             let grossSaleValue = 0; // Sum of price * qty (before VAT)
@@ -802,14 +900,14 @@
                 name: item.product.name,
                 quantity: item.quantity,
                 price: item.product.price,
-                vatRate: item.product.vatRate,
+                vatRate: item.product.vatRate || DEFAULT_VAT_RATE, // Ensure vatRate is stored
                 amount: calculateItemSubtotal(item.product, item.quantity) // Amount includes VAT
             }));
 
 
             cart.forEach(item => {
                 const itemNetPrice = item.product.price * item.quantity;
-                const { vatAmount, total: itemAmountInclVat } = calculateVAT(itemNetPrice, item.product.vatRate);
+                const { vatAmount, total: itemAmountInclVat } = calculateVAT(itemNetPrice, item.product.vatRate || DEFAULT_VAT_RATE);
 
                 grossSaleValue += itemNetPrice; // Sum of net prices
 
@@ -818,8 +916,8 @@
                         <td class="py-1 px-2 text-left">${item.product.name}</td>
                         <td class="py-1 px-2 text-center">${item.product.id}</td>
                         <td class="py-1 px-2 text-center">${item.quantity}</td>
-                        <td class="py-1 px-2 text-right">${item.product.price.toFixed(2)}</td>
-                        <td class="py-1 px-2 text-right">${itemAmountInclVat.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right">${formatCurrency(item.product.price)}</td>
+                        <td class="py-1 px-2 text-right">${formatCurrency(itemAmountInclVat)}</td>
                     </tr>
                 `;
             });
@@ -871,6 +969,7 @@
                     <h2 class="text-2xl font-bold text-gray-900">${storeName}</h2>
                     <p class="text-sm text-gray-600">${storeAddress}</p>
                     <p class="text-sm text-gray-600">Email: ${storeEmail}</p>
+                    <p class="text-sm text-gray-600 italic mt-2">"Quality products, exceptional service!"</p>
                 </div>
                 <hr>
                 <h3 class="text-xl font-bold text-center my-4">TAX INVOICE</h3>
@@ -879,7 +978,7 @@
                     <div class="flex justify-between mb-1"><span>Invoice No:</span><span>${transactionId}</span></div>
                     <div class="flex justify-between mb-1"><span>Date:</span><span>${now.toLocaleDateString()}</span></div>
                     <div class="flex justify-between mb-1"><span>Time:</span><span>${now.toLocaleTimeString()}</span></div>
-                    <div class="flex justify-between mb-1"><span>Cashier:</span><span>${cashierName}</span></div>
+                    <div class="flex justify-between mb-1"><span>Cashier:</span><span>${cashierName} (Shift: ${shiftTime})</span></div>
                     <div class="flex justify-between mb-1"><span>Till No:</span><span>${tillNumber}</span></div>
                 </div>
                 <hr>
@@ -929,8 +1028,41 @@
                 </div>
                 <hr>
                 <div class="my-4 text-gray-800">
-                    <p>Payment Method: <span class="font-semibold">${selectedPaymentMethod || 'N/A'}</span></p>
-                    ${selectedPaymentMethod === 'Mpesa' ? `<p>M-PESA Code: MP${Math.random().toString(36).substring(2, 10).toUpperCase()}</p>` : ''}
+                    <p class="font-bold mb-1">Payment Breakdown:</p>
+                    <div class="flex justify-between mb-1">
+                        <span>Method:</span>
+                        <span>${selectedPaymentMethod || 'N/A'}</span>
+                    </div>
+                    ${selectedPaymentMethod === 'Cash' ? `
+                        <div class="flex justify-between mb-1">
+                            <span>Cash Received:</span>
+                            <span>${formatCurrency(cashReceived)}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>Change Given:</span>
+                            <span>${formatCurrency(balance)}</span>
+                        </div>
+                    ` : ''}
+                    ${selectedPaymentMethod === 'Mpesa' ? `
+                        <div class="flex justify-between mb-1">
+                            <span>M-PESA Code:</span>
+                            <span>MP${Math.random().toString(36).substring(2, 10).toUpperCase()}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>Amount Paid:</span>
+                            <span>${formatCurrency(grandTotal)}</span>
+                        </div>
+                    ` : ''}
+                    ${selectedPaymentMethod === 'Card' ? `
+                        <div class="flex justify-between mb-1">
+                            <span>Card Transaction:</span>
+                            <span>Processed Externally</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>Amount Paid:</span>
+                            <span>${formatCurrency(grandTotal)}</span>
+                        </div>
+                    ` : ''}
                 </div>
                 <hr>
                 <div class="my-4 text-gray-800">
@@ -957,24 +1089,49 @@
                         <span>${cuDate}</span>
                     </div>
                     <p class="text-sm text-gray-600 mt-2">Printed Date: ${printedDate}</p>
-                    <p class="text-sm text-gray-600 mt-4">Thank you for shopping with us!</p>
+                    <p class="text-sm text-gray-600 mt-4 font-bold italic">Thank you for shopping with Prince Alex Store!</p>
+                    <p class="text-xs text-gray-500 mt-2">Return Policy: Items can be returned within 7 days with original receipt for exchange or store credit. No cash refunds.</p>
                 </div>
             `;
         }
+
+        /**
+         * Shows a modal with fade-in/slide-up animation.
+         * @param {HTMLElement} modalElement - The modal DOM element.
+         */
+        function showModal(modalElement) {
+            modalElement.classList.remove('hidden'); // Ensure it's not display: none
+            setTimeout(() => {
+                modalElement.classList.add('show');
+            }, 10); // Small delay to allow 'display' change to register before 'opacity' transition
+        }
+
+        /**
+         * Hides a modal with fade-out/slide-down animation.
+         * @param {HTMLElement} modalElement - The modal DOM element.
+         */
+        function hideModal(modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.addEventListener('transitionend', function handler() {
+                modalElement.classList.add('hidden'); // Hide completely after transition
+                modalElement.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
 
         /**
          * Displays the receipt modal with generated content.
          */
         async function showReceipt() { 
             receiptContentBody.innerHTML = await generateReceiptContent(); 
-            receiptModal.style.display = 'flex'; // Show the modal
+            showModal(receiptModal);
         }
 
         /**
          * Hides the receipt modal.
          */
         function hideReceipt() {
-            receiptModal.style.display = 'none'; // Hide the modal
+            hideModal(receiptModal);
         }
 
         /**
@@ -1041,17 +1198,17 @@
         function requestManagerApproval() {
             managerCodeInput.value = ""; // Clear input field
             approvalError.classList.add("hidden"); // Hide previous error
-            managerApprovalModal.classList.remove("hidden"); // Show the modal
+            showModal(managerApprovalModal); // Show modal with animation
             managerCodeInput.focus(); // Focus on input for scanner/manual entry
         }
 
         /**
          * Handles the manager approval process.
-         * This function replaces the previous validateManagerApproval().
          */
         async function approveAction() {
             const code = managerCodeInput.value.trim();
             approvalError.classList.add("hidden"); // Hide error on new attempt
+            approveBtnSpinner.classList.remove('hidden'); // Show spinner
 
             try {
                 const q = query(usersCol, where("role", "in", ["manager", "admin"]));
@@ -1066,7 +1223,7 @@
                 });
 
                 if (approvedUser) {
-                    managerApprovalModal.classList.add("hidden"); // Hide approval modal
+                    hideModal(managerApprovalModal); // Hide approval modal with animation
                     showToast(`✅ Approved by ${approvedUser.name}`, "success");
 
                     // Execute the pending action
@@ -1092,6 +1249,8 @@
             } catch (error) {
                 console.error("Error during manager approval:", error);
                 showToast("An error occurred during approval. Please try again.", "error");
+            } finally {
+                approveBtnSpinner.classList.add('hidden'); // Hide spinner
             }
         }
 
@@ -1102,6 +1261,7 @@
         async function cashierLogin() {
             const code = cashierCodeInput.value.trim();
             loginErrorMsg.classList.add("hidden"); // Hide previous error
+            loginBtnSpinner.classList.remove('hidden'); // Show spinner
 
             try {
                 const q = query(usersCol, where("role", "==", "cashier"));
@@ -1119,7 +1279,7 @@
                     currentCashier = found;
                     // For persistence, we'll use localStorage
                     localStorage.setItem("currentCashier", JSON.stringify(found)); 
-                    cashierLoginDiv.classList.add("hidden"); // Hide login screen
+                    hideModal(cashierLoginDiv); // Hide login screen with animation
                     mainPosContent.classList.remove("hidden"); // Show main POS content
                     cashierNameDisplay.textContent = currentCashier.name; // Update display
                     showToast(`✅ Welcome, ${currentCashier.name}!`, "success"); // Use checkmark emoji
@@ -1134,6 +1294,8 @@
                         console.error("Error listening to products collection:", error);
                         showToast("Failed to get real-time product updates. Please check console.", "error");
                     });
+                    // Start inactivity timer
+                    startInactivityTimer();
                 } else {
                     loginErrorMsg.classList.remove("hidden"); // Show error
                     showToast("❌ Invalid PIN or Card ID.", "error"); // Use cross emoji
@@ -1143,6 +1305,8 @@
             } catch (error) {
                 console.error("Error during cashier login:", error);
                 showToast("Login failed. Please try again later.", "error");
+            } finally {
+                loginBtnSpinner.classList.add('hidden'); // Hide spinner
             }
         }
 
@@ -1150,6 +1314,9 @@
          * Handles cashier logout.
          */
         function cashierLogout() {
+            // Stop inactivity timer
+            stopInactivityTimer();
+
             currentCashier = null;
             localStorage.removeItem("currentCashier");
             cashierNameDisplay.textContent = "Logged Out";
@@ -1159,7 +1326,7 @@
             // Hide main POS content on logout
             mainPosContent.classList.add("hidden");
             // Show login screen
-            cashierLoginDiv.classList.remove("hidden");
+            showModal(cashierLoginDiv); // Show login screen with animation
             cashierCodeInput.value = '';
             cashierCodeInput.focus();
             // Important: Stop product snapshot listener on logout to prevent issues
@@ -1226,6 +1393,9 @@
             digitalPaymentDetails.textContent = '';
             updateCartDisplay();
             calculateTotals();
+            productSearchInput.value = ''; // Clear search bar
+            searchResultsDiv.classList.add('hidden'); // Hide search results
+            clearSearchBtn.classList.remove('show'); // Hide clear search button
         }
 
         /**
@@ -1246,9 +1416,32 @@
             resetPOS(); // Reset cart as a demonstration of completing the action
         }
 
+        /**
+         * Starts the inactivity timer.
+         */
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(cashierLogout, INACTIVITY_TIMEOUT_MS);
+        }
+
+        /**
+         * Stops the inactivity timer.
+         */
+        function stopInactivityTimer() {
+            clearTimeout(inactivityTimer);
+        }
+
+        /**
+         * Resets the inactivity timer on user activity.
+         */
+        function resetInactivityTimer() {
+            if (currentCashier) { // Only reset if a cashier is logged in
+                startInactivityTimer();
+            }
+        }
+
 
         // --- Product Barcode Scanner Functions ---
-        // Keeping these functions as they are used, but their related DOM elements in manager approval modal HTML are removed.
         function startScanner() {
             // If scanner already exists or is in a scanning state, don't restart
             if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
@@ -1268,6 +1461,7 @@
                     playBeep(); // Play beep sound on success
                     await addToCart(decodedText); // Call your function to handle the product
                     productSearchInput.value = decodedText; // Populate search input with scanned code
+                    productSearchInput.focus(); // Auto-focus search bar
                     // Set a timeout to clear the lastScannedCode after a debounce period (e.g., 800ms)
                     setTimeout(() => { lastScannedCode = null; }, 800); 
                 }
@@ -1330,16 +1524,6 @@
             }
         }
 
-        // --- Manager Card Scanner Functions (Simplified for general approval) ---
-        // These are just placeholder functions now that the general manager approval uses a direct input.
-        function startManagerScanner() {
-            showToast("Manager card scanner for this modal is not directly implemented, please use the PIN/Card ID input.", "info");
-        }
-
-        function stopManagerScanner() {
-            showToast("Manager card scanner operation is not active for this modal.", "info");
-        }
-
 
         // Expose functions to the global scope for onclick attributes
         window.startScanner = startScanner;
@@ -1350,11 +1534,17 @@
 
         // --- Event Listeners ---
 
+        // Listen for any user activity to reset the inactivity timer
+        ['click', 'keydown', 'mousemove'].forEach(eventType => {
+            document.addEventListener(eventType, resetInactivityTimer);
+        });
+
         // Product Search Input
         productSearchInput.addEventListener('input', (event) => {
             const searchTerm = event.target.value.toLowerCase();
             if (searchTerm.length > 0) {
                 searchResultsDiv.classList.remove('hidden');
+                clearSearchBtn.classList.add('show'); // Show clear button
                 const filtered = products.filter(product =>
                     product.name.toLowerCase().includes(searchTerm) ||
                     product.id.includes(searchTerm)
@@ -1363,7 +1553,17 @@
             } else {
                 searchResultsDiv.classList.add('hidden');
                 productResultsList.innerHTML = '';
+                clearSearchBtn.classList.remove('show'); // Hide clear button
             }
+        });
+
+        // Clear Search Button
+        clearSearchBtn.addEventListener('click', () => {
+            productSearchInput.value = '';
+            searchResultsDiv.classList.add('hidden');
+            productResultsList.innerHTML = '';
+            clearSearchBtn.classList.remove('show');
+            productSearchInput.focus();
         });
 
         // Payment Method Selection
@@ -1424,7 +1624,7 @@
                         payMpesaBtn.disabled = false;
                         payCardBtn.disabled = false;
                         calculateTotals(); // Re-calculate to enable complete sale button
-                    }, 15000); // Changed to 15 seconds
+                    }, 3000); // Reduced to 3 seconds for faster testing
                 }
 
                 calculateTotals(); // Initial calculation to update complete sale button state
@@ -1467,7 +1667,7 @@
         });
 
         // Receipt Modal Close Button
-        receiptCloseBtn.addEventListener('click', hideReceipt);
+        receiptCloseBtn.addEventListener('click', () => hideModal(receiptModal));
 
         // Print Button inside Receipt Modal
         printReceiptFromModalBtn.addEventListener('click', () => {
@@ -1477,13 +1677,18 @@
         // Close modal when clicking outside of it
         window.addEventListener('click', (event) => {
             if (event.target === receiptModal) {
-                hideReceipt();
+                hideModal(receiptModal);
             }
             if (event.target === managerApprovalModal) {
                 // Clicking outside the manager approval modal should also close it and cancel the action
-                managerApprovalModal.classList.add("hidden");
+                hideModal(managerApprovalModal);
                 showToast('Manager approval cancelled.', 'info');
                 // No need to execute pendingAction here as it was cancelled
+            }
+            if (event.target === cashierLoginDiv && !cashierLoginDiv.classList.contains('hidden')) {
+                // Prevent closing login modal by clicking outside if it's visible and not hidden
+                // This enforces login
+                return; 
             }
         });
 
@@ -1535,8 +1740,8 @@
 
         // --- Keyboard Shortcuts ---
         document.addEventListener('keydown', (event) => {
-            // Only allow POS shortcuts if cashier is logged in
-            if (!currentCashier) return;
+            // Only allow POS shortcuts if cashier is logged in AND login modal is hidden
+            if (!currentCashier || cashierLoginDiv.classList.contains('show')) return;
 
             // Enter to add item (from search bar)
             if (event.key === 'Enter' && productSearchInput === document.activeElement) {
@@ -1564,7 +1769,7 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Keep input focused for USB barcode scanner entry
+            // Initial focus for USB barcode scanner entry
             const input = document.getElementById("cashierCode");
             input.focus();
             input.addEventListener("blur", () => setTimeout(() => input.focus(), 100));
@@ -1574,7 +1779,7 @@
             if (storedCashier) {
                 currentCashier = JSON.parse(storedCashier);
                 cashierNameDisplay.textContent = currentCashier.name;
-                cashierLoginDiv.classList.add("hidden"); // Hide login screen if already logged in
+                hideModal(cashierLoginDiv); // Hide login screen with animation
                 mainPosContent.classList.remove("hidden"); // Show main POS content
                 // Setup real-time listener for products after successful login
                 productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
@@ -1586,8 +1791,10 @@
                     console.error("Error listening to products collection:", error);
                     showToast("Failed to get real-time product updates. Please check console.", "error");
                 });
+                // Start inactivity timer on successful load if already logged in
+                startInactivityTimer();
             } else {
-                cashierLoginDiv.classList.remove("hidden"); // Show login screen
+                showModal(cashierLoginDiv); // Show login screen with animation
                 mainPosContent.classList.add("hidden"); // Hide main POS content
                 cashierNameDisplay.textContent = "Please Log In";
                 cashierCodeInput.focus();
