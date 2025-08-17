@@ -308,57 +308,89 @@
     <div id="toast-container"></div>
 
     <script type="module">
+        //
+        // 🔑 Firebase Security Rules (IMPORTANT!) 🔑
+        //
+        // You are encountering "Missing or insufficient permissions" because your Firestore
+        // database rules are not configured to allow the application to read and write data.
+        //
+        // To fix this, you need to go to your Firebase project console:
+        // 1. Go to Firestore Database -> Rules tab.
+        // 2. Replace the existing rules with the following for development purposes.
+        //    (For production, you'll need more refined rules based on authentication.)
+        //
+        // rules_version = '2';
+        // service cloud.firestore {
+        //   match /databases/{database}/documents {
+        //     // Allow read and write access to 'products', 'sales', 'users', and 'managerLogs'
+        //     // for any authenticated user. For testing, you might even allow unauthenticated access
+        //     // but ensure to tighten this for production!
+        //     match /{document=**} {
+        //       allow read, write: if true; // WARNING: This allows anyone to read/write!
+        //                                   // Use this ONLY for initial setup/testing.
+        //                                   // For production, consider: allow read, write: if request.auth != null;
+        //     }
+        //
+        //     // More specific rules (example for authenticated users):
+        //     // match /products/{productId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /sales/{saleId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /users/{userId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //     // match /managerLogs/{logId} {
+        //     //   allow read, write: if request.auth != null;
+        //     // }
+        //   }
+        // }
+        //
+        // After updating the rules, publish them. Your application should then be able to
+        // interact with Firestore correctly.
+        //
+
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Firebase config (yours)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUNs3WYS2mkvPvzRDfhyZFUbP2XpZjDQg",
+            authDomain: "retailflow-pos-11726.firebaseapp.com",
+            projectId: "retailflow-pos-11726",
+            storageBucket: "retailflow-pos-11726.firebasestorage.app",
+            messagingSenderId: "309314798354",
+            appId: "1:309314798354:web:30784c2b2e7e42168629cb"
+        };
+
+        // Initialize Firebase + Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Firestore collection references
+        const productsCol = collection(db, "products");
+        const salesCol = collection(db, "sales");
+        const usersCol = collection(db, "users"); // Users collection reference
+        const managerLogsCol = collection(db, "managerLogs"); // New: Manager Logs collection reference
+
         // --- Product Database (Initial Data) ---
-        // This will be loaded from localStorage if available, otherwise initialized
-        let products = [
-            { id: '1001', name: 'Safari Pure Milk (500ml)', price: 65.00, vatRate: 0.16, stock: 150 },
-            { id: '1002', name: 'Supa Loaf Bread (400g)', price: 60.00, vatRate: 0.16, stock: 200 },
-            { id: '1003', name: 'Mumias Sugar (1kg)', price: 185.00, vatRate: 0.16, stock: 120 },
-            { id: '1004', name: 'Elianto Cooking Oil (2L)', price: 380.00, vatRate: 0.16, stock: 80 },
-            { id: '1005', name: 'Pishori Rice (2kg)', price: 270.00, vatRate: 0.16, stock: 100 },
-            { id: '1006', name: 'Kienyeji Eggs (Tray of 30)', price: 420.00, vatRate: 0.16, stock: 60 },
-            { id: '1007', name: 'Fresh Tomatoes (1kg)', price: 90.00, vatRate: 0.16, stock: 40 },
-            { id: '1008', name: 'Irish Potatoes (1kg)', price: 75.00, vatRate: 0.16, stock: 70 },
-            { id: '1009', name: 'Lifebuoy Soap (175g)', price: 55.00, vatRate: 0.16, stock: 200 },
-            { id: '1010', name: 'Colgate Toothpaste (100ml)', price: 120.00, vatRate: 0.16, stock: 150 },
-            { id: '1011', name: 'Nescafe Classic Coffee (100g)', price: 250.00, vatRate: 0.16, stock: 90 },
-            { id: '1012', name: 'Ketepa Tea Bags (100pcs)', price: 160.00, vatRate: 0.16, stock: 130 },
-            { id: '1013', name: 'Del Monte Orange Juice (1L)', price: 140.00, vatRate: 0.16, stock: 110 },
-            { id: '1014', name: 'Brookside Yogurt (450g)', price: 95.00, vatRate: 0.16, stock: 100 },
-            { id: '1015', name: 'Weetabix Cereal (450g)', price: 300.00, vatRate: 0.16, stock: 75 },
-            { id: '1016', name: 'Kimbo Cooking Fat (500g)', price: 150.00, vatRate: 0.16, stock: 100 },
-            { id: '1017', name: 'Blue Band Margarine (250g)', price: 110.00, vatRate: 0.16, stock: 120 },
-            { id: '1018', name: 'Royco Mchuzi Mix (200g)', price: 80.00, vatRate: 0.16, stock: 180 },
-            { id: '1019', name: 'Omo Washing Powder (1kg)', price: 280.00, vatRate: 0.16, stock: 90 },
-            { id: '1020', name: 'Sunlight Dishwashing Liquid (500ml)', price: 130.00, vatRate: 0.16, stock: 140 },
-            { id: '1021', name: 'Coca-Cola (500ml)', price: 70.00, vatRate: 0.16, stock: 250 },
-            { id: '1022', name: 'Fanta Orange (500ml)', price: 70.00, vatRate: 0.16, stock: 230 },
-            { id: '1023', name: 'Keringet Water (1L)', price: 60.00, vatRate: 0.16, stock: 300 },
-            { id: '1024', name: 'Tusker Lager (500ml)', price: 200.00, vatRate: 0.16, stock: 100 },
-            { id: '1025', name: 'Guinness Stout (500ml)', price: 220.00, vatRate: 0.16, stock: 80 },
-            { id: '1026', name: 'Huggies Diapers (Size 4, 50pcs)', price: 1200.00, vatRate: 0.16, stock: 50 },
-            { id: '1027', name: 'Always Sanitary Pads (Normal, 10pcs)', price: 180.00, vatRate: 0.16, stock: 150 },
-            { id: '1028', name: 'Nivea Body Lotion (400ml)', price: 450.00, vatRate: 0.16, stock: 70 },
-            { id: '1029', name: 'Vaseline Petroleum Jelly (250g)', price: 280.00, vatRate: 0.16, stock: 110 },
-            { id: '1030', name: 'Bic Pens (Blue, 5pcs)', price: 100.00, vatRate: 0.16, stock: 300 },
-        ];
+        // This will now be loaded from Firestore
+        let products = []; 
 
         // --- Global Variables ---
         let cart = []; // Stores items currently in the cart
         let selectedPaymentMethod = null;
         let transactionIdCounter = 1000; // Simple counter for transaction IDs
         let pendingApprovalAction = null; // Stores the function to execute after manager approval
+        let pendingApprovalActionDetails = { action: '', itemName: '' }; // Stores details for logging manager action
         let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
         let html5QrcodeScanner; // Declare product scanner variable globally
         let html5QrcodeManagerScanner; // Declare manager scanner variable globally
         let isScanningProduct = false; // Flag to prevent multiple product scans simultaneously
         let isScanningManager = false; // Flag to prevent multiple manager scans simultaneously
-
-        // --- Manager Credentials (Hardcoded for demo) ---
-        const MANAGER_CREDENTIALS = {
-            cardId: 'MANAGER123', // Dummy manager card ID for scanning
-            code: '0000'
-        };
+        let lastScannedCode = null; // New: Debounce variable for product scanner
 
         // --- DOM Elements ---
         const productSearchInput = document.getElementById('productSearch');
@@ -563,9 +595,9 @@
 
             // Attach event listeners to new "Add" buttons
             document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
+                button.addEventListener('click', async (event) => { // Made async to handle potential stock updates
                     const productId = event.target.dataset.productId;
-                    addToCart(productId);
+                    await addToCart(productId); // Await addToCart
                     productSearchInput.value = ''; // Clear search bar
                     searchResultsDiv.classList.add('hidden'); // Hide search results
                 });
@@ -576,7 +608,7 @@
          * Adds a product to the cart or increments its quantity.
          * @param {string} productId - The ID of the product to add.
          */
-        function addToCart(productId) {
+        async function addToCart(productId) {
             const productToAdd = products.find(p => p.id === productId);
             if (!productToAdd) {
                 showToast(`Product with ID ${productId} not found.`, 'error');
@@ -604,7 +636,6 @@
             }
             updateCartDisplay();
             calculateTotals();
-            saveTransactionLocally(); // Save cart state
         }
 
         /**
@@ -631,15 +662,18 @@
                         cart.splice(itemIndex, 1); // Remove item
                         updateCartDisplay();
                         calculateTotals();
-                        saveTransactionLocally();
                         showToast(`${removedItemName} removed from cart.`, 'info');
+                    };
+                    // Set details for logging
+                    pendingApprovalActionDetails = { 
+                        action: 'Adjust Quantity to Zero/Remove', 
+                        itemName: currentItem.product.name 
                     };
                     showManagerApprovalModal();
                 } else {
                     currentItem.quantity += change;
                     updateCartDisplay();
                     calculateTotals();
-                    saveTransactionLocally();
                     showToast(`${currentItem.product.name} quantity updated.`, 'info');
                 }
             }
@@ -657,8 +691,12 @@
                 cart = cart.filter(item => item.product.id !== productId);
                 updateCartDisplay();
                 calculateTotals();
-                saveTransactionLocally();
                 showToast(`${itemToRemove.product.name} removed from cart.`, 'info');
+            };
+            // Set details for logging
+            pendingApprovalActionDetails = { 
+                action: 'Remove Item', 
+                itemName: itemToRemove.product.name 
             };
             showManagerApprovalModal();
         }
@@ -718,7 +756,7 @@
          * Generates the HTML content for the receipt.
          * @returns {string} HTML string of the receipt.
          */
-        function generateReceiptContent() {
+        async function generateReceiptContent() { 
             const now = new Date();
             const transactionId = `TXN-${transactionIdCounter}`;
             transactionIdCounter++; // Increment for next transaction
@@ -727,7 +765,7 @@
             const storeAddress = "123 Market Street, Nairobi, Kenya";
             const storeEmail = "info@princealexstore.com";
             const cashierName = cashierNameDisplay.textContent; // Get from display
-            const tillNumber = "001"; // Updated to "001"
+            const tillNumber = "001"; 
             const serialNumber = "SN-POS-2024-001"; // Placeholder
             const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
             const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
@@ -782,7 +820,7 @@
             // Construct the sale object to save
             const saleData = {
                 invoiceNo: transactionId,
-                timestamp: now.toISOString(), // Use ISO string for localStorage
+                timestamp: now.toISOString(), // Use ISO string for Firestore
                 cashierName: cashierName,
                 tillNumber: tillNumber,
                 cartItems: salesCartItems, // Store the simplified cart items
@@ -799,7 +837,11 @@
                 cuDate: cuDate,
                 printedDate: printedDate
             };
-            saveSaleToLocalStorage(saleData); // Save the completed sale
+            
+            // Save the completed sale to Firestore
+            await saveSaleToFirestore(saleData); 
+            // Update stock in Firestore
+            await updateStockAfterSale(saleData.cartItems);
 
             return `
                 <div class="text-center mb-4">
@@ -898,8 +940,8 @@
         /**
          * Displays the receipt modal with generated content.
          */
-        function showReceipt() {
-            receiptContentBody.innerHTML = generateReceiptContent();
+        async function showReceipt() { 
+            receiptContentBody.innerHTML = await generateReceiptContent(); 
             receiptModal.style.display = 'flex'; // Show the modal
         }
 
@@ -918,8 +960,7 @@
                 showToast('Cart is empty. Nothing to print.', 'warning');
                 return;
             }
-            showReceipt(); // Show the receipt modal first
-            // Use a small delay to ensure modal is fully rendered before printing
+            showReceipt(); 
             setTimeout(() => {
                 const printContents = receiptContentBody.innerHTML;
                 const originalContents = document.body.innerHTML;
@@ -989,24 +1030,86 @@
         function hideManagerApprovalModal() {
             managerApprovalModal.style.display = 'none';
             pendingApprovalAction = null; // Clear pending action
+            pendingApprovalActionDetails = { action: '', itemName: '' }; // Clear details
             stopManagerScanner(); // Ensure manager scanner is stopped when modal closes
         }
 
         /**
-         * Validates manager credentials and executes the pending action if approved.
+         * Validates manager credentials from Firestore.
+         * @param {string} cardId - The card ID entered or scanned.
+         * @param {string} code - The code entered.
+         * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
          */
-        function validateManagerApproval() {
+        async function validateManager(cardId, code) {
+            try {
+                const q = query(usersCol, where("role", "==", "manager"));
+                const snapshot = await getDocs(q);
+
+                let approved = false;
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if ((cardId && data.cardId === cardId) || (code && data.code === code)) {
+                        approved = true;
+                    }
+                });
+                return approved;
+            } catch (error) {
+                console.error("Error validating manager credentials:", error);
+                showToast("Error verifying manager. Please try again.", "error");
+                return false;
+            }
+        }
+
+        /**
+         * Logs a manager approval action to Firestore.
+         * @param {string} managerIdentifier - The card ID or code used by the manager.
+         * @param {string} action - The action approved (e.g., "Remove Item", "Adjust Quantity Down").
+         * @param {string} itemName - The name of the item involved in the action.
+         * @param {string} cashierName - The name of the cashier.
+         */
+        async function logManagerApproval(managerIdentifier, action, itemName, cashierName) {
+            try {
+                await addDoc(managerLogsCol, {
+                    managerIdentifier: managerIdentifier,
+                    action: action,
+                    item: itemName,
+                    cashier: cashierName,
+                    timestamp: new Date().toISOString()
+                });
+                console.log("Manager approval logged to Firestore.");
+            } catch (error) {
+                console.error("Error logging manager approval:", error);
+                showToast("Failed to log manager approval action.", "error");
+            }
+        }
+
+        /**
+         * Validates manager approval for certain actions.
+         */
+        async function validateManagerApproval() { 
             const cardId = managerCardIdInput.value.trim();
             const code = managerCodeInput.value.trim();
 
-            if (cardId === MANAGER_CREDENTIALS.cardId || code === MANAGER_CREDENTIALS.code) {
+            const approved = await validateManager(cardId, code);
+
+            if (approved) {
                 hideManagerApprovalModal();
                 if (pendingApprovalAction) {
                     pendingApprovalAction(); // Execute the stored action (remove item/update quantity)
                     showToast('Manager approval successful!', 'success');
+                    
+                    // Log the manager approval
+                    const managerIdentifier = cardId || code; // Use whichever was provided
+                    const cashierName = cashierNameDisplay.textContent;
+                    await logManagerApproval(
+                        managerIdentifier, 
+                        pendingApprovalActionDetails.action, 
+                        pendingApprovalActionDetails.itemName, 
+                        cashierName
+                    );
                 }
             } else {
-                showToast('Invalid Manager Card ID or Code. Please try again.', 'error');
+                showToast('Invalid Manager credentials. Please try again.', 'error');
                 managerCardIdInput.value = '';
                 managerCodeInput.value = '';
                 managerCardIdInput.focus();
@@ -1014,83 +1117,56 @@
         }
 
         /**
-         * Saves the current cart and transaction details to local storage.
-         * This now also saves the completed sale to a sales history array.
+         * Loads products from Firestore.
          */
-        function saveTransactionLocally() {
-            // Save current cart state (for persistence if page reloads mid-transaction)
-            const currentTransactionData = {
-                cart: cart,
-                lastTransactionId: transactionIdCounter,
-                selectedPaymentMethod: selectedPaymentMethod,
-                paymentConfirmed: paymentConfirmed
-            };
-            localStorage.setItem('princeAlexPOS_current_transaction', JSON.stringify(currentTransactionData));
-
-            // Also save the current products array (with updated stock)
-            localStorage.setItem('princeAlexPOS_products', JSON.stringify(products));
+        async function loadProducts() {
+            try {
+                const snapshot = await getDocs(productsCol);
+                products = snapshot.docs.map(doc => ({
+                    id: doc.id, // Firestore doc ID = barcode or productId
+                    ...doc.data()
+                }));
+                console.log("Products loaded:", products);
+                updateCartDisplay();
+                calculateTotals();
+            } catch (error) {
+                console.error("Error loading products from Firestore:", error);
+                showToast("Failed to load products. Please check console.", "error");
+            }
         }
 
         /**
-         * Loads the last saved transaction from local storage.
+         * Updates stock in Firestore after a sale.
+         * @param {Array<object>} cartItems - Items in the completed sale.
          */
-        function loadTransactionLocally() {
-            // Load products first
-            const savedProducts = localStorage.getItem('princeAlexPOS_products');
-            if (savedProducts) {
-                products = JSON.parse(savedProducts);
-            }
-
-            // Load current transaction state
-            const savedCurrentTransactionData = localStorage.getItem('princeAlexPOS_current_transaction');
-            if (savedCurrentTransactionData) {
-                const transactionData = JSON.parse(savedCurrentTransactionData);
-                cart = transactionData.cart || [];
-                transactionIdCounter = transactionData.lastTransactionId || 1000;
-                selectedPaymentMethod = transactionData.selectedPaymentMethod || null;
-                paymentConfirmed = transactionData.paymentConfirmed || false;
-
-                // Re-apply payment method styling if any was selected
-                if (selectedPaymentMethod) {
-                    document.querySelectorAll('.payment-btn').forEach(btn => {
-                        if (btn.id === `pay${selectedPaymentMethod}Btn`) {
-                            btn.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
-                        } else {
-                            btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
-                        }
+        async function updateStockAfterSale(cartItems) {
+            for (let item of cartItems) {
+                const productRef = doc(db, "products", item.id);
+                const productInDb = products.find(p => p.id === item.id); // Find the current product in our local 'products' array
+                if (productInDb) {
+                    const newStock = productInDb.stock - item.quantity;
+                    await updateDoc(productRef, {
+                        stock: newStock >= 0 ? newStock : 0 // Ensure stock doesn't go negative in DB
                     });
-                    if (selectedPaymentMethod === 'Cash') {
-                        cashPaymentSection.classList.remove('hidden');
-                        digitalPaymentStatusDiv.classList.add('hidden');
-                    } else {
-                        cashPaymentSection.classList.add('hidden');
-                        digitalPaymentStatusDiv.classList.remove('hidden');
-                        digitalPaymentMessage.textContent = `${selectedPaymentMethod} Payment Confirmed!`;
-                        digitalPaymentDetails.textContent = ''; // Clear details on load, as they are dynamic
-                    }
+                    // Also update the local 'products' array to reflect new stock
+                    productInDb.stock = newStock >= 0 ? newStock : 0;
                 }
             }
+            console.log("Stock updated in Firestore.");
         }
 
         /**
-         * Saves a completed sale transaction to local storage history.
+         * Saves a completed sale transaction to Firestore.
          * @param {object} saleData - The completed sale object.
          */
-        function saveSaleToLocalStorage(saleData) {
-            let salesHistory = JSON.parse(localStorage.getItem('princeAlexPOS_sales_history') || '[]');
-            salesHistory.push(saleData);
-            localStorage.setItem('princeAlexPOS_sales_history', JSON.stringify(salesHistory));
-            console.log("Sale saved to local storage history:", saleData);
-
-            // Update product stock in localStorage
-            saleData.cartItems.forEach(soldItem => {
-                const productInDb = products.find(p => p.id === soldItem.id);
-                if (productInDb) {
-                    productInDb.stock -= soldItem.quantity;
-                    if (productInDb.stock < 0) productInDb.stock = 0; // Prevent negative stock
-                }
-            });
-            localStorage.setItem('princeAlexPOS_products', JSON.stringify(products));
+        async function saveSaleToFirestore(saleData) {
+            try {
+                await addDoc(salesCol, saleData);
+                console.log("Sale saved to Firestore:", saleData);
+            } catch (error) {
+                console.error("Error saving sale to Firestore:", error);
+                showToast("Failed to save sale. Please check console.", "error");
+            }
         }
 
 
@@ -1112,7 +1188,6 @@
             digitalPaymentDetails.textContent = '';
             updateCartDisplay();
             calculateTotals();
-            saveTransactionLocally(); // Clear current transaction state and save updated products
         }
 
         // --- Product Barcode Scanner Functions ---
@@ -1129,16 +1204,17 @@
             stopScannerBtn.classList.remove('hidden'); // Show the stop button
 
             // Define what happens when a barcode is successfully scanned
-            function onScanSuccess(decodedText, decodedResult) {
-                // Only process if not debouncing
-                if (isScanningProduct) { // Check the flag again
-                    console.log(`Scanned code: ${decodedText}`);
+            async function onScanSuccess(decodedText, decodedResult) {
+                // Debounce logic: only process if different from last scanned or if enough time has passed
+                if (!lastScannedCode || lastScannedCode !== decodedText) {
+                    lastScannedCode = decodedText;
                     playBeep(); // Play beep sound on success
-                    stopScanner(); // Stop scanning after first match
-                    addToCart(decodedText); // Call your function to handle the product
+                    await addToCart(decodedText); // Call your function to handle the product
                     productSearchInput.value = decodedText; // Populate search input with scanned code
-                    productSearchInput.dispatchEvent(new Event('input')); // Trigger search
+                    // Set a timeout to clear the lastScannedCode after a debounce period (e.g., 800ms)
+                    setTimeout(() => { lastScannedCode = null; }, 800); 
                 }
+                // Do NOT stop scanner here; allow continuous scanning
             }
 
             // Define what happens when scan error occurs
@@ -1148,10 +1224,10 @@
 
             // Define the scanner
             html5QrcodeScanner = new Html5Qrcode("reader");
-            // Optimized config: Higher FPS, slightly larger QR box, disableFlip
+            // Optimized config: Higher FPS, smaller QR box, disableFlip
             const config = { 
-                fps: 15, 
-                qrbox: { width: 280, height: 280 },
+                fps: 30, // Increased FPS for smoother scanning
+                qrbox: { width: 200, height: 200 }, // Reduced QR box size for faster decode
                 disableFlip: true // Can improve performance on some devices
             };
 
@@ -1181,11 +1257,13 @@
                     showToast("Product scanner stopped.", "info");
                     isScanningProduct = false; // Reset scanning flag
                     productScannerMessage.classList.add('hidden'); // Hide message
+                    lastScannedCode = null; // Reset debounce variable when scanner is explicitly stopped
                 }).catch(err => {
                     console.error("Error stopping scanner:", err);
                     showToast("Error stopping scanner.", "error");
                     isScanningProduct = false; // Reset scanning flag even on stop error
                     productScannerMessage.classList.add('hidden'); // Hide message
+                    lastScannedCode = null; // Reset debounce variable on stop error
                 });
             } else if (html5QrcodeScanner) {
                  // If scanner object exists but isn't scanning, just clear it
@@ -1195,6 +1273,7 @@
                  stopScannerBtn.classList.add('hidden');
                  isScanningProduct = false; // Reset scanning flag
                  productScannerMessage.classList.add('hidden'); // Hide message
+                 lastScannedCode = null; // Reset debounce variable
             }
         }
 
@@ -1212,7 +1291,7 @@
             startManagerScannerBtn.classList.add('hidden'); // Hide start button
 
             function onScanSuccessManager(decodedText, decodedResult) {
-                // Only process if not debouncing
+                // Only process if not debouncing (no explicit debounce for manager as it's a single scan)
                 if (isScanningManager) { // Check the flag again
                     console.log(`Manager Card Scanned: ${decodedText}`);
                     playBeep(); // Play beep sound on success
@@ -1227,10 +1306,10 @@
             }
 
             html5QrcodeManagerScanner = new Html5Qrcode("managerReader");
-            // Optimized config: Higher FPS, slightly larger QR box, disableFlip
+            // Optimized config: Higher FPS, smaller QR box, disableFlip
             const config = { 
-                fps: 15, 
-                qrbox: { width: 220, height: 220 }, // Smaller QR box for manager card
+                fps: 30, // Increased FPS
+                qrbox: { width: 200, height: 200 }, // Smaller QR box for manager card
                 disableFlip: true // Can improve performance on some devices
             }; 
 
@@ -1384,7 +1463,7 @@
         });
 
         // Complete Sale Button
-        completeSaleBtn.addEventListener('click', () => {
+        completeSaleBtn.addEventListener('click', async () => { 
             if (cart.length === 0) {
                 showToast('Cart is empty. Please add items before completing the sale.', 'error');
                 return;
@@ -1400,7 +1479,7 @@
 
             // Simulate sale completion
             showToast(`Sale Completed! Total: ${formatCurrency(grandTotal)}`, 'success');
-            showReceipt(); // Show receipt after sale completion
+            await showReceipt(); // Show receipt after sale completion
             resetPOS(); // Reset POS for next transaction
         });
 
@@ -1483,9 +1562,7 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadTransactionLocally(); // Load any saved cart data
-            updateCartDisplay(); // Render cart on load
-            calculateTotals(); // Calculate totals on load
+            loadProducts(); // Load products from Firestore
         });
     </script>
 </body>
