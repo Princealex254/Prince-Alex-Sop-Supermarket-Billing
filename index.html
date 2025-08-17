@@ -143,15 +143,16 @@
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
     <!-- Cashier Login Screen -->
-    <div id="cashierLogin" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-[1002]">
-        <div class="bg-white p-6 rounded-xl shadow-lg w-80">
-            <h2 class="text-xl font-bold mb-4 text-center">Cashier Login</h2>
-            <input id="cashierCode" type="password" placeholder="Enter PIN or Scan Card"
-                class="w-full border rounded-lg px-3 py-2 mb-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button onclick="cashierLogin()" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition duration-200 shadow-md">Login</button>
-            <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">Invalid code, please try again.</p>
-        </div>
+    <div id="cashierLogin" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[1002]">
+      <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+        <h2 class="text-2xl font-bold mb-4 text-center text-blue-700">Cashier Login</h2>
+        <input id="cashierCode" type="password" 
+          placeholder="Scan Card or Enter PIN"
+          class="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-600">
+        <button onclick="cashierLogin()" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Login</button>
+        <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center">❌ Invalid code, try again</p>
+      </div>
     </div>
 
 
@@ -367,7 +368,7 @@
 
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Firebase config (yours)
         const firebaseConfig = {
@@ -1156,15 +1157,25 @@
 
                 if (found) {
                     currentCashier = found;
-                    // For persistence, we'll use localStorage (adjust for real auth)
+                    // For persistence, we'll use localStorage
                     localStorage.setItem("currentCashier", JSON.stringify(found)); 
                     cashierLoginDiv.classList.add("hidden"); // Hide login screen
                     cashierNameDisplay.textContent = currentCashier.name; // Update display
-                    showToast(`Welcome, ${currentCashier.name}!`, "success");
-                    loadProducts(); // Load products and initialize POS after login
+                    showToast(`✅ Welcome, ${currentCashier.name}!`, "success"); // Use checkmark emoji
+
+                    // Setup real-time listener for products after successful login
+                    productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
+                        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("Products updated in real-time:", products);
+                        updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
+                        calculateTotals();   // Re-calculate totals
+                    }, (error) => {
+                        console.error("Error listening to products collection:", error);
+                        showToast("Failed to get real-time product updates. Please check console.", "error");
+                    });
                 } else {
                     loginErrorMsg.classList.remove("hidden"); // Show error
-                    showToast("Invalid PIN or Card ID.", "error");
+                    showToast("❌ Invalid PIN or Card ID.", "error"); // Use cross emoji
                     cashierCodeInput.value = '';
                     cashierCodeInput.focus();
                 }
@@ -1188,46 +1199,15 @@
             cashierLoginDiv.classList.remove("hidden");
             cashierCodeInput.value = '';
             cashierCodeInput.focus();
-        }
-
-        /**
-         * Loads products from Firestore.
-         */
-        async function loadProducts() {
-            try {
-                const snapshot = await getDocs(productsCol);
-                products = snapshot.docs.map(doc => ({
-                    id: doc.id, // Firestore doc ID = barcode or productId
-                    ...doc.data()
-                }));
-                console.log("Products loaded:", products);
-                updateCartDisplay();
-                calculateTotals();
-            } catch (error) {
-                console.error("Error loading products from Firestore:", error);
-                showToast("Failed to load products. Please check console.", "error");
+            // Important: Stop product snapshot listener on logout to prevent issues
+            if (productsSnapshotUnsubscribe) {
+                productsSnapshotUnsubscribe();
+                productsSnapshotUnsubscribe = null;
             }
         }
 
-        /**
-         * Updates stock in Firestore after a sale.
-         * @param {Array<object>} cartItems - Items in the completed sale.
-         */
-        async function updateStockAfterSale(cartItems) {
-            for (let item of cartItems) {
-                const productRef = doc(db, "products", item.id);
-                const productInDb = products.find(p => p.id === item.id); // Find the current product in our local 'products' array
-                if (productInDb) {
-                    const newStock = productInDb.stock - item.quantity;
-                    await updateDoc(productRef, {
-                        stock: newStock >= 0 ? newStock : 0 // Ensure stock doesn't go negative in DB
-                    });
-                    // Also update the local 'products' array to reflect new stock
-                    productInDb.stock = newStock >= 0 ? newStock : 0;
-                }
-            }
-            console.log("Stock updated in Firestore.");
-        }
+        // Store the unsubscribe function for the product snapshot listener
+        let productsSnapshotUnsubscribe = null;
 
         /**
          * Saves a completed sale transaction to Firestore.
@@ -1652,13 +1632,27 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Keep input focused for USB barcode scanner entry
+            const input = document.getElementById("cashierCode");
+            input.focus();
+            input.addEventListener("blur", () => setTimeout(() => input.focus(), 100));
+
             // Check for a logged-in cashier in localStorage
             const storedCashier = localStorage.getItem("currentCashier");
             if (storedCashier) {
                 currentCashier = JSON.parse(storedCashier);
                 cashierNameDisplay.textContent = currentCashier.name;
                 cashierLoginDiv.classList.add("hidden"); // Hide login screen if already logged in
-                loadProducts(); // Load products and initialize POS
+                // Setup real-time listener for products after successful login
+                productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
+                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log("Products updated in real-time:", products);
+                    updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
+                    calculateTotals();   // Re-calculate totals
+                }, (error) => {
+                    console.error("Error listening to products collection:", error);
+                    showToast("Failed to get real-time product updates. Please check console.", "error");
+                });
             } else {
                 cashierLoginDiv.classList.remove("hidden"); // Show login screen
                 cashierNameDisplay.textContent = "Please Log In";
