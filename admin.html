@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prince Alex Store Admin</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -111,6 +113,7 @@
 </head>
 <body class="bg-gray-100 flex min-h-screen">
 
+    <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-[1002]">
         <div class="bg-white p-6 rounded-xl shadow-lg w-96">
             <h2 class="text-2xl font-bold mb-4 text-center text-red-700">Admin Login</h2>
@@ -123,9 +126,12 @@
         </div>
     </div>
     
+    <!-- Toast Container -->
     <div id="toast-container"></div>
 
+    <!-- Main Admin Panel (Hidden until login) -->
     <div id="adminPanel" class="hidden flex w-full">
+        <!-- Sidebar Navigation -->
         <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4">
             <div class="flex items-center justify-center p-6 border-b border-gray-700">
                 <img src="https://placehold.co/40x40/fff/000?text=A" alt="Admin Icon" class="rounded-full mr-2">
@@ -162,7 +168,9 @@
             </div>
         </aside>
 
+        <!-- Main Content Area -->
         <main class="flex-1 p-6">
+            <!-- Dashboard Section -->
             <section id="dashboard" class="main-content">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,6 +189,7 @@
                 </div>
             </section>
 
+            <!-- Products Management Section -->
             <section id="products" class="main-content hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Products Management</h2>
@@ -209,6 +218,7 @@
                 </div>
             </section>
 
+            <!-- Users Management Section -->
             <section id="users" class="main-content hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Users Management</h2>
@@ -236,6 +246,7 @@
                 </div>
             </section>
 
+            <!-- Sales Reports Section -->
             <section id="sales" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Sales Reports</h2>
                 <div class="flex items-center space-x-4 mb-6">
@@ -266,6 +277,7 @@
                 </div>
             </section>
 
+            <!-- Manager Approvals Section -->
             <section id="manager-logs" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Manager Approvals</h2>
                 <div class="table-container bg-white rounded-lg shadow-md">
@@ -288,6 +300,7 @@
                 </div>
             </section>
             
+            <!-- Audit Logs Section -->
             <section id="audit-logs" class="main-content hidden">
                 <h2 class="text-3xl font-bold mb-6 text-gray-800">Audit Logs</h2>
                 <div class="table-container bg-white rounded-lg shadow-md">
@@ -312,6 +325,9 @@
         </main>
     </div>
 
+    <!-- Modals for Products and Users Management -->
+
+    <!-- Product Modal -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <h3 id="productModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add Product</h3>
@@ -345,6 +361,7 @@
         </div>
     </div>
 
+    <!-- User Modal -->
     <div id="userModal" class="modal">
         <div class="modal-content">
             <h3 id="userModalTitle" class="text-2xl font-bold mb-4 text-gray-800">Add User</h3>
@@ -771,7 +788,8 @@
                     logAudit("Add User", `Added new user: ${name} (${role})`);
                 }
                 closeModal('userModal');
-            } catch (e) {
+            }
+            catch (e) {
                 console.error("Error saving user:", e);
                 showToast("Failed to save user. Check console.", "error");
             }
@@ -992,6 +1010,17 @@
                 adminCodeInput.addEventListener("blur", () => setTimeout(() => adminCodeInput.focus(), 100));
             }
         });
+
+        // Expose functions to the global scope for inline HTML event handlers
+        window.adminLogin = adminLogin;
+        window.adminLogout = adminLogout;
+        window.showSection = showSection;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.editProduct = editProduct;
+        window.deleteProduct = deleteProduct;
+        window.editUser = editUser;
+        window.deleteUser = deleteUser;
 
     </script>
 </body>
