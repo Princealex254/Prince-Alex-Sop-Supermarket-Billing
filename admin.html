@@ -288,7 +288,7 @@
                                 <th class="py-3 px-4 text-left text-sm font-medium">Manager</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Cashier</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Item</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Item</th>
                             </tr>
                         </thead>
                         <tbody id="managerLogsTableBody" class="divide-y divide-gray-200">
@@ -311,7 +311,7 @@
                                 <th class="py-3 px-4 text-left text-sm font-medium">User</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Action</th>
                                 <th class="py-3 px-4 text-left text-sm font-medium">Details</th>
-                                <th class="py-3 px-4 text-left text-sm font-medium">Status</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium rounded-tr-lg">Status</th>
                             </tr>
                         </thead>
                         <tbody id="auditLogsTableBody" class="divide-y divide-gray-200">
@@ -452,7 +452,7 @@
         const productIdInput = document.getElementById('productId');
         const productBarcodeInput = document.getElementById('productBarcode');
         const productNameInput = document.getElementById('productName');
-        const productPriceInput = document.getElementById('productPrice'); // Fixed this line
+        const productPriceInput = document.getElementById('productPrice');
         const productStockInput = document.getElementById('productStock');
         const productVatRateInput = document.getElementById('productVatRate');
 
@@ -656,14 +656,14 @@
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="py-3 px-4 text-gray-800">${product.barcode}</td>
+                    <td class="py-3 px-4 text-gray-800">${product.id}</td>
                     <td class="py-3 px-4 text-gray-800">${product.name}</td>
                     <td class="py-3 px-4 text-gray-700">${formatCurrency(product.price)}</td>
                     <td class="py-3 px-4 text-gray-700">${product.stock}</td>
                     <td class="py-3 px-4 text-gray-700">${(product.vatRate * 100).toFixed(0)}%</td>
                     <td class="py-3 px-4">
-                        <button onclick="editProduct('${product.barcode}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                        <button onclick="deleteProduct('${product.barcode}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                        <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800">Delete</button>
                     </td>
                 `;
                 productsTableBody.appendChild(row);
@@ -674,7 +674,7 @@
         }
 
         async function saveProduct() {
-            const id = productIdInput.value.trim(); // This will be the barcode if editing, or empty if new
+            const id = productIdInput.value.trim();
             const barcode = productBarcodeInput.value.trim();
             const name = productNameInput.value.trim();
             const price = parseFloat(productPriceInput.value);
@@ -687,7 +687,6 @@
             }
 
             try {
-                // If editing an existing product (id will be present and equal to existing barcode)
                 if (id) {
                     await updateDoc(doc(db, "products", id), {
                         barcode, name, price, stock, vatRate
@@ -695,8 +694,9 @@
                     showToast("Product updated successfully!", "success");
                     logAudit("Update Product", `Updated product: ${name} (ID: ${id})`);
                 } else {
-                    // If adding a new product, use the provided barcode as the document ID
-                    await setDoc(doc(db, "products", barcode), {
+                    const newProductRef = doc(productsCol);
+                    await setDoc(newProductRef, {
+                        id: newProductRef.id, // Use the generated ID
                         barcode, name, price, stock, vatRate
                     });
                     showToast("Product added successfully!", "success");
@@ -710,10 +710,10 @@
         }
         
         function editProduct(productId) {
-            const product = products.find(p => p.barcode === productId); // Find by barcode
+            const product = products.find(p => p.id === productId);
             if (product) {
                 productModalTitle.textContent = "Edit Product";
-                productIdInput.value = product.barcode; // Set hidden ID to barcode
+                productIdInput.value = product.id;
                 productBarcodeInput.value = product.barcode;
                 productNameInput.value = product.name;
                 productPriceInput.value = product.price;
@@ -726,7 +726,7 @@
         async function deleteProduct(productId) {
             if (confirm("Are you sure you want to delete this product?")) {
                 try {
-                    await deleteDoc(doc(db, "products", productId)); // Use barcode as ID
+                    await deleteDoc(doc(db, "products", productId));
                     showToast("Product deleted successfully!", "success");
                     logAudit("Delete Product", `Deleted product with ID: ${productId}`);
                 } catch (e) {
