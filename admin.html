@@ -24,6 +24,177 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            /* Admin layout adjustments for mobile */
+            .admin-container {
+                flex-direction: column;
+            }
+            
+            /* Sidebar adjustments for mobile */
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-radius: 1rem 1rem 0 0;
+            }
+            
+            .sidebar nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+            
+            .sidebar nav a {
+                flex: 1;
+                min-width: calc(50% - 0.25rem);
+                padding: 0.75rem 0.5rem;
+                text-align: center;
+                border-radius: 0.75rem;
+            }
+            
+            .sidebar nav a span {
+                font-size: 0.75rem;
+            }
+            
+            /* Main content adjustments for mobile */
+            .main-content {
+                margin: 0.5rem;
+                padding: 1rem;
+                border-radius: 1rem;
+            }
+            
+            /* Header adjustments for mobile */
+            .main-content h2 {
+                font-size: 1.5rem;
+            }
+            
+            .main-content p {
+                font-size: 0.875rem;
+            }
+            
+            /* Table adjustments for mobile */
+            .table-container {
+                max-height: 60vh;
+                font-size: 0.875rem;
+            }
+            
+            .table-container table {
+                font-size: 0.75rem;
+            }
+            
+            .table-container th,
+            .table-container td {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            /* Button adjustments for mobile */
+            .btn-primary,
+            .btn-success,
+            .btn-danger {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+                min-height: 44px; /* Touch-friendly minimum */
+            }
+            
+            /* Modal adjustments for mobile */
+            .modal-content {
+                width: 95%;
+                max-width: none;
+                margin: 1rem;
+                padding: 1rem;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            /* Form adjustments for mobile */
+            .modern-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 0.75rem;
+            }
+            
+            /* Grid adjustments for mobile */
+            .grid {
+                gap: 1rem;
+            }
+            
+            .grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-cols-1.md\\:grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-cols-1.md\\:grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Extra small screens */
+            body {
+                padding: 0.25rem;
+            }
+            
+            .main-content {
+                margin: 0.25rem;
+                padding: 0.75rem;
+            }
+            
+            /* Sidebar for very small screens */
+            .sidebar nav {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .sidebar nav a {
+                min-width: 100%;
+                padding: 0.5rem;
+            }
+            
+            /* Table adjustments for very small screens */
+            .table-container {
+                font-size: 0.75rem;
+            }
+            
+            .table-container th,
+            .table-container td {
+                padding: 0.25rem;
+            }
+            
+            /* Hide some less critical columns on very small screens */
+            .table-container .actions-column {
+                min-width: 80px;
+            }
+            
+            /* Button adjustments for very small screens */
+            .btn-primary,
+            .btn-success,
+            .btn-danger {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+            
+            /* Modal adjustments for very small screens */
+            .modal-content {
+                width: 98%;
+                margin: 0.5rem;
+                padding: 0.75rem;
+            }
+            
+            /* Grid adjustments for very small screens */
+            .grid-cols-1.md\\:grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
         }
 
         .main-content {
@@ -474,9 +645,9 @@
     <div id="toast-container"></div>
 
     <!-- Main Admin Panel (Hidden until login) -->
-    <div id="adminPanel" class="hidden flex w-full">
+    <div id="adminPanel" class="hidden flex flex-col lg:flex-row w-full">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-8 pb-4">
+        <aside class="sidebar text-white flex-shrink-0 flex flex-col pt-4 lg:pt-8 pb-4">
             <div class="flex items-center justify-center p-6 border-b border-gray-600">
                 <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl mr-3 flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,7 +659,7 @@
                     <p class="text-xs text-gray-400">Prince Alex Store</p>
                 </div>
             </div>
-            <nav class="flex-1 mt-8 space-y-1">
+            <nav class="flex-1 mt-4 lg:mt-8 space-y-1 lg:space-y-1">
                 <a href="#" class="flex items-center space-x-4 active" data-section="dashboard">
                     <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
