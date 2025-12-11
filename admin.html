@@ -861,6 +861,7 @@
                                 <th class="text-left">Barcode</th>
                                 <th class="text-left">Product Name</th>
                                 <th class="text-left">Price (KSh)</th>
+                                <th class="text-left">Offer Price (KSh)</th>
                                 <th class="text-left">Stock</th>
                                 <th class="text-left">VAT Rate</th>
                                 <th class="text-left">Actions</th>
@@ -868,7 +869,7 @@
                         </thead>
                         <tbody id="productsTableBody">
                             <tr>
-                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                <td colspan="7" class="py-8 text-center text-gray-500">
                                     <div class="flex flex-col items-center">
                                         <div class="loading-spinner mb-2"></div>
                                         Loading products...
@@ -911,13 +912,15 @@
                                 <th class="text-left">Name</th>
                                 <th class="text-left">Role</th>
                                 <th class="text-left">Card ID</th>
+                                <th class="text-left">Till No.</th>
                                 <th class="text-left">PIN</th>
+                                <th class="text-left">Status</th>
                                 <th class="text-left">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
                             <tr>
-                                <td colspan="5" class="py-8 text-center text-gray-500">
+                                <td colspan="6" class="py-8 text-center text-gray-500">
                                     <div class="flex flex-col items-center">
                                         <div class="loading-spinner mb-2"></div>
                                         Loading users...
@@ -1378,13 +1381,17 @@
                         <input type="text" id="productName" required class="modern-input" placeholder="Enter product name">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <div>
                         <label for="productPrice" class="block text-gray-700 text-sm font-semibold mb-2">Price (KSh)</label>
                         <input type="number" id="productPrice" step="0.01" required class="modern-input" placeholder="0.00">
                     </div>
                     <div>
-                        <label for="productStock" class="block text-gray-700 text-sm font-semibold mb-2">Stock Quantity</label>
+                        <label for="productOfferPrice" class="block text-gray-700 text-sm font-semibold mb-2">Offer Price (KSh)</label>
+                        <input type="number" id="productOfferPrice" step="0.01" class="modern-input" placeholder="e.g., 45.00">
+                    </div>
+                    <div>
+                        <label for="productStock" class="block text-gray-700 text-sm font-semibold mb-2">Stock</label>
                         <input type="number" id="productStock" required class="modern-input" placeholder="0">
                     </div>
                     <div>
@@ -1452,6 +1459,11 @@
                         <input type="password" id="userPin" required class="modern-input" placeholder="Enter 4-digit PIN" maxlength="4">
                         <p class="text-xs text-gray-500 mt-1">Must be exactly 4 digits</p>
                     </div>
+                </div>
+                <div class="mb-6">
+                    <label for="userTillNumber" class="block text-gray-700 text-sm font-semibold mb-2">Till Number</label>
+                    <input type="text" id="userTillNumber" required class="modern-input" placeholder="e.g., 001, 002">
+                    <p class="text-xs text-gray-500 mt-1">Assign a unique till/register number to this user.</p>
                 </div>
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                     <button type="button" onclick="closeModal('userModal')" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200">
@@ -1569,6 +1581,7 @@
         const productNameInput = document.getElementById('productName');
         const productPriceInput = document.getElementById('productPrice');
         const productStockInput = document.getElementById('productStock');
+        const productOfferPriceInput = document.getElementById('productOfferPrice');
         const productVatRateInput = document.getElementById('productVatRate');
 
         // Users Management Elements
@@ -1582,6 +1595,9 @@
         const userRoleInput = document.getElementById('userRole');
         const userCardIdInput = document.getElementById('userCardId');
         const userPinInput = document.getElementById('userPin');
+        const userActiveInput = document.getElementById('userActive');
+
+        const userTillNumberInput = document.getElementById('userTillNumber');
 
         // Sales Reports Elements
         const salesTableBody = document.getElementById('salesTableBody');
@@ -1663,6 +1679,12 @@
             try {
                 const q = query(usersCol, where("role", "==", "admin"));
                 const snapshot = await getDocs(q);
+                // Query for user by PIN or Card ID first
+                const pinQuery = query(usersCol, where("code", "==", code));
+                const cardQuery = query(usersCol, where("cardId", "==", code));
+                
+                const pinSnapshot = await getDocs(pinQuery);
+                const cardSnapshot = await getDocs(cardQuery);
 
                 if (snapshot.empty) {
                     loginErrorMsg.textContent = "❌ No admin users found in database.";
@@ -1670,35 +1692,46 @@
                     showToast("❌ No admin accounts set up!", "error");
                     return;
                 }
+                let userDoc = null;
+                if (!pinSnapshot.empty) {
+                    userDoc = pinSnapshot.docs[0];
+                } else if (!cardSnapshot.empty) {
+                    userDoc = cardSnapshot.docs[0];
+                }
 
-                let found = null;
-                snapshot.forEach(docSnap => {
-                    const user = docSnap.data();
-                    if (user.code === code || user.cardId === code) {
-                        found = { id: docSnap.id, ...user };
+                if (userDoc) {
+                    const user = { id: userDoc.id, ...userDoc.data() };
+                    // Now, check if the found user is an admin
+                    if (user.role === 'admin' && user.active !== false) {
+                        currentAdmin = user;
+                        localStorage.setItem("currentAdmin", JSON.stringify(user));
+                        adminLoginModal.classList.add("hidden");
+                        adminPanel.classList.remove("hidden");
+                        showToast(`✅ Welcome, ${currentAdmin.name}!`, "success");
+                        initializeAdminPanel();
+                    } else if (user.role !== 'admin') {
+                        loginErrorMsg.textContent = `❌ Access Denied. User '${user.name}' is not an admin.`;
+                        loginErrorMsg.classList.remove("hidden");
+                        showToast("❌ You do not have admin privileges.", "error");
+                    } else { // User is inactive
+                        loginErrorMsg.textContent = `❌ Access Denied. User '${user.name}' is inactive.`;
+                        loginErrorMsg.classList.remove("hidden");
+                        showToast("❌ This admin account is inactive.", "error");
                     }
-                });
-
-                if (found) {
-                    currentAdmin = found;
-                    localStorage.setItem("currentAdmin", JSON.stringify(found));
-                    adminLoginModal.classList.add("hidden");
-                    adminPanel.classList.remove("hidden");
-                    showToast(`✅ Welcome, ${currentAdmin.name}!`, "success");
-                    initializeAdminPanel();
                 } else {
+                    // No user found with the provided credentials
                     loginErrorMsg.textContent = "❌ Invalid Admin PIN or Card ID.";
                     loginErrorMsg.classList.remove("hidden");
                     showToast("❌ Invalid Admin PIN or Card ID.", "error");
-                    adminCodeInput.value = '';
-                    adminCodeInput.focus();
                 }
+                adminCodeInput.value = '';
+                adminCodeInput.focus();
 
             } catch (error) {
                 console.error("Error during admin login:", error);
                 loginErrorMsg.textContent = "❌ Login failed due to a system error.";
                 loginErrorMsg.classList.remove("hidden");
-                showToast("⚠️ Login failed. Check console.", "error");
+                showToast("⚠️ Login failed. See console for details.", "error");
             }
         }
         
@@ -1786,6 +1819,9 @@
                     <td class="py-4 px-4 text-gray-800 font-medium">${product.barcode || product.id}</td>
                     <td class="py-4 px-4 text-gray-800">${product.name}</td>
                     <td class="py-4 px-4 text-gray-700 font-semibold">${formatCurrency(product.price)}</td>
+                    <td class="py-4 px-4 text-blue-600 font-semibold">
+                        ${product.offerPrice > 0 ? formatCurrency(product.offerPrice) : '<span class="text-gray-400">N/A</span>'}
+                    </td>
                     <td class="py-4 px-4 text-gray-700">
                         <span class="px-3 py-1 rounded-full text-sm font-medium ${product.stock < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
                             ${product.stock}
@@ -1814,7 +1850,7 @@
             if (products.length === 0) {
                 productsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="py-12 text-center text-gray-500">
+                        <td colspan="7" class="py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center">
                                 <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
@@ -1840,6 +1876,7 @@
             const name = productNameInput.value.trim();
             const price = parseFloat(productPriceInput.value);
             const stock = parseInt(productStockInput.value, 10);
+            const offerPrice = parseFloat(productOfferPriceInput.value) || 0; // Default to 0 if empty
             const vatRate = parseFloat(productVatRateInput.value);
 
             if (!barcode || !name || isNaN(price) || isNaN(stock) || isNaN(vatRate)) {
@@ -1850,15 +1887,14 @@
             try {
                 if (id) {
                     await updateDoc(doc(db, "products", id), {
-                        barcode, name, price, stock, vatRate
+                        barcode, name, price, stock, offerPrice, vatRate
                     });
                     showToast("Product updated successfully!", "success");
                     logAudit("Update Product", `Updated product: ${name} (ID: ${id})`);
                 } else {
                     const newProductRef = doc(productsCol);
                     await setDoc(newProductRef, {
-                        id: newProductRef.id, // Use the generated ID
-                        barcode, name, price, stock, vatRate
+                        id: newProductRef.id, barcode, name, price, stock, offerPrice, vatRate
                     });
                     showToast("Product added successfully!", "success");
                     logAudit("Add Product", `Added new product: ${name}`);
@@ -1879,6 +1915,7 @@
                 productNameInput.value = product.name;
                 productPriceInput.value = product.price;
                 productStockInput.value = product.stock;
+                productOfferPriceInput.value = product.offerPrice || '';
                 productVatRateInput.value = product.vatRate;
                 openModal('productModal');
             }
@@ -1908,6 +1945,12 @@
                     'manager': 'bg-blue-100 text-blue-800',
                     'cashier': 'bg-green-100 text-green-800'
                 };
+                const isActive = user.active !== false; // Treat undefined as active for backward compatibility
+                const statusClass = isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const statusText = isActive ? 'Active' : 'Inactive';
+                const toggleButtonClass = isActive ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200';
+                const toggleButtonText = isActive ? 'Deactivate' : 'Activate';
+
                 row.innerHTML = `
                     <td class="py-4 px-4 text-gray-800 font-medium">${user.name}</td>
                     <td class="py-4 px-4 text-gray-800">
@@ -1916,7 +1959,11 @@
                         </span>
                     </td>
                     <td class="py-4 px-4 text-gray-700">${user.cardId || 'N/A'}</td>
+                    <td class="py-4 px-4 text-gray-700 font-semibold">${user.tillNumber || 'N/A'}</td>
                     <td class="py-4 px-4 text-gray-700 font-mono">${user.code || 'N/A'}</td>
+                    <td class="py-4 px-4">
+                        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">${statusText}</span>
+                    </td>
                     <td class="py-4 px-4">
                         <div class="flex space-x-2">
                             <button onclick="editUser('${user.id}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-200 text-sm font-medium">
@@ -1931,6 +1978,9 @@
                                 </svg>
                                 Delete
                             </button>
+                            <button onclick="toggleUserStatus('${user.id}')" class="px-3 py-1 rounded-lg transition-all duration-200 text-sm font-medium ${toggleButtonClass}">
+                                ${toggleButtonText}
+                            </button>
                         </div>
                     </td>
                 `;
@@ -1939,7 +1989,8 @@
             if (users.length === 0) {
                 usersTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="py-12 text-center text-gray-500">
+                        <td colspan="6" class="py-12 text-center text-gray-500">
+                        <td colspan="7" class="py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center">
                                 <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
@@ -1965,8 +2016,10 @@
             const role = userRoleInput.value;
             const cardId = userCardIdInput.value.trim() || null;
             const code = userPinInput.value.trim();
+            const active = userActiveInput.checked;
+            const tillNumber = userTillNumberInput.value.trim() || null;
 
-            if (!name || !role || !code) {
+            if (!name || !role || !code || !tillNumber) {
                 showToast("Please fill all required fields correctly.", "error");
                 return;
             }
@@ -1976,14 +2029,13 @@
             }
 
             try {
-                const userData = { name, role, cardId, code };
+                const userData = { name, role, cardId, code, tillNumber, active };
                 if (id) {
                     await updateDoc(doc(db, "users", id), userData);
                     showToast("User updated successfully!", "success");
                     logAudit("Update User", `Updated user: ${name} (${role})`);
                 } else {
-                    const newUserRef = doc(usersCol);
-                    await setDoc(newUserRef, { id: newUserRef.id, ...userData });
+                    const newUserRef = await addDoc(usersCol, { ...userData, active: true }); // New users are active by default
                     showToast("User added successfully!", "success");
                     logAudit("Add User", `Added new user: ${name} (${role})`);
                 }
@@ -2004,6 +2056,8 @@
                 userRoleInput.value = user.role;
                 userCardIdInput.value = user.cardId || '';
                 userPinInput.value = user.code;
+                userTillNumberInput.value = user.tillNumber || '';
+                userActiveInput.checked = user.active !== false; // Default to checked if 'active' is not defined
                 openModal('userModal');
             }
         }
@@ -2021,6 +2075,26 @@
             }
         }
 
+        async function toggleUserStatus(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            const newStatus = !(user.active !== false); // Toggle the status
+            const action = newStatus ? "activate" : "deactivate";
+
+            if (confirm(`Are you sure you want to ${action} the user "${user.name}"?`)) {
+                try {
+                    await updateDoc(doc(db, "users", userId), { active: newStatus });
+                    showToast(`User ${user.name} has been ${action}d.`, "success");
+                    logAudit("User Status Change", `${action.charAt(0).toUpperCase() + action.slice(1)}d user: ${user.name}`);
+                } catch (e) {
+                    console.error(`Error ${action}ing user:`, e);
+                    showToast(`Failed to ${action} user.`, "error");
+                }
+            }
+        }
+
+
         // --- Sales Reports Functions ---
         function renderSales(salesData) {
             salesTableBody.innerHTML = '';
@@ -2034,7 +2108,7 @@
                     <td class="py-3 px-4 text-gray-700">${formatCurrency(sale.grandTotal)}</td>
                     <td class="py-3 px-4 text-gray-700">${sale.paymentMethod}</td>
                     <td class="py-3 px-4">
-                        <button onclick="showSaleDetails('${sale.id}')" class="text-blue-600 hover:text-blue-800">View Details</button>
+                        <button onclick="viewSaleDetails('${sale.id}')" class="text-blue-600 hover:text-blue-800">View Details</button>
                     </td>
                 `;
                 salesTableBody.appendChild(row);
@@ -2356,24 +2430,25 @@
         }
 
         // --- Sale Details Functions ---
-        function viewSaleDetails(invoiceNo) {
-            // Sample sale data - in real implementation, this would come from Firestore
-            const sampleSaleData = {
-                invoiceNo: invoiceNo,
-                date: "2025-01-12",
-                time: "14:30:25",
-                cashier: getCashierName(invoiceNo),
-                tillNumber: "001",
-                paymentMethod: getPaymentMethod(invoiceNo),
-                grandTotal: getTotalAmount(invoiceNo),
-                items: getSampleItems(invoiceNo),
-                vatAmount: 0,
-                totalBeforeVat: 0,
-                receivedAmount: 0,
-                balancePaid: 0
+        function viewSaleDetails(saleId) {
+            // Find the sale from the live sales data using its ID
+            const saleData = sales.find(s => s.id === saleId);
+
+            if (!saleData) {
+                showToast("Sale details not found.", "error");
+                return;
+            }
+
+            // Prepare data for display
+            const saleDate = new Date(saleData.timestamp);
+            const displayData = {
+                ...saleData,
+                date: saleDate.toLocaleDateString(),
+                time: saleDate.toLocaleTimeString(),
+                items: saleData.cartItems // Use the cartItems from the sale record
             };
-            
-            displaySaleDetails(sampleSaleData);
+
+            displaySaleDetails(displayData);
             openModal('saleDetailsModal');
         }
         
@@ -2426,10 +2501,6 @@
         
         function displaySaleDetails(saleData) {
             const content = document.getElementById('saleDetailsContent');
-            const totalAmount = saleData.grandTotal;
-            const vatAmount = totalAmount * 0.16;
-            const beforeVat = totalAmount - vatAmount;
-            
             content.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
@@ -2449,11 +2520,11 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Cashier:</span>
-                                <span class="font-semibold">${saleData.cashier}</span>
+                                <span class="font-semibold">${saleData.cashierName}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Till No:</span>
-                                <span class="font-semibold">${saleData.tillNumber}</span>
+                                <span class="font-semibold">${saleData.tillNumber || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -2467,15 +2538,15 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Total Before VAT:</span>
-                                <span class="font-semibold">KSh ${beforeVat.toFixed(2)}</span>
+                                <span class="font-semibold">${formatCurrency(saleData.totalBeforeVat)}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">VAT (16%):</span>
-                                <span class="font-semibold">KSh ${vatAmount.toFixed(2)}</span>
+                                <span class="font-semibold">${formatCurrency(saleData.vatAmount)}</span>
                             </div>
                             <div class="flex justify-between text-lg font-bold border-t pt-2">
                                 <span class="text-gray-800">Grand Total:</span>
-                                <span class="text-green-600">KSh ${totalAmount.toFixed(2)}</span>
+                                <span class="text-green-600">${formatCurrency(saleData.grandTotal)}</span>
                             </div>
                         </div>
                     </div>
@@ -2500,8 +2571,8 @@
                                         <td class="py-2 px-3 text-gray-800">${item.name}</td>
                                         <td class="py-2 px-3 text-gray-600">${item.barcode}</td>
                                         <td class="py-2 px-3 text-center text-gray-700">${item.quantity}</td>
-                                        <td class="py-2 px-3 text-right text-gray-700">KSh ${item.price.toFixed(2)}</td>
-                                        <td class="py-2 px-3 text-right font-semibold text-gray-800">KSh ${item.total.toFixed(2)}</td>
+                                        <td class="py-2 px-3 text-right text-gray-700">${formatCurrency(item.price)}</td>
+                                        <td class="py-2 px-3 text-right font-semibold text-gray-800">${formatCurrency(item.amount)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -2662,6 +2733,7 @@
         window.deleteProduct = deleteProduct;
         window.editUser = editUser;
         window.deleteUser = deleteUser;
+        window.toggleUserStatus = toggleUserStatus;
         window.viewRefundDetails = viewRefundDetails;
         window.approveRefund = approveRefund;
         window.rejectRefund = rejectRefund;
