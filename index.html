@@ -326,45 +326,48 @@
 
     <div id="cashierLogin" class="fixed inset-0 bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-[1002] transition-opacity duration-300">
       <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-96 transition-transform duration-300 transform scale-95 border border-white/20">
-        <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span class="text-white text-2xl">👤</span>
-          </div>
-          <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Cashier Login</h2>
-          <p class="text-gray-600 mt-2">Enter your credentials to access the POS system</p>
-        </div>
-        <div class="space-y-6">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span class="text-gray-400 text-lg">🔐</span>
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Cashier Login</h2>
+                <p class="text-gray-600 mt-2">Enter your credentials to access the POS system</p>
             </div>
-        <input id="cashierCode" type="password" 
-          placeholder="Scan Card or Enter PIN"
-              class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-lg shadow-lg bg-white/80 backdrop-blur-sm transition-all duration-300">
-          </div>
-        <button onclick="cashierLogin()" 
-            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-            <span class="text-xl">🚀</span>
-            <span>Login</span>
-          </button>
-          <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center bg-red-50 p-3 rounded-xl border border-red-200">❌ Invalid code, try again</p>
-        </div>
+            <div class="space-y-6">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <input id="cashierCode" type="password" 
+                        placeholder="Scan Card or Enter PIN"
+                        class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-lg shadow-lg bg-white/80 backdrop-blur-sm transition-all duration-300">
+                </div>
+                <button onclick="cashierLogin()" 
+                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    <span>Login</span>
+                </button>
+                <p id="loginError" class="text-red-600 text-sm mt-2 hidden text-center bg-red-50 p-3 rounded-xl border border-red-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    <span>Invalid code, try again</span>
+                </p>
+            </div>
       </div>
     </div>
 
     <div id="managerApproval" class="manager-approval-modal transition-opacity duration-300">
       <div class="manager-approval-content transition-transform duration-300 bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white/20">
         <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span class="text-white text-2xl">👨‍💼</span>
-          </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            </div>
           <h2 class="text-3xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Manager Approval Required</h2>
           <p class="text-gray-600 mt-2">This action requires manager authorization</p>
         </div>
         <div class="space-y-6">
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span class="text-gray-400 text-lg">🔑</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
             </div>
         <input id="managerCode" type="password" 
           placeholder="Manager PIN or Card ID"
@@ -372,10 +375,10 @@
           </div>
         <button onclick="approveAction()" 
             class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-            <span class="text-xl">✅</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>Approve Action</span>
           </button>
-          <p id="approvalError" class="text-red-600 text-sm mt-2 hidden text-center bg-red-50 p-3 rounded-xl border border-red-200">❌ Invalid Manager Code</p>
+          <p id="approvalError" class="text-red-600 text-sm mt-2 hidden text-center bg-red-50 p-3 rounded-xl border border-red-200">Invalid Manager Code</p>
         </div>
       </div>
     </div>
@@ -383,9 +386,9 @@
     <div id="refundModal" class="manager-approval-modal transition-opacity duration-300">
       <div class="manager-approval-content transition-transform duration-300 bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white/20 max-w-4xl">
         <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span class="text-white text-2xl">↩️</span>
-          </div>
+            <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3"></path></svg>
+            </div>
           <h2 class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">Process Refund</h2>
           <p class="text-gray-600 mt-2">Enter invoice number to process refund</p>
         </div>
@@ -394,7 +397,7 @@
           <!-- Invoice Number Input -->
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span class="text-gray-400 text-lg">🧾</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
             <input id="refundInvoiceNo" type="text" 
               placeholder="Enter Invoice Number (e.g., TXN-20240115-001)"
@@ -404,7 +407,7 @@
           <!-- Search Button -->
           <button id="searchRefundSaleBtn" 
             class="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-            <span class="text-xl">🔍</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <span>Search Sale</span>
           </button>
           
@@ -418,8 +421,8 @@
             <!-- Review Time Notice -->
             <div class="mt-4 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200">
               <div class="flex items-center space-x-3">
-                <span class="text-2xl">⏰</span>
-                <div>
+                  <svg class="w-8 h-8 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div>
                   <p class="font-semibold text-yellow-800">Review Time: 24 Hours</p>
                   <p class="text-sm text-yellow-700">This refund request will be reviewed by management and approved within 24 hours.</p>
                 </div>
@@ -430,12 +433,12 @@
             <div id="refundActionButtons" class="mt-6 flex space-x-4">
               <button id="confirmRefundBtn" 
                 class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
-                <span class="text-lg">📤</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                 <span>Submit Refund Request</span>
               </button>
               <button id="cancelRefundBtn" 
                 class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
-                <span class="text-lg">❌</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 <span>Cancel</span>
               </button>
             </div>
@@ -448,12 +451,49 @@
       </div>
     </div>
 
+    <!-- M-Pesa Payment Modal -->
+    <div id="mpesaModal" class="manager-approval-modal transition-opacity duration-300">
+      <div class="manager-approval-content transition-transform duration-300 bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white/20">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path></svg>
+            </div>
+          <h2 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">M-Pesa Payment</h2>
+          <p class="text-gray-600 mt-2">Enter customer's phone number to send STK push.</p>
+        </div>
+        <div id="mpesaForm" class="space-y-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.46 4.4a1 1 0 01-.275 1.118l-2.238 2.238a11.034 11.034 0 005.574 5.574l2.238-2.238a1 1 0 011.118-.275l4.4 1.46a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+            </div>
+            <input id="mpesaPhoneNumber" type="tel" placeholder="e.g., 0712345678" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-lg shadow-lg bg-white/80 backdrop-blur-sm transition-all duration-300">
+          </div>
+          <button id="initiateMpesaPaymentBtn" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
+            <span>Initiate Payment</span>
+          </button>
+          <div class="relative flex py-2 items-center">
+            <div class="flex-grow border-t border-gray-300"></div>
+            <span class="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+            <div class="flex-grow border-t border-gray-300"></div>
+          </div>
+          <button id="confirmMpesaManualBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3">
+            <span>Confirm Manual Payment</span>
+          </button>
+        </div>
+        <div id="mpesaStatus" class="hidden text-center py-8">
+            <div class="spinner mx-auto mb-4"></div>
+            <p id="mpesaStatusMessage" class="text-gray-700 font-semibold"></p>
+        </div>
+        <button id="cancelMpesaBtn" class="w-full text-center text-gray-500 hover:text-gray-700 mt-4">Cancel</button>
+      </div>
+    </div>
 
-    <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-6 flex items-center justify-between shadow-2xl relative overflow-hidden">
+
+    <header class="sticky top-0 z-50 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-6 flex items-center justify-between shadow-2xl relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-blue-600/20"></div>
         <div class="relative z-10 flex items-center space-x-4">
             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <span class="text-2xl">🏪</span>
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
             </div>
             <div>
                 <h1 class="text-2xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">Prince Alex Store POS</h1>
@@ -471,24 +511,11 @@
                 <!-- Status will be populated by JavaScript -->
             </div>
             
-            <!-- Invoice Counter Status -->
-            <div id="invoiceCounterStatus" class="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/20">
-                <span class="text-sm text-blue-100">Today's Invoices:</span>
-                <span id="invoiceCounterDisplay" class="font-semibold ml-2">Loading...</span>
-            </div>
-            
-            <!-- Scanner Mode Toggle -->
-            <button id="scannerModeBtn" onclick="switchScannerMode()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-white/20 hover:scale-105 flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span class="text-sm">Camera</span>
-            </button>
-            
             <button id="adminPanelBtn" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-white/20 hover:scale-105">Admin Panel</button>
             <button id="logoutBtn" class="bg-red-500/80 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">Logout</button>
-            <button id="settingsBtn" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-white/20 hover:scale-105">⚙️</button>
+            <button id="settingsBtn" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-white/20 hover:scale-105">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
         </div>
     </header>
 
@@ -497,7 +524,7 @@
             <div class="lg:w-2/3 p-4 sm:p-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl lg:rounded-r-none lg:border-r border-gray-200/50 shadow-inner">
                 <div class="flex items-center space-x-3 mb-8">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <span class="text-white text-lg">🛒</span>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Billing Panel</h1>
                 </div>
@@ -505,14 +532,14 @@
                 <div class="mb-8 flex flex-col sm:flex-row items-center gap-4">
                     <div class="search-input-container w-full sm:w-2/3 relative">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span class="text-gray-400 text-lg">🔍</span>
-                    </div>
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
                         <input type="text" id="productSearch" placeholder="Scan barcode or type product name..."
                                class="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-lg shadow-lg bg-white/80 backdrop-blur-sm transition-all duration-300">
                         <button id="clearSearchBtn" class="clear-search-btn absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-2xl transition-colors duration-200">&times;</button>
                     </div>
                     <button onclick="startScanner()" class="w-full sm:w-1/3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
-                        <span class="text-xl">📷</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         <span>Scan Barcode</span>
                     </button>
                 </div>
@@ -524,14 +551,14 @@
                     </div>
                 </div>
                 <button onclick="stopScanner()" id="stopScannerBtn" class="hidden w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-2xl mt-4 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
-                    <span class="text-xl">❌</span>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     <span>Close Scanner</span>
                 </button>
 
                 <div id="searchResults" class="mb-8 hidden">
                     <div class="flex items-center space-x-3 mb-4">
                         <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white text-sm">🔍</span>
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
                         <h2 class="text-xl font-semibold text-gray-700">Search Results</h2>
                     </div>
@@ -542,7 +569,7 @@
                 <div class="mb-8">
                     <div class="flex items-center space-x-3 mb-6">
                         <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white text-sm">🛒</span>
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
                         <h2 class="text-xl font-semibold text-gray-700">Current Cart</h2>
                     </div>
@@ -561,7 +588,7 @@
                                 <tr id="emptyCartMessage">
                                     <td colspan="5" class="py-8 px-6 text-center text-gray-500 bg-gradient-to-br from-gray-50 to-gray-100">
                                         <div class="flex flex-col items-center space-y-2">
-                                            <span class="text-4xl">🛒</span>
+                                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                             <span class="text-lg font-medium">Cart is empty</span>
                                             <span class="text-sm">Add items to get started!</span>
                                         </div>
@@ -576,7 +603,7 @@
             <div class="lg:w-1/3 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl lg:rounded-l-none mt-4 sm:mt-6 lg:mt-0 shadow-inner border border-gray-200/50">
                 <div class="flex items-center justify-center space-x-3 mb-8">
                     <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                        <span class="text-white text-lg">📊</span>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                     </div>
                     <h2 class="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Order Summary</h2>
                 </div>
@@ -584,17 +611,21 @@
                 <div class="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50 mb-6">
                     <div class="space-y-4">
                         <div class="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-                        <span class="text-lg font-medium text-gray-700">Total (Before VAT):</span>
-                            <span id="totalBeforeVat" class="text-lg font-semibold text-gray-900 bg-white px-3 py-1 rounded-lg shadow-sm">KSh 0.00</span>
-                    </div>
-                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
-                        <span class="text-lg font-medium text-gray-700">VAT Amount (<span id="vatRateDisplay">16</span>%):</span>
+                            <span class="text-lg font-medium text-gray-700">Subtotal (Incl. VAT):</span>
+                            <span id="grandTotal" class="text-lg font-semibold text-gray-900 bg-white px-3 py-1 rounded-lg shadow-sm">KSh 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+                            <span class="text-lg font-medium text-gray-700">VAT Amount (<span id="vatRateDisplay">16</span>%):</span>
                             <span id="vatAmount" class="text-lg font-semibold text-gray-900 bg-white px-3 py-1 rounded-lg shadow-sm">KSh 0.00</span>
-                    </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
+                            <span class="text-lg font-medium text-gray-700">Net Amount:</span>
+                            <span id="totalBeforeVat" class="text-lg font-semibold text-gray-900 bg-white px-3 py-1 rounded-lg shadow-sm">KSh 0.00</span>
+                        </div>
                         <div class="border-t-2 border-dashed border-gray-300 my-4"></div>
                         <div class="flex justify-between items-center p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white">
                             <span class="text-xl font-bold">Grand Total:</span>
-                            <span id="grandTotal" class="text-2xl font-extrabold bg-white/20 px-4 py-2 rounded-xl">KSh 0.00</span>
+                            <span id="grandTotalDisplay" class="text-2xl font-extrabold bg-white/20 px-4 py-2 rounded-xl">KSh 0.00</span>
                         </div>
                     </div>
                 </div>
@@ -602,19 +633,51 @@
                 <div class="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50 mb-6">
                     <div class="flex items-center space-x-3 mb-6">
                         <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white text-sm">💳</span>
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                         </div>
                         <h3 class="text-xl font-semibold text-gray-700">Payment Options</h3>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        <button id="payCashBtn" class="payment-btn bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>💵 Cash</button>
-                        <button id="payMpesaBtn" class="payment-btn bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>📱 M-PESA</button>
-                        <button id="payCardBtn" class="payment-btn bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>💳 Card</button>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+                        <!-- CASH -->
+                        <button 
+                            id="payCashBtn"
+                            class="payment-btn w-full flex flex-col items-center justify-center p-6 border rounded-xl hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white" disabled>
+                            <svg class="w-10 h-10 mb-2 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.5"
+                                 viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round"
+                                 d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <p class="text-lg font-medium text-gray-800">Cash</p>
+                        </button>
+
+                        <!-- M-PESA -->
+                        <button 
+                            id="payMpesaBtn"
+                            class="payment-btn w-full flex flex-col items-center justify-center p-6 border-2 border-transparent rounded-xl hover:bg-green-50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white" disabled>
+                            <svg class="w-10 h-10 mb-2 text-green-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                                 viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                            </svg>
+                            <p class="text-lg font-medium text-green-700">M-Pesa</p>
+                        </button>
+
+                        <!-- CARD -->
+                        <button 
+                            id="payCardBtn"
+                            class="payment-btn w-full flex flex-col items-center justify-center p-6 border-2 border-transparent rounded-xl hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white" disabled>
+                            <svg class="w-10 h-10 mb-2 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                                 viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                            </svg>
+                            <p class="text-lg font-medium text-blue-700">Card</p>
+                        </button>
+
                     </div>
 
                     <div id="cashPaymentSection" class="hidden bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-200">
                         <label for="cashReceived" class="block text-gray-700 text-sm font-bold mb-3 flex items-center space-x-2">
-                            <span>💰</span>
+                            <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                             <span>Cash Received (KSh):</span>
                         </label>
                         <input type="number" id="cashReceived" placeholder="Enter amount"
@@ -631,29 +694,39 @@
                     </div>
 
                     <button id="completeSaleBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-2xl text-xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-3" disabled>
-                        <span class="text-2xl">✅</span>
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span>Complete Sale</span>
                     </button>
                 </div>
 
                 <div class="mt-6 flex flex-col space-y-3">
                     <button id="printReceiptBtn" class="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-                        <span class="text-xl">🖨️</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         <span>Print Receipt</span>
                         <span class="text-xs text-gray-300 bg-gray-800 px-2 py-1 rounded">Ctrl+P</span>
                     </button>
                     <button id="cancelSaleBtn" class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-                        <span class="text-xl">❌</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         <span>Cancel Current Sale</span>
                     </button>
                     <button id="refundSaleBtn" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-3">
-                        <span class="text-xl">↩️</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3"></path></svg>
                         <span>Process Refund</span>
                     </button>
                 </div>
             </div>
         </div>
     </main>
+
+    <footer class="bg-black/20 backdrop-blur-sm text-white/80 text-xs p-3 flex items-center justify-between border-t border-white/10">
+        <div>
+            <p class="font-semibold">Prince Alex RetailFlow POS © 2025</p>
+            <p>Version 1.0.0</p>
+        </div>
+        <p>Powered by 
+            <a href="https://www.princealex.pro" target="_blank" class="font-bold text-white hover:underline">Prince Alex Digital</a>
+        </p>
+    </footer>
 
     <div id="receiptModal" class="receipt-modal">
         <div class="receipt-content">
@@ -662,11 +735,11 @@
                 </div>
             <div class="flex space-x-3 mt-4">
                 <button id="printReceiptFromModalBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
-                    <span>🖨️</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     <span>Print</span>
                 </button>
                 <button id="downloadReceiptBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
-                    <span>📥</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>Download</span>
                 </button>
             </div>
@@ -782,6 +855,7 @@
         const vatRateDisplay = document.getElementById('vatRateDisplay'); // New: VAT rate display
         const vatAmountSpan = document.getElementById('vatAmount');
         const grandTotalSpan = document.getElementById('grandTotal');
+        const grandTotalDisplay = document.getElementById('grandTotalDisplay'); // The large total display
         const payCashBtn = document.getElementById('payCashBtn');
         const payMpesaBtn = document.getElementById('payMpesaBtn');
         const payCardBtn = document.getElementById('payCardBtn');
@@ -822,6 +896,15 @@
         const refundError = document.getElementById('refundError');
         const refundSuccess = document.getElementById('refundSuccess');
 
+        // M-Pesa Modal Elements
+        const mpesaModal = document.getElementById('mpesaModal');
+        const mpesaPhoneNumberInput = document.getElementById('mpesaPhoneNumber');
+        const initiateMpesaPaymentBtn = document.getElementById('initiateMpesaPaymentBtn');
+        const confirmMpesaManualBtn = document.getElementById('confirmMpesaManualBtn');
+        const cancelMpesaBtn = document.getElementById('cancelMpesaBtn');
+        const mpesaForm = document.getElementById('mpesaForm');
+        const mpesaStatus = document.getElementById('mpesaStatus');
+        const mpesaStatusMessage = document.getElementById('mpesaStatusMessage');
 
         // Scanner messages 
         const productScannerMessage = document.getElementById('productScannerMessage');
@@ -831,120 +914,76 @@
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
         const digitalPaymentMessage = document.getElementById('digitalPaymentMessage');
         const digitalPaymentDetails = document.getElementById('digitalPaymentDetails');
-        const invoiceCounterDisplay = document.getElementById('invoiceCounterDisplay');
 
 
         // --- Helper Functions ---
         
         /**
-         * Gets the next available invoice number for today using atomic transactions.
-         * Ensures uniqueness across all cashiers in real-time.
+         * Generates a unique, sequential invoice number for the current cashier for the current day.
+         * Uses Firestore transactions for atomic increments.
          */
-        async function getNextInvoiceNumber() {
-            const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const counterDocId = `counter_${todayStr}`;
-            const counterDocRef = doc(invoiceCountersCol, counterDocId);
+        async function generateInvoiceNumber() {
+            if (!currentCashier || !currentCashier.id) {
+                throw new Error("No cashier is logged in.");
+            }
+
+            const cashierId = currentCashier.id;
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const counterDocRef = doc(db, "invoiceCounters", cashierId);
             
             try {
-                // Use atomic transaction to ensure uniqueness
-                const result = await runTransaction(db, async (transaction) => {
+                const newCount = await runTransaction(db, async (transaction) => {
                     const counterDoc = await transaction.get(counterDocRef);
-                    
-                    let currentCount = 1000; // Start from 1000
-                    
-                    if (counterDoc.exists()) {
-                        currentCount = counterDoc.data().count || 1000;
+                    let nextCounter = 1;
+
+                    if (!counterDoc.exists()) {
+                        // First invoice ever for this cashier
+                        transaction.set(counterDocRef, { counter: nextCounter, lastDate: today });
                     } else {
-                        // Create new counter document for today
-                        transaction.set(counterDocRef, {
-                            date: todayStr,
-                            count: 1000,
-                            createdAt: serverTimestamp(),
-                            lastUpdated: serverTimestamp()
-                        });
+                        const data = counterDoc.data();
+                        if (data.lastDate === today) {
+                            // Same day, increment counter
+                            nextCounter = data.counter + 1;
+                        } else {
+                            // New day, reset counter
+                            nextCounter = 1;
+                        }
+                        transaction.update(counterDocRef, { counter: nextCounter, lastDate: today });
                     }
-                    
-                    // Increment counter atomically
-                    const newCount = currentCount + 1;
-                    transaction.update(counterDocRef, {
-                        count: newCount,
-                        lastUpdated: serverTimestamp(),
-                        lastCashier: currentCashier ? currentCashier.name : "Unknown"
-                    });
-                    
-                    return newCount;
+                    return nextCounter;
                 });
-                
-                // Generate invoice number with the atomic counter
-                const invoiceNumber = `TXN-${todayStr}-${String(result).padStart(3, '0')}`;
-                
-                console.log(`Generated unique invoice number: ${invoiceNumber}`);
+
+                // Format the invoice number: INV-YYYYMMDD-CASHIERID-0001
+                const datePart = today.replace(/-/g, '');
+                const cashierPart = currentCashier.name.toUpperCase().replace(/\s/g, '').substring(0, 4);
+                const countPart = String(newCount).padStart(4, '0');
+                const invoiceNumber = `INV-${datePart}-${cashierPart}-${countPart}`;
+
+                // console.log(`Generated unique invoice number: ${invoiceNumber}`);
+                // console.log(`Generated unique invoice number: ${invoiceNumber}`); // Removed for cleaner console
                 return invoiceNumber;
-                
+
             } catch (error) {
                 console.error("Error generating invoice number:", error);
-                
-                // Fallback: Use timestamp-based approach if transaction fails
-                const fallbackNumber = `TXN-${todayStr}-${Date.now().toString().slice(-3)}`;
-                console.warn(`Using fallback invoice number: ${fallbackNumber}`);
+                showToast("Error generating invoice number!", "error");
+                // Fallback to a non-sequential but unique number
+                const fallbackNumber = `FAIL-${Date.now()}`;
+                // console.warn(`Using fallback invoice number: ${fallbackNumber}`);
+                // console.warn(`Using fallback invoice number: ${fallbackNumber}`); // Removed for cleaner console
                 return fallbackNumber;
             }
         }
         
         /**
-         * Monitors invoice counter in real-time and updates the display.
-         */
-        function startInvoiceCounterMonitoring() {
-            const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const counterDocId = `counter_${todayStr}`;
-            const counterDocRef = doc(invoiceCountersCol, counterDocId);
-            
-            // Set up real-time listener for invoice counter
-            const unsubscribe = onSnapshot(counterDocRef, (doc) => {
-                if (doc.exists()) {
-                    const data = doc.data();
-                    const count = data.count || 1000;
-                    const lastCashier = data.lastCashier || "Unknown";
-                    
-                    // Update display with current count and next invoice number
-                    const nextInvoice = `TXN-${todayStr}-${String(count + 1).padStart(3, '0')}`;
-                    invoiceCounterDisplay.innerHTML = `
-                        <span class="text-green-300">${count}</span>
-                        <span class="text-xs text-blue-200 ml-1">(Next: ${nextInvoice})</span>
-                    `;
-                    
-                    // Show toast when counter updates (but not on initial load)
-                    if (count > 1000) {
-                        // Message exists but hidden from user - only logs to console
-                        console.log(`Invoice counter updated: ${count} invoices today`);
-                    }
-                } else {
-                    // Counter doesn't exist yet, show default
-                    const nextInvoice = `TXN-${todayStr}-001`;
-                    invoiceCounterDisplay.innerHTML = `
-                        <span class="text-green-300">0</span>
-                        <span class="text-xs text-blue-200 ml-1">(Next: ${nextInvoice})</span>
-                    `;
-                }
-            }, (error) => {
-                console.error("Error monitoring invoice counter:", error);
-                invoiceCounterDisplay.textContent = "Error";
-            });
-            
-            return unsubscribe;
-        }
-        
-        /**
-         * Resets the auto-logout timer.
          */
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(cashierLogout, INACTIVITY_TIMEOUT_MINUTES * 60 * 1000);
-            console.log("Timer reset");
+            // console.log("Timer reset");
+            // console.log("Timer reset"); // Removed for cleaner console
         }
 
         /**
-         * Detects USB barcode scanner connection and sets up input handling.
          */
         function detectUSBScanner() {
             // Create hidden input for USB scanner
@@ -963,8 +1002,9 @@
             const SCANNER_TIMEOUT = 50; // ms between keystrokes
 
             document.addEventListener('keydown', (e) => {
-                // Skip if it's a special key or modifier
-                if (e.ctrlKey || e.altKey || e.metaKey || e.key === 'Tab' || e.key === 'Enter') {
+                // Only process single-character keys. This ignores "Backspace", "Shift", "Control", etc.
+                // Also ignore if a modifier key is pressed.
+                if (e.key.length > 1 || e.ctrlKey || e.altKey || e.metaKey) {
                     return;
                 }
 
@@ -988,12 +1028,12 @@
             // Monitor USB device connections
             if (navigator.usb) {
                 navigator.usb.addEventListener('connect', () => {
-                    console.log('USB device connected');
+                    // console.log('USB device connected'); // Removed for cleaner console
                     checkForScannerDevice();
                 });
 
                 navigator.usb.addEventListener('disconnect', () => {
-                    console.log('USB device disconnected');
+                    // console.log('USB device disconnected'); // Removed for cleaner console
                     usbScannerConnected = false;
                     updateScannerStatus();
                 });
@@ -1004,11 +1044,11 @@
         }
 
         /**
-         * Checks for connected USB devices that might be scanners.
          */
         async function checkForScannerDevice() {
             if (!navigator.usb) {
-                console.log('WebUSB not supported');
+                // console.log('WebUSB not supported');
+                // console.log('WebUSB not supported'); // Removed for cleaner console
                 return;
             }
 
@@ -1027,19 +1067,21 @@
 
                 if (scannerDevices.length > 0) {
                     usbScannerConnected = true;
-                    console.log('USB Scanner detected:', scannerDevices[0].productName);
+                    // console.log('USB Scanner detected:', scannerDevices[0].productName);
+                    // console.log('USB Scanner detected:', scannerDevices[0].productName); // Removed for cleaner console
                     updateScannerStatus();
                 }
             } catch (error) {
-                console.log('Error checking USB devices:', error);
+                // console.log('Error checking USB devices:', error);
+                console.error('Error checking USB devices:', error); // Keep as error
             }
         }
 
         /**
-         * Handles input from USB barcode scanner.
          */
         function handleUSBScannerInput(scannedCode) {
-            console.log('USB Scanner input:', scannedCode);
+            // console.log('USB Scanner input:', scannedCode);
+            // console.log('USB Scanner input:', scannedCode); // Removed for cleaner console
             
             // Debounce: prevent multiple rapid scans
             if (lastScannedCode === scannedCode) {
@@ -1054,10 +1096,19 @@
 
             // Process the scanned code
             processScannedCode(scannedCode);
+            processScannedCode(scannedCode); // This was the undefined function
         }
 
         /**
-         * Updates the scanner status display.
+         * Processes a scanned barcode by adding the product to the cart.
+         */
+        async function processScannedCode(scannedCode) {
+            playBeep();
+            await addToCart(scannedCode);
+            productSearchInput.value = scannedCode;
+        }
+
+        /**
          */
         function updateScannerStatus() {
             const scannerStatusDiv = document.getElementById('scannerStatus');
@@ -1087,7 +1138,6 @@
         }
 
         /**
-         * Switches between camera and USB scanner modes.
          */
         function switchScannerMode() {
             if (scannerMode === 'camera') {
@@ -1107,7 +1157,6 @@
         }
 
         /**
-         * Updates the scanner mode display.
          */
         function updateScannerModeDisplay() {
             const scannerModeBtn = document.getElementById('scannerModeBtn');
@@ -1132,9 +1181,6 @@
         }
 
         /**
-         * Toggles the visibility and animation of a modal.
-         * @param {HTMLElement} modal - The modal element to toggle.
-         * @param {boolean} show - True to show, false to hide.
          */
         function toggleModal(modal, show) {
             if (show) {
@@ -1144,22 +1190,16 @@
             }
         }
 
-        /**
-         * Displays a toast notification.
-         * @param {string} message - The message to display.
-         * @param {'success'|'error'|'info'|'warning'} type - The type of toast (for styling).
-         * @param {number} duration - How long the toast should be visible in ms.
-         */
         function showToast(message, type = 'info', duration = 3000) {
             const toast = document.createElement('div');
-            const icon = {
-                success: '✅',
-                error: '❌',
-                info: 'ℹ️',
-                warning: '⚠️'
+            const iconHtml = {
+                success: '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>',
+                error: '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>',
+                info: '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>',
+                warning: '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>'
             }[type] || '';
-            toast.className = `toast ${type}`;
-            toast.textContent = `${icon} ${message}`;
+            toast.className = `toast ${type} flex items-center`;
+            toast.innerHTML = `${iconHtml}<span>${message}</span>`;
             toastContainer.appendChild(toast);
 
             // Trigger reflow to ensure transition plays
@@ -1174,7 +1214,6 @@
         }
 
         /**
-         * Plays a simple beep sound.
          */
         function playBeep() {
             try {
@@ -1193,17 +1232,13 @@
                 gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.1); // Short decay
                 oscillator.stop(audioContext.currentTime + 0.1); // Stop after 0.1 seconds
             } catch (e) {
-                console.warn("AudioContext not supported or error playing sound:", e);
+                // console.warn("AudioContext not supported or error playing sound:", e); 
             }
         }
 
         /**
-         * Formats a number to currency string (KSh).
-         * @param {number} amount - The amount to format.
-         * @returns {string} Formatted currency string.
          */
         function formatCurrency(amount) {
-            // Ensure amount is a number and handle potential NaN
             const numAmount = parseFloat(amount);
             if (isNaN(numAmount)) {
                 return 'KSh 0.00';
@@ -1211,63 +1246,56 @@
             return `KSh ${numAmount.toFixed(2)}`;
         }
 
-        /**
-         * Calculates VAT based on price and VAT rate.
-         * Assumes VAT Exclusive pricing (price in DB excludes VAT).
-         * @param {number} price - The price of the item (or subtotal of items).
-         * @param {number} vatRate - The VAT rate (e.g., 0.16 for 16%).
-         * @returns {{netPrice: number, vatAmount: number, total: number}} Object containing net price, VAT amount, and total.
-         */
-        function calculateVAT(price, vatRate) {
-            // Price is VAT Exclusive, add it
-            const vatAmount = price * vatRate;
-            const total = price + vatAmount;
-            return { netPrice: price, vatAmount, total };
+        function calculateVAT(total, vatRate) {
+            // Prices are VAT Inclusive. We need to extract the VAT amount.
+            const vatAmount = total * (vatRate / (1 + vatRate)); // e.g., total * (0.16 / 1.16)
+            const netPrice = total - vatAmount;
+            return { netPrice: netPrice, vatAmount: vatAmount, total: total };
         }
 
         /**
-         * Calculates VAT for a single item.
-         * @param {object} product - The product object.
-         * @param {number} quantity - The quantity of the product.
-         * @returns {number} The calculated VAT amount.
          */
         function calculateItemVat(product, quantity) {
-            const { vatAmount } = calculateVAT(product.price * quantity, vatRate);
+            const { vatAmount } = calculateVAT(product.price * quantity, product.vatRate || vatRate);
             return vatAmount;
         }
 
-        /**
-         * Calculates the subtotal for a single item (price * quantity + item VAT).
-         * @param {object} product - The product object.
-         * @param {number} quantity - The quantity of the product.
-         * @returns {number} The calculated item subtotal.
-         */
         function calculateItemSubtotal(product, quantity) {
-            const { total } = calculateVAT(product.price * quantity, vatRate);
-            return total;
+            // Use offer price if available and valid, otherwise use regular price
+            const priceToUse = (product.offerPrice && product.offerPrice > 0) ? product.offerPrice : product.price;
+            return priceToUse * quantity;
         }
 
         /**
-         * Updates the cart summary (total before VAT, VAT amount, grand total).
-         * Also controls the complete sale button's disabled state.
+         * Calculates the total savings for a cart item if it's on offer.
+         */
+        function calculateItemSavings(product, quantity) {
+            if (product.offerPrice && product.offerPrice > 0) {
+                return (product.price - product.offerPrice) * quantity;
+            }
+            return 0;
+        }
+
+        /**
          */
         function calculateTotals() {
-            let totalBeforeVat = 0; // This will be the net amount
+            let grandTotal = 0;
             let totalVatAmount = 0;
 
             cart.forEach(item => {
-                const itemNetPrice = item.product.price * item.quantity;
-                const { vatAmount } = calculateVAT(itemNetPrice, vatRate);
+                const subtotal = calculateItemSubtotal(item.product, item.quantity);
+                const { vatAmount } = calculateVAT(subtotal, item.product.vatRate || vatRate);
                 
-                totalBeforeVat += itemNetPrice;
+                grandTotal += subtotal;
                 totalVatAmount += vatAmount;
             });
 
-            const grandTotal = totalBeforeVat + totalVatAmount;
+            const totalBeforeVat = grandTotal - totalVatAmount;
 
             totalBeforeVatSpan.textContent = formatCurrency(totalBeforeVat);
             vatAmountSpan.textContent = formatCurrency(totalVatAmount);
             grandTotalSpan.textContent = formatCurrency(grandTotal);
+            grandTotalDisplay.textContent = formatCurrency(grandTotal); // Update the large display
 
             // Logic for enabling/disabling complete sale button
             let enableCompleteSale = false;
@@ -1299,10 +1327,6 @@
             }
         }
 
-        /**
-         * Renders products in the search results list.
-         * @param {Array<object>} filteredProducts - Products to display.
-         */
         function renderProducts(filteredProducts) {
             productResultsList.innerHTML = ''; // Clear previous results
             if (filteredProducts.length === 0) {
@@ -1315,17 +1339,25 @@
                 productDiv.className = 'flex justify-between items-center p-4 border-b border-gray-200/50 last:border-b-0 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer rounded-2xl transition-all duration-300 hover:shadow-lg hover:scale-105 m-2';
                 productDiv.innerHTML = `
                     <div class="flex items-center space-x-4">
-                        <img src="${product.thumbnail || 'https://placehold.co/50x50/E5E7EB/4B5563?text=N/A'}" alt="Product thumbnail" class="w-12 h-12 rounded-xl shadow-md">
+                        <img src="${product.thumbnail || 'https://placehold.co/50x50/E5E7EB/4B5563?text=N/A'}" alt="Product thumbnail" class="w-16 h-16 rounded-xl shadow-md object-cover">
                         <div>
                             <p class="font-semibold text-gray-800 text-lg">${product.name}</p>
                             <p class="text-sm text-gray-500">Barcode: ${product.barcode || 'N/A'}</p>
                             <p class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full inline-block">Stock: ${product.stock}</p>
                         </div>
                     </div>
-                    <button data-product-id="${product.id}" class="add-to-cart-btn bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
-                        <span>➕</span>
-                        <span>Add (KSh ${product.price.toFixed(2)})</span>
-                    </button>
+                    <div class="text-right">
+                        ${product.offerPrice && product.offerPrice > 0 ? `
+                            <p class="text-xl font-bold text-red-600">${formatCurrency(product.offerPrice)}</p>
+                            <p class="text-sm text-gray-500 line-through">${formatCurrency(product.price)}</p>
+                        ` : `
+                            <p class="text-xl font-bold text-gray-800">${formatCurrency(product.price)}</p>
+                        `}
+                        <button data-product-id="${product.id}" class="add-to-cart-btn mt-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm font-bold py-2 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            <span>Add to Cart</span>
+                        </button>
+                    </div>
                 `;
                 productResultsList.appendChild(productDiv);
             });
@@ -1336,6 +1368,7 @@
                     event.preventDefault(); // Prevent any default behavior
                     const productId = button.dataset.productId; // Use button instead of event.target
                     console.log("Button clicked, productId:", productId);
+                    // console.log("Button clicked, productId:", productId); // Removed for cleaner console
                     await addToCart(productId); // Await addToCart
                     productSearchInput.value = ''; // Clear search bar
                     searchResultsDiv.classList.add('hidden'); // Hide search results
@@ -1344,13 +1377,11 @@
             });
         }
 
-        /**
-         * Adds a product to the cart or increments its quantity.
-         * @param {string} productIdOrBarcode - The ID or barcode of the product to add.
-         */
         async function addToCart(productIdOrBarcode) {
-            console.log("addToCart called with:", productIdOrBarcode);
-            console.log("Available products:", products.length);
+            // console.log("addToCart called with:", productIdOrBarcode);
+            // console.log("Available products:", products.length);
+            // console.log("addToCart called with:", productIdOrBarcode); // Removed for cleaner console
+            // console.log("Available products:", products.length); // Removed for cleaner console
             
             // Check if the parameter is valid
             if (!productIdOrBarcode) {
@@ -1360,16 +1391,19 @@
 
             // First try to find by ID (for manual selection)
             let productToAdd = products.find(p => p.id === productIdOrBarcode);
-            console.log("Found by ID:", productToAdd ? productToAdd.name : "Not found");
+            // console.log("Found by ID:", productToAdd ? productToAdd.name : "Not found");
+            // console.log("Found by ID:", productToAdd ? productToAdd.name : "Not found"); // Removed for cleaner console
             
             // If not found by ID, try to find by barcode (for scanned items)
             if (!productToAdd && productIdOrBarcode) {
                 productToAdd = products.find(p => p.barcode && p.barcode === productIdOrBarcode);
-                console.log("Found by barcode:", productToAdd ? productToAdd.name : "Not found");
+                // console.log("Found by barcode:", productToAdd ? productToAdd.name : "Not found");
+                // console.log("Found by barcode:", productToAdd ? productToAdd.name : "Not found"); // Removed for cleaner console
             }
             
             if (!productToAdd) {
-                console.log("Product not found. Available barcodes:", products.map(p => p.barcode));
+                // console.log("Product not found. Available barcodes:", products.map(p => p.barcode));
+                // console.log("Product not found. Available barcodes:", products.map(p => p.barcode)); // Removed for cleaner console
                 showToast(`Product "${productIdOrBarcode}" not found. Please check the barcode or product name.`, 'error');
                 return;
             }
@@ -1397,11 +1431,6 @@
             calculateTotals();
         }
 
-        /**
-         * Updates the quantity of an item in the cart.
-         * @param {string} productId - The ID of the product.
-         * @param {number} change - The amount to change the quantity by (+1 or -1).
-         */
         function updateCartItemQuantity(productId, change) {
             const itemIndex = cart.findIndex(item => item.product.id === productId);
             if (itemIndex > -1) {
@@ -1438,10 +1467,6 @@
             }
         }
 
-        /**
-         * Removes an item from the cart. Requires manager approval.
-         * @param {string} productId - The ID of the product to remove.
-         */
         function removeItemFromCart(productId) {
             const itemToRemove = cart.find(item => item.product.id === productId);
             if (!itemToRemove) return;
@@ -1460,9 +1485,6 @@
             requestManagerApproval(); // Trigger manager approval
         }
 
-        /**
-         * Renders the current items in the cart table.
-         */
         function updateCartDisplay() {
             cartItemsTableBody.innerHTML = ''; // Clear current cart display
 
@@ -1472,7 +1494,8 @@
                 emptyCartMessage.classList.add('hidden');
                 cart.forEach(item => {
                     const itemVat = calculateItemVat(item.product, item.quantity);
-                    const itemSubtotal = calculateItemSubtotal(item.product, item.quantity);
+                    const priceToUse = (item.product.offerPrice && item.product.offerPrice > 0) ? item.product.offerPrice : item.product.price;
+                    const itemSubtotal = priceToUse * item.quantity;
 
                     const row = document.createElement('tr');
                     row.className = 'bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300';
@@ -1489,7 +1512,13 @@
                                 <button data-product-id="${item.product.id}" class="remove-item-btn ml-4 text-red-600 hover:text-red-800 text-2xl transition-colors duration-200">×</button>
                             </div>
                         </td>
-                        <td class="py-4 px-6 text-gray-700 font-medium">${formatCurrency(item.product.price)}</td>
+                        <td class="py-4 px-6 text-gray-700 font-medium">
+                            ${(item.product.offerPrice && item.product.offerPrice > 0) ? `
+                                <span class="text-red-600 font-bold">${formatCurrency(item.product.offerPrice)}</span>
+                                <span class="text-gray-500 line-through text-sm ml-1">${formatCurrency(item.product.price)}</span>
+                            ` : formatCurrency(item.product.price)
+                            }
+                        </td>
                         <td class="py-4 px-6 text-gray-700 font-medium">${formatCurrency(itemVat)}</td>
                         <td class="py-4 px-6 text-gray-900 font-bold text-lg">${formatCurrency(itemSubtotal)}</td>
                     `;
@@ -1514,21 +1543,17 @@
             }
         }
 
-        /**
-         * Generates the HTML content for the receipt.
-         * @returns {string} HTML string of the receipt.
-         */
         async function generateReceiptContent() { 
             const now = new Date();
-            // Generate date-based sequential invoice number: TXN-YYYYMMDD-001
-            const transactionId = await getNextInvoiceNumber();
-            // Note: Counter increment is now handled atomically in getNextInvoiceNumber()
+            // Generate the new per-cashier, daily sequential invoice number
+            const transactionId = await generateInvoiceNumber();
+            if (transactionId.startsWith('FAIL')) return null; // Stop if invoice generation failed
 
             const storeName = "Prince Alex Store";
             const storeAddress = "123 Market Street, Nairobi, Kenya";
             const storeEmail = "info@princealexstore.com";
-            const cashierName = currentCashier ? currentCashier.name : "Unknown"; // Use currentCashier
-            const tillNumber = "001"; 
+            const cashierName = currentCashier ? currentCashier.name : "Unknown";
+            const tillNumber = currentCashier ? currentCashier.tillNumber : "N/A"; // Use the cashier's assigned till number
             const serialNumber = "SN-POS-2024-001"; // Placeholder
             const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
             const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
@@ -1536,6 +1561,7 @@
 
             let itemsTableRows = '';
             let grossSaleValue = 0; // Sum of price * qty (before VAT)
+            let totalSavings = 0; // Placeholder for total savings
 
             // Prepare cart items for saving (simplified structure)
             const salesCartItems = cart.map(item => ({
@@ -1543,10 +1569,16 @@
                 name: item.product.name,
                 barcode: item.product.barcode,
                 quantity: item.quantity,
-                price: item.product.price,
+                price: item.product.price, // Original price
+                offerPrice: item.product.offerPrice || 0, // Offer price
                 vatRate: item.product.vatRate,
                 amount: calculateItemSubtotal(item.product, item.quantity) // Amount includes VAT
             }));
+
+            // Calculate total savings
+            cart.forEach(item => {
+                totalSavings += calculateItemSavings(item.product, item.quantity);
+            });
 
 
             cart.forEach(item => {
@@ -1555,12 +1587,18 @@
 
                 grossSaleValue += itemNetPrice; // Sum of net prices
 
+                const priceUsed = (item.product.offerPrice && item.product.offerPrice > 0) ? item.product.offerPrice : item.product.price;
+                const savings = calculateItemSavings(item.product, item.quantity);
+
                 itemsTableRows += `
                     <tr>
-                        <td class="py-1 px-2 text-left">${item.product.name}</td>
+                        <td class="py-1 px-2 text-left">
+                            ${item.product.name}
+                            ${savings > 0 ? '<br><em class="text-xs text-green-600">(Offer Applied)</em>' : ''}
+                        </td>
                         <td class="py-1 px-2 text-center">${item.product.barcode || 'N/A'}</td>
                         <td class="py-1 px-2 text-center">${item.quantity}</td>
-                        <td class="py-1 px-2 text-right">${item.product.price.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-right">${priceUsed.toFixed(2)}</td>
                         <td class="py-1 px-2 text-right">${itemAmountInclVat.toFixed(2)}</td>
                     </tr>
                 `;
@@ -1583,11 +1621,10 @@
                 paymentDetails = `${selectedPaymentMethod}: ${formatCurrency(grandTotal)}`;
             }
 
-            const totalSavings = 0.00; // Placeholder for total savings
-
             // Construct the sale object to save
             const saleData = {
                 invoiceNo: transactionId,
+                cashierId: currentCashier.id,
                 timestamp: now.toISOString(), // Use ISO string for Firestore
                 cashierName: cashierName,
                 tillNumber: tillNumber,
@@ -1608,7 +1645,7 @@
             
             // Save the completed sale to Firestore
             await saveSaleToFirestore(saleData); 
-            // Update stock in Firestore
+            // Update stock in Firestore (no change needed here)
             await updateStockAfterSale(saleData.cartItems);
 
             return `
@@ -1674,7 +1711,7 @@
                     </div>
                 </div>
                 <hr>
-                <div class="my-4 text-gray-800">
+                <div class="my-4 text-gray-800 text-sm">
                     <h3 class="font-bold text-lg mb-2">Tax Summary:</h3>
                     <div class="flex justify-between mb-1">
                         <span>VAT (${vatRate * 100}% of ${formatCurrency(totalBeforeVat)}):</span>
@@ -1706,9 +1743,6 @@
             `;
         }
 
-        /**
-         * Downloads the receipt as a PDF or HTML file.
-         */
         function downloadReceipt() {
             // Check if receipt modal has content
             if (!receiptContentBody.innerHTML || receiptContentBody.innerHTML.trim() === '') {
@@ -1784,24 +1818,17 @@
             }
         }
 
-        /**
-         * Displays the receipt modal with generated content.
-         */
         async function showReceipt() { 
-            receiptContentBody.innerHTML = await generateReceiptContent(); 
+            const content = await generateReceiptContent();
+            if (!content) return; // Don't show modal if content generation failed
+            receiptContentBody.innerHTML = content; 
             toggleModal(receiptModal, true); // Show the modal with animation
         }
 
-        /**
-         * Hides the receipt modal.
-         */
         function hideReceipt() {
             toggleModal(receiptModal, false); // Hide the modal with animation
         }
 
-        /**
-         * Handles the printing of the receipt.
-         */
         function printReceipt() {
             // Check if receipt modal has content
             if (!receiptContentBody.innerHTML || receiptContentBody.innerHTML.trim() === '') {
@@ -1940,9 +1967,6 @@
             }, 100); // Small delay to ensure modal is visible
         }
 
-        /**
-         * Triggers the manager approval modal for restricted actions.
-         */
         function requestManagerApproval() {
             managerCodeInput.value = ""; // Clear input field
             approvalError.classList.add("hidden"); // Hide previous error
@@ -1950,10 +1974,6 @@
             managerCodeInput.focus(); // Focus on input for scanner/manual entry
         }
 
-        /**
-         * Handles the manager approval process.
-         * This function replaces the previous validateManagerApproval().
-         */
         async function approveAction() {
             const code = managerCodeInput.value.trim();
             approvalError.classList.add("hidden"); // Hide error on new attempt
@@ -1970,8 +1990,8 @@
                     }
                 });
 
-                if (approvedUser) {
-                    toggleModal(managerApprovalModal, false); // Hide approval modal with animation
+                if (approvedUser && approvedUser.active !== false) {
+                    toggleModal(managerApprovalModal, false);
                     showToast(`Approved by ${approvedUser.name}`, "success");
 
                     // Execute the pending action
@@ -1990,7 +2010,8 @@
 
                 } else {
                     approvalError.classList.remove("hidden"); // Show invalid code error
-                    showToast("Invalid Manager Code", "error");
+                    approvalError.textContent = 'Invalid or Inactive Manager Code';
+                    showToast("Invalid or Inactive Manager Code", "error");
                     managerCodeInput.value = ''; // Clear input
                     managerCodeInput.focus(); // Re-focus
                 }
@@ -2000,10 +2021,6 @@
             }
         }
 
-
-        /**
-         * Fetches cashier data from users collection by cardId or code.
-         */
         async function fetchCashierData(cashierCode) {
                 const q = query(usersCol, where("role", "==", "cashier"));
                 const snapshot = await getDocs(q);
@@ -2011,48 +2028,41 @@
                 let found = null;
                 snapshot.forEach(docSnap => {
                     const user = docSnap.data();
-                if (user.code === cashierCode || user.cardId === cashierCode) {
+                    if (user.code === cashierCode || user.cardId === cashierCode) {
                         found = { id: docSnap.id, ...user };
                     }
                 });
 
-            if (found) {
-                return found;
-            } else {
-                throw new Error("Cashier not found in users collection");
-            }
+                if (found && found.active !== false) {
+                    return found;
+                } else {
+                    return null;
+                }
         }
 
-        /**
-         * Logs a cashier in.
-         */
         async function cashierLogin() {
             const code = cashierCodeInput.value.trim();
             loginErrorMsg.classList.add("hidden"); // Hide previous error
 
             try {
-                const found = await fetchCashierData(code);
+                const cashier = await fetchCashierData(code);
 
-                if (found) {
-                    currentCashier = found;
+                if (cashier) {
+                    currentCashier = cashier;
                     // For persistence, we'll use localStorage
-                    localStorage.setItem("currentCashier", JSON.stringify(found)); 
+                    localStorage.setItem("currentCashier", JSON.stringify(cashier)); 
                     cashierLoginDiv.classList.add("hidden"); // Hide login screen
                     mainPosContent.classList.remove("hidden"); // Show main POS content
                     cashierNameDisplay.textContent = currentCashier.name; // Update display
                     
                     // Show current date and invoice format
                     const today = new Date();
-                    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-                    const sampleInvoice = `TXN-${dateStr}-001`;
+                    const sampleInvoice = `INV-${today.toISOString().slice(0,10).replace(/-/g,'')}-${currentCashier.name.toUpperCase().substring(0,4)}-0001`;
                     showToast(`Welcome, ${currentCashier.name}! Today's invoices: ${sampleInvoice}`, "success");
                     
                     // Update scanner status after login
                     updateScannerStatus();
                     updateScannerModeDisplay();
-                    
-                    // Start invoice counter monitoring
-                    invoiceCounterUnsubscribe = startInvoiceCounterMonitoring();
                     
                     resetInactivityTimer(); // Start the inactivity timer
 
@@ -2061,6 +2071,8 @@
                         products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         console.log("Products updated in real-time:", products);
                         console.log("Sample product structure:", products[0]); // Log first product to see structure
+                        // console.log("Products updated in real-time:", products); // Removed for cleaner console
+                        // console.log("Sample product structure:", products[0]); // Removed for cleaner console
                         updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
                         calculateTotals();   // Re-calculate totals
                     }, (error) => {
@@ -2068,8 +2080,9 @@
                         showToast("Failed to get real-time product updates. Please check console.", "error");
                     });
                 } else {
-                    loginErrorMsg.classList.remove("hidden"); // Show error
-                    showToast("Invalid PIN or Card ID.", "error"); // Use cross emoji
+                    loginErrorMsg.classList.remove("hidden"); // Show error                    
+                    loginErrorMsg.textContent = 'Invalid PIN or Inactive Account.';
+                    showToast("Invalid PIN or Inactive Account.", "error");
                     cashierCodeInput.value = '';
                     cashierCodeInput.focus();
                 }
@@ -2079,9 +2092,6 @@
             }
         }
 
-        /**
-         * Handles cashier logout.
-         */
         function cashierLogout() {
             currentCashier = null;
             localStorage.removeItem("currentCashier");
@@ -2101,37 +2111,26 @@
                 productsSnapshotUnsubscribe();
                 productsSnapshotUnsubscribe = null;
             }
-            
-            // Stop invoice counter monitoring
-            if (invoiceCounterUnsubscribe) {
-                invoiceCounterUnsubscribe();
-                invoiceCounterUnsubscribe = null;
-            }
         }
 
         // Store the unsubscribe function for the product snapshot listener
         let productsSnapshotUnsubscribe = null;
 
-        /**
-         * Saves a completed sale transaction to Firestore.
-         * @param {object} saleData - The completed sale object.
-         */
         async function saveSaleToFirestore(saleData) {
             try {
                 // Use the name from the currentCashier object
                 saleData.cashierName = currentCashier ? currentCashier.name : "Unknown"; 
+                await addDoc(salesCol, saleData); 
+                // console.log("Sale saved to Firestore:", saleData);
+                saleData.cashierName = currentCashier ? currentCashier.name : "Unknown";
                 await addDoc(salesCol, saleData);
-                console.log("Sale saved to Firestore:", saleData);
+                // console.log("Sale saved to Firestore:", saleData); // Removed for cleaner console
             } catch (error) {
                 console.error("Error saving sale to Firestore:", error);
                 showToast("Failed to save sale. Please check console.", "error");
             }
         }
 
-        /**
-         * Updates stock in Firestore after a sale.
-         * @param {Array<object>} cartItems - Items in the completed sale.
-         */
         async function updateStockAfterSale(cartItems) {
             for (let item of cartItems) {
                 const productRef = doc(db, "products", item.id);
@@ -2145,12 +2144,10 @@
                     productInDb.stock = newStock >= 0 ? newStock : 0;
                 }
             }
-            console.log("Stock updated in Firestore.");
+            // console.log("Stock updated in Firestore.");
+            // console.log("Stock updated in Firestore."); // Removed for cleaner console
         }
 
-        /**
-         * Resets the POS system to a fresh state after a completed sale.
-         */
         function resetPOS() {
             cart = [];
             selectedPaymentMethod = null;
@@ -2168,26 +2165,20 @@
             // Reset Complete Sale button to original state
             completeSaleBtn.disabled = false;
             completeSaleBtn.innerHTML = `
-                <span class="text-2xl">✅</span>
-                <span>Complete Sale</span>
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="ml-2">Complete Sale</span>
             `;
             
             updateCartDisplay();
             calculateTotals();
         }
 
-        /**
-         * Function to handle "Cancel Sale" action, clears the current cart.
-         */
         function cancelCurrentSale() {
             cart = []; // Clear the cart
             resetPOS(); // Reset the POS state
             showToast("Current sale cancelled.", "info");
         }
 
-        /**
-         * Function to open refund modal and start refund request.
-         */
         function openRefundRequest() {
             // Clear previous data
             refundInvoiceNoInput.value = '';
@@ -2204,9 +2195,6 @@
             refundInvoiceNoInput.focus();
         }
 
-        /**
-         * Function to search for a sale by invoice number.
-         */
         async function searchRefundSale() {
             const invoiceNo = refundInvoiceNoInput.value.trim();
             
@@ -2255,9 +2243,6 @@
             }
         }
 
-        /**
-         * Function to display sale details in the refund modal.
-         */
         function displayRefundSaleDetails(saleData, existingRefundRequest = null) {
             const saleDate = new Date(saleData.timestamp).toLocaleString();
             
@@ -2370,9 +2355,6 @@
             }
         }
 
-        /**
-         * Function to submit refund request to admin for approval.
-         */
         async function requestRefundApproval() {
             const invoiceNo = refundInvoiceNoInput.value.trim();
             
@@ -2463,9 +2445,6 @@
             }
         }
 
-        /**
-         * Function to process the approved refund.
-         */
         async function processRefundApproval(invoiceNo) {
             try {
                 // Here you would typically:
@@ -2515,23 +2494,29 @@
 
             // Define what happens when a barcode is successfully scanned
             async function onScanSuccess(decodedText, decodedResult) {
-                console.log("Scanner decoded:", decodedText);
-                // Debounce logic: only process if different from last scanned or if enough time has passed
-                if (!lastScannedCode || lastScannedCode !== decodedText) {
+                // console.log("Scanner decoded:", decodedText);
+                // console.log("Scanner decoded:", decodedText); // Removed for cleaner console
+                // Debounce logic: only process if different from last scanned
+                if (lastScannedCode !== decodedText) {
                     lastScannedCode = decodedText;
                     playBeep(); // Play beep sound on success
-                    console.log("Calling addToCart with scanned barcode:", decodedText);
+                    // console.log("Calling addToCart with scanned barcode:", decodedText);
+                    // console.log("Calling addToCart with scanned barcode:", decodedText); // Removed for cleaner console
                     await addToCart(decodedText); // Call your function to handle the product
                     productSearchInput.value = decodedText; // Populate search input with scanned code
+                    await processScannedCode(decodedText);
+
                     // Set a timeout to clear the lastScannedCode after a debounce period (e.g., 800ms)
                     setTimeout(() => { lastScannedCode = null; }, 800); 
+                    setTimeout(() => { lastScannedCode = null; }, 800);
                 }
                 // Do NOT stop scanner here; allow continuous scanning
             }
 
             // Define what happens when scan error occurs
             function onScanError(errorMessage) {
-                // console.warn(`Scan error: ${errorMessage}`); // Log errors for debugging, but don't show to user constantly
+                // console.warn(`Scan error: ${errorMessage}`);
+                // console.warn(`Scan error: ${errorMessage}`); // Removed for cleaner console
             }
 
             // Define the scanner
@@ -2608,8 +2593,10 @@
         // Product Search Input
         productSearchInput.addEventListener('input', (event) => {
             const searchTerm = event.target.value.toLowerCase();
-            console.log("Searching for:", searchTerm);
-            console.log("Products available for search:", products.length);
+            // console.log("Searching for:", searchTerm);
+            // console.log("Products available for search:", products.length);
+            // console.log("Searching for:", searchTerm); // Removed for cleaner console
+            // console.log("Products available for search:", products.length); // Removed for cleaner console
             
             if (searchTerm.length > 0) {
                 searchResultsDiv.classList.remove('hidden');
@@ -2617,10 +2604,12 @@
                 const filtered = products.filter(product => {
                     const nameMatch = product.name.toLowerCase().includes(searchTerm);
                     const barcodeMatch = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
-                    console.log(`Product ${product.name}: nameMatch=${nameMatch}, barcodeMatch=${barcodeMatch}, barcode=${product.barcode}`);
+                    // console.log(`Product ${product.name}: nameMatch=${nameMatch}, barcodeMatch=${barcodeMatch}, barcode=${product.barcode}`);
+                    // console.log(`Product ${product.name}: nameMatch=${nameMatch}, barcodeMatch=${barcodeMatch}, barcode=${product.barcode}`); // Removed for cleaner console
                     return nameMatch || barcodeMatch;
                 });
-                console.log("Filtered products:", filtered.length);
+                // console.log("Filtered products:", filtered.length);
+                // console.log("Filtered products:", filtered.length); // Removed for cleaner console
                 renderProducts(filtered);
             } else {
                 searchResultsDiv.classList.add('hidden');
@@ -2655,49 +2644,21 @@
 
                 // Add active styling to the clicked button
                 event.target.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+                event.currentTarget.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
 
                 selectedPaymentMethod = event.target.id.replace('pay', '').replace('Btn', ''); // e.g., 'Cash', 'Mpesa', 'Card'
+                selectedPaymentMethod = event.currentTarget.id.replace('pay', '').replace('Btn', ''); // e.g., 'Cash', 'Mpesa', 'Card'
 
                 if (selectedPaymentMethod === 'Cash') {
                     cashPaymentSection.classList.remove('hidden');
                     cashReceivedInput.focus();
-                } else {
+                } else if (selectedPaymentMethod === 'Mpesa') {
+                    toggleModal(mpesaModal, true);
+                    mpesaPhoneNumberInput.focus();
+                } else { // For Card payments
                     cashPaymentSection.classList.add('hidden');
                     balanceAmountSpan.textContent = formatCurrency(0); // Clear balance
                     cashReceivedInput.value = '';
-
-                    // Disable payment buttons during processing
-                    payCashBtn.disabled = true;
-                    payMpesaBtn.disabled = true;
-                    payCardBtn.disabled = true;
-
-                    // Simulate digital payment processing
-                    digitalPaymentStatusDiv.classList.remove('hidden');
-                    digitalPaymentMessage.textContent = `Connecting to ${selectedPaymentMethod}...`;
-                    digitalPaymentDetails.textContent = 'Please wait...';
-                    showToast(`Initiating ${selectedPaymentMethod} payment...`, 'info');
-
-                    setTimeout(() => {
-                        paymentConfirmed = true;
-                        digitalPaymentMessage.textContent = `✅ ${selectedPaymentMethod} Payment Confirmed!`;
-                        const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
-                        cashReceivedInput.value = grandTotal.toFixed(2); // Simulate full payment received for digital methods
-                        balanceAmountSpan.textContent = formatCurrency(0); // Balance is 0 for digital payments
-
-                        if (selectedPaymentMethod === 'Mpesa') {
-                            const mpesaCode = `MP${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-                            digitalPaymentDetails.textContent = `Transaction Code: ${mpesaCode}\nAmount: ${formatCurrency(grandTotal)}`;
-                        } else if (selectedPaymentMethod === 'Card') {
-                            digitalPaymentDetails.textContent = `Payment processed via external card machine.\nAmount: ${formatCurrency(grandTotal)}`;
-                        }
-                        showToast(`${selectedPaymentMethod} payment successful!`, 'success');
-
-                        // Re-enable payment buttons after successful processing
-                        payCashBtn.disabled = false;
-                        payMpesaBtn.disabled = false;
-                        payCardBtn.disabled = false;
-                        calculateTotals(); // Re-calculate to enable complete sale button
-                    }, 5000); // Changed to 5 seconds for faster testing
                 }
 
                 calculateTotals(); // Initial calculation to update complete sale button state
@@ -2734,13 +2695,21 @@
                 // Disable complete sale button during processing
                 completeSaleBtn.disabled = true;
                 completeSaleBtn.innerHTML = `
-                    <span class="text-2xl">⏳</span>
-                    <span>Completing Sale...</span>
+                    <svg class="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Processing...</span>
                 `;
 
                 // Generate receipt content (this will save the sale and generate invoice)
                 const receiptContent = await generateReceiptContent();
                 
+                if (!receiptContent) {
+                    showToast("Failed to complete sale. Could not generate invoice.", "error");
+                    // Re-enable button on failure
+                    completeSaleBtn.disabled = false;
+                    completeSaleBtn.innerHTML = `<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="ml-2">Complete Sale</span>`;
+                    return;
+                }
+
                 // Display the receipt modal
                 receiptContentBody.innerHTML = receiptContent;
                 toggleModal(receiptModal, true);
@@ -2758,8 +2727,8 @@
                 // Re-enable complete sale button
                 completeSaleBtn.disabled = false;
                 completeSaleBtn.innerHTML = `
-                    <span class="text-2xl">✅</span>
-                    <span>Complete Sale</span>
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-2">Complete Sale</span>
                 `;
             }
         });
@@ -2862,6 +2831,86 @@
             toggleModal(refundModal, false);
         });
 
+        // M-Pesa Modal Event Listeners
+        initiateMpesaPaymentBtn.addEventListener('click', () => {
+            const phoneNumber = mpesaPhoneNumberInput.value.trim();
+            // Basic validation for a Kenyan phone number
+            if (!/^(07|01)\d{8}$/.test(phoneNumber)) {
+                showToast("Please enter a valid phone number (e.g., 0712345678).", "error");
+                return;
+            }
+
+            mpesaForm.classList.add('hidden');
+            mpesaStatus.classList.remove('hidden');
+            mpesaStatusMessage.textContent = `Sending payment prompt to ${phoneNumber}...`;
+            showToast(`STK push sent to ${phoneNumber}. Customer should enter their PIN.`, 'info', 5000);
+
+            // 1. Show "prompt sent" message
+            setTimeout(() => {
+                mpesaStatusMessage.textContent = "Fetching payment status...";
+
+                // 2. Simulate waiting for payment confirmation
+                setTimeout(() => {
+                    paymentConfirmed = true;
+                    const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+                    cashReceivedInput.value = grandTotal.toFixed(2);
+                    balanceAmountSpan.textContent = formatCurrency(0);
+                    
+                    // Update the main UI to show payment is confirmed
+                    digitalPaymentStatusDiv.classList.remove('hidden');
+                    const mpesaCode = `MP${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+                    digitalPaymentMessage.textContent = `✅ M-Pesa Payment Confirmed!`;
+                    digitalPaymentDetails.textContent = `Transaction Code: ${mpesaCode} | Amount: ${formatCurrency(grandTotal)}`;
+                    
+                    showToast(`M-Pesa payment of ${formatCurrency(grandTotal)} received.`, 'success');
+                    
+                    // Close and reset the modal
+                    toggleModal(mpesaModal, false);
+                    setTimeout(() => { // Delay reset to allow modal to close gracefully
+                        mpesaForm.classList.remove('hidden');
+                        mpesaStatus.classList.add('hidden');
+                        mpesaPhoneNumberInput.value = '';
+                    }, 500);
+
+                    calculateTotals(); // Re-calculate to enable the "Complete Sale" button
+                }, 4000); // 4-second simulation for fetching status
+
+            }, 2000); // 2-second delay before fetching status
+        });
+
+        confirmMpesaManualBtn.addEventListener('click', () => {
+            paymentConfirmed = true;
+            const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+            cashReceivedInput.value = grandTotal.toFixed(2);
+            balanceAmountSpan.textContent = formatCurrency(0);
+
+            // Update the main UI to show payment is confirmed
+            digitalPaymentStatusDiv.classList.remove('hidden');
+            const mpesaCode = `MANUAL${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            digitalPaymentMessage.textContent = `✅ M-Pesa Payment Confirmed!`;
+            digitalPaymentDetails.textContent = `Manual Confirmation | Ref: ${mpesaCode} | Amount: ${formatCurrency(grandTotal)}`;
+            
+            showToast(`Manual M-Pesa payment of ${formatCurrency(grandTotal)} confirmed.`, 'success');
+            
+            // Close the modal and reset its state
+            toggleModal(mpesaModal, false);
+            setTimeout(() => { // Delay reset to allow modal to close gracefully
+                mpesaForm.classList.remove('hidden');
+                mpesaStatus.classList.add('hidden');
+                mpesaPhoneNumberInput.value = '';
+            }, 500);
+
+            calculateTotals(); // Re-calculate to enable the "Complete Sale" button
+        });
+
+
+        cancelMpesaBtn.addEventListener('click', () => {
+            toggleModal(mpesaModal, false);
+            // Deselect the M-Pesa button
+            payMpesaBtn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+            selectedPaymentMethod = null;
+            calculateTotals();
+        });
 
         // Cashier Login Input (Enter key)
         cashierCodeInput.addEventListener('keydown', (event) => {
@@ -2886,9 +2935,11 @@
             // Enter to add item (from search bar)
             if (event.key === 'Enter' && productSearchInput === document.activeElement) {
                 const visibleResults = productResultsList.querySelectorAll('.add-to-cart-btn');
-                console.log("Enter key pressed, visible results:", visibleResults.length);
+                // console.log("Enter key pressed, visible results:", visibleResults.length);
+                // console.log("Enter key pressed, visible results:", visibleResults.length); // Removed for cleaner console
                 if (visibleResults.length > 0) {
-                    console.log("Clicking first add button");
+                    // console.log("Clicking first add button");
+                    // console.log("Clicking first add button"); // Removed for cleaner console
                     visibleResults[0].click(); // Simulate click on the first "Add" button
                     event.preventDefault(); // Prevent default Enter key behavior (e.g., form submission)
                 }
@@ -2911,6 +2962,12 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Expose functions to the global scope for onclick attributes
+            window.startScanner = startScanner;
+            window.stopScanner = stopScanner;
+            window.cashierLogin = cashierLogin;
+            window.approveAction = approveAction;
+
             // Initialize USB scanner detection
             detectUSBScanner();
             
@@ -2933,13 +2990,11 @@
                 updateScannerStatus();
                 updateScannerModeDisplay();
                 
-                // Start invoice counter monitoring
-                invoiceCounterUnsubscribe = startInvoiceCounterMonitoring();
-                
                 // Setup real-time listener for products after successful login
                 productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
-                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    console.log("Products updated in real-time:", products);
+                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                    // console.log("Products updated in real-time:", products.length);
+                    // console.log("Products updated in real-time:", products.length); // Removed for cleaner console
                     updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
                     calculateTotals();   // Re-calculate totals
                 }, (error) => {
