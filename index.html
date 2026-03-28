@@ -417,18 +417,7 @@
             <div id="refundSaleInfo" class="space-y-3">
               <!-- Sale information will be populated here -->
             </div>
-            
-            <!-- Review Time Notice -->
-            <div class="mt-4 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200">
-              <div class="flex items-center space-x-3">
-                  <svg class="w-8 h-8 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <div>
-                  <p class="font-semibold text-yellow-800">Review Time: 24 Hours</p>
-                  <p class="text-sm text-yellow-700">This refund request will be reviewed by management and approved within 24 hours.</p>
-                </div>
-              </div>
-            </div>
-            
+
             <!-- Refund Action Buttons -->
             <div id="refundActionButtons" class="mt-6 flex space-x-4">
               <button id="confirmRefundBtn" 
@@ -447,6 +436,41 @@
           <!-- Error Messages -->
           <p id="refundError" class="text-red-600 text-sm mt-2 hidden text-center bg-red-50 p-3 rounded-xl border border-red-200"></p>
           <p id="refundSuccess" class="text-green-600 text-sm mt-2 hidden text-center bg-green-50 p-3 rounded-xl border border-green-200"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Loyalty Overlay -->
+    <div id="loyaltyModal" class="manager-approval-modal transition-opacity duration-300">
+      <div class="manager-approval-content transition-transform duration-300 bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white/20 max-w-md">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+          <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Customer Loyalty</h2>
+          <p class="text-gray-600 mt-2">Enter phone number to reward points</p>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="relative">
+            <input id="loyaltyPhoneInput" type="tel" placeholder="Customer Phone (e.g. 0712345678)" 
+                   class="w-full pl-4 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-lg shadow-lg bg-white/80 backdrop-blur-sm transition-all duration-300">
+          </div>
+          
+          <div id="loyaltyCustomerDisplay" class="hidden p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+              <p class="text-sm text-blue-600 font-medium">Customer Found:</p>
+              <p id="loyaltyCustomerName" class="text-xl font-bold text-blue-900"></p>
+              <p id="loyaltyPointsBalance" class="text-sm text-blue-700"></p>
+          </div>
+
+          <div class="flex space-x-3 mt-6">
+            <button id="skipLoyaltyBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 rounded-2xl transition-all duration-300">
+              Skip
+            </button>
+            <button id="confirmLoyaltyBtn" class="flex-[2] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105">
+              Complete Sale
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -606,6 +630,31 @@
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                     </div>
                     <h2 class="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Order Summary</h2>
+                </div>
+
+                <!-- Redemption Section -->
+                <div class="bg-green-50 p-6 rounded-2xl border border-green-200 mb-6 shadow-sm">
+                    <h3 class="font-bold text-green-800 mb-2 flex items-center">
+                        <span class="mr-2">🎁</span> Redeem Loyalty Points
+                    </h3>
+                    <div id="redemptionLookupContainer" class="flex flex-col space-y-2">
+                        <input type="hidden" id="customerPhone"> <!-- Hidden field to store phone for the sale -->
+                        <button onclick="openRedemptionOverlay()" class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <span>Lookup Customer to Redeem</span>
+                        </button>
+                        
+                        <div id="activeRedemptionSection" class="hidden space-y-2 mt-2 pt-2 border-t border-green-200">
+                            <div class="flex justify-between text-sm text-green-700">
+                                <span id="identifiedCustomerName" class="font-medium italic">Customer Found</span>
+                                <span class="font-bold"><span id="availablePointsDisplay">0</span> pts</span>
+                            </div>
+                            <input id="redeemPointsMain" type="number" 
+                                placeholder="Points to redeem"
+                                class="w-full p-4 border-2 border-green-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-lg shadow-inner bg-white/80">
+                        </div>
+                        <p id="redeemPreviewMain" class="text-green-600 text-sm font-medium h-5"></p>
+                    </div>
                 </div>
 
                 <div class="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50 mb-6">
@@ -794,7 +843,7 @@
 
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp, runTransaction, increment, limit, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Firebase config (yours)
         const firebaseConfig = {
@@ -810,12 +859,25 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Enable Offline Persistence for zero-downtime resilience
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                // Multiple tabs open, persistence can only be enabled in one tab at a time.
+                console.warn("Offline persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+                // The current browser does not support all of the features required to enable persistence
+                console.warn("Offline persistence not supported by this browser.");
+            }
+        });
+
         // Firestore collection references
         const productsCol = collection(db, "products");
         const salesCol = collection(db, "sales");
         const usersCol = collection(db, "users"); // Users collection reference
         const managerLogsCol = collection(db, "managerLogs"); // New: Manager Logs collection reference (serves as audit trail)
         const refundRequestsCol = collection(db, "refundRequests"); // New: Refund Requests collection for admin approval
+        const auditLogsCol = collection(db, "auditLogs"); // New Audit Logs collection
+        const customersCol = collection(db, "customers"); // New Customers collection
         const invoiceCountersCol = collection(db, "invoiceCounters"); // New: Invoice counters collection for atomic operations
 
         // --- Product Database (Initial Data) ---
@@ -833,7 +895,16 @@
         let paymentConfirmed = false; // Tracks if a digital payment has been confirmed
         let html5QrcodeScanner; // Declare product scanner variable globally
         let lastScannedCode = null; // New: Debounce variable for product scanner
+        let lastItemAddedId = null; // Track the very last item added for void permissions
         let usbScannerConnected = false; // Track USB scanner connection status
+
+        // New variables for redemption
+        let pointsToRedeem = 0;
+        let redemptionValue = 0;
+        let availablePoints = 0;
+        let isRedemptionLookup = false; // Flag for modal state
+        const POINT_VALUE = 0.1; // 10 points = 1 KSh
+
         let scannerMode = 'camera'; // 'camera' or 'usb'
         let usbScannerInput = null; // Hidden input for USB scanner
         let currentCashier = null; // Stores the currently logged-in cashier object
@@ -858,6 +929,8 @@
         const grandTotalDisplay = document.getElementById('grandTotalDisplay'); // The large total display
         const payCashBtn = document.getElementById('payCashBtn');
         const payMpesaBtn = document.getElementById('payMpesaBtn');
+        const redeemPointsMain = document.getElementById('redeemPointsMain');
+        const redeemPreviewMain = document.getElementById('redeemPreviewMain');
         const payCardBtn = document.getElementById('payCardBtn');
         const cashPaymentSection = document.getElementById('cashPaymentSection');
         const cashReceivedInput = document.getElementById('cashReceived');
@@ -914,6 +987,15 @@
         const digitalPaymentStatusDiv = document.getElementById('digitalPaymentStatus');
         const digitalPaymentMessage = document.getElementById('digitalPaymentMessage');
         const digitalPaymentDetails = document.getElementById('digitalPaymentDetails');
+
+        // Loyalty Modal Elements
+        const loyaltyModal = document.getElementById('loyaltyModal');
+        const loyaltyPhoneInput = document.getElementById('loyaltyPhoneInput');
+        const loyaltyCustomerDisplay = document.getElementById('loyaltyCustomerDisplay');
+        const loyaltyCustomerName = document.getElementById('loyaltyCustomerName');
+        const loyaltyPointsBalance = document.getElementById('loyaltyPointsBalance');
+        const skipLoyaltyBtn = document.getElementById('skipLoyaltyBtn');
+        const confirmLoyaltyBtn = document.getElementById('confirmLoyaltyBtn');
 
 
         // --- Helper Functions ---
@@ -1096,7 +1178,6 @@
 
             // Process the scanned code
             processScannedCode(scannedCode);
-            processScannedCode(scannedCode); // This was the undefined function
         }
 
         /**
@@ -1279,30 +1360,34 @@
         /**
          */
         function calculateTotals() {
-            let grandTotal = 0;
+            let baseGrandTotal = 0;
             let totalVatAmount = 0;
 
             cart.forEach(item => {
                 const subtotal = calculateItemSubtotal(item.product, item.quantity);
                 const { vatAmount } = calculateVAT(subtotal, item.product.vatRate || vatRate);
                 
-                grandTotal += subtotal;
+                baseGrandTotal += subtotal;
                 totalVatAmount += vatAmount;
             });
 
-            const totalBeforeVat = grandTotal - totalVatAmount;
+            // Apply redemption
+            let finalGrandTotal = baseGrandTotal - redemptionValue;
+            if (finalGrandTotal < 0) finalGrandTotal = 0;
+
+            const totalBeforeVat = finalGrandTotal - totalVatAmount;
 
             totalBeforeVatSpan.textContent = formatCurrency(totalBeforeVat);
             vatAmountSpan.textContent = formatCurrency(totalVatAmount);
-            grandTotalSpan.textContent = formatCurrency(grandTotal);
-            grandTotalDisplay.textContent = formatCurrency(grandTotal); // Update the large display
+            grandTotalSpan.textContent = formatCurrency(finalGrandTotal);
+            grandTotalDisplay.textContent = formatCurrency(finalGrandTotal); // Update the large display
 
             // Logic for enabling/disabling complete sale button
             let enableCompleteSale = false;
             if (cart.length > 0) {
                 if (selectedPaymentMethod === 'Cash') {
                     const cashReceived = parseFloat(cashReceivedInput.value) || 0;
-                    enableCompleteSale = cashReceived >= grandTotal;
+                    enableCompleteSale = cashReceived >= finalGrandTotal;
                 } else if (selectedPaymentMethod === 'Mpesa' || selectedPaymentMethod === 'Card') {
                     enableCompleteSale = paymentConfirmed;
                 }
@@ -1378,33 +1463,36 @@
         }
 
         async function addToCart(productIdOrBarcode) {
-            // console.log("addToCart called with:", productIdOrBarcode);
-            // console.log("Available products:", products.length);
-            // console.log("addToCart called with:", productIdOrBarcode); // Removed for cleaner console
-            // console.log("Available products:", products.length); // Removed for cleaner console
-            
-            // Check if the parameter is valid
             if (!productIdOrBarcode) {
                 showToast('Invalid product identifier provided.', 'error');
                 return;
             }
 
-            // First try to find by ID (for manual selection)
-            let productToAdd = products.find(p => p.id === productIdOrBarcode);
-            // console.log("Found by ID:", productToAdd ? productToAdd.name : "Not found");
-            // console.log("Found by ID:", productToAdd ? productToAdd.name : "Not found"); // Removed for cleaner console
-            
-            // If not found by ID, try to find by barcode (for scanned items)
-            if (!productToAdd && productIdOrBarcode) {
-                productToAdd = products.find(p => p.barcode && p.barcode === productIdOrBarcode);
-                // console.log("Found by barcode:", productToAdd ? productToAdd.name : "Not found");
-                // console.log("Found by barcode:", productToAdd ? productToAdd.name : "Not found"); // Removed for cleaner console
+            let productToAdd = null;
+            try {
+                // 1. Try to fetch by Document ID
+                const docRef = doc(db, "products", productIdOrBarcode);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    productToAdd = { id: docSnap.id, ...docSnap.data() };
+                } else {
+                    // 2. Try to find by Barcode field
+                    const q = query(productsCol, where("barcode", "==", productIdOrBarcode), limit(1));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        const productDoc = querySnapshot.docs[0];
+                        productToAdd = { id: productDoc.id, ...productDoc.data() };
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching product:", error);
+                showToast("Database connection error.", "error");
+                return;
             }
-            
+
             if (!productToAdd) {
-                // console.log("Product not found. Available barcodes:", products.map(p => p.barcode));
-                // console.log("Product not found. Available barcodes:", products.map(p => p.barcode)); // Removed for cleaner console
-                showToast(`Product "${productIdOrBarcode}" not found. Please check the barcode or product name.`, 'error');
+                showToast(`Product "${productIdOrBarcode}" not found.`, 'error');
                 return;
             }
 
@@ -1413,6 +1501,7 @@
             if (existingItemIndex > -1) {
                 if (cart[existingItemIndex].quantity < productToAdd.stock) {
                     cart[existingItemIndex].quantity++;
+                    lastItemAddedId = productToAdd.id;
                     showToast(`${productToAdd.name} added to cart!`, 'success');
                 } else {
                     showToast(`Not enough stock for ${productToAdd.name}.`, 'warning');
@@ -1421,6 +1510,7 @@
             } else {
                 if (productToAdd.stock > 0) {
                     cart.push({ product: productToAdd, quantity: 1 });
+                    lastItemAddedId = productToAdd.id;
                     showToast(`${productToAdd.name} added to cart!`, 'success');
                 } else {
                     showToast(`${productToAdd.name} is out of stock.`, 'error');
@@ -1431,38 +1521,63 @@
             calculateTotals();
         }
 
-        function updateCartItemQuantity(productId, change) {
+        async function updateCartItemQuantity(productId, change) {
             const itemIndex = cart.findIndex(item => item.product.id === productId);
             if (itemIndex > -1) {
                 const currentItem = cart[itemIndex];
-                const productInDb = products.find(p => p.id === productId);
+
+                // Fetch latest stock info from server to ensure accuracy
+                let productStock = currentItem.product.stock;
+                try {
+                    const docRef = doc(db, "products", productId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const latestData = docSnap.data();
+                        productStock = latestData.stock;
+                        // Sync current cart item metadata (price/offer/etc)
+                        currentItem.product = { id: docSnap.id, ...latestData };
+                    }
+                } catch (e) {
+                    console.error("Error checking latest stock:", e);
+                }
 
                 // If quantity increases, check stock
-                if (change > 0 && currentItem.quantity + change > productInDb.stock) {
+                if (change > 0 && currentItem.quantity + change > productStock) {
                     showToast(`Cannot add more ${currentItem.product.name}. Max stock reached.`, 'warning');
                     return;
                 }
 
-                // If quantity goes to 0 or less, require manager approval
-                if (currentItem.quantity + change <= 0) {
-                    pendingApprovalAction = () => {
-                        const removedItemName = currentItem.product.name;
-                        cart.splice(itemIndex, 1); // Remove item
+                // LOSS PREVENTION: Check if cashier is allowed to void (decrease) this item
+                if (change < 0) {
+                    const isLastItem = productId === lastItemAddedId;
+                    
+                    const performVoid = () => {
+                        if (currentItem.quantity + change <= 0) {
+                            cart.splice(itemIndex, 1);
+                            logAudit("Void Line", `Removed ${currentItem.product.name}`);
+                        } else {
+                            currentItem.quantity += change;
+                            logAudit("Void Qty", `Decreased ${currentItem.product.name} to ${currentItem.quantity}`);
+                        }
                         updateCartDisplay();
                         calculateTotals();
-                        showToast(`${removedItemName} removed from cart.`, 'info');
                     };
-                    // Set details for logging
-                    pendingApprovalActionDetails = { 
-                        action: 'Adjust Quantity to Zero/Remove', 
-                        itemName: currentItem.product.name 
-                    };
-                    requestManagerApproval(); // Trigger manager approval
+
+                    if (isLastItem) {
+                        performVoid();
+                        showToast("Voided last item.", "info");
+                    } else {
+                        pendingApprovalAction = performVoid;
+                        pendingApprovalActionDetails = { 
+                            action: 'Void (Previous Item)', 
+                            itemName: currentItem.product.name 
+                        };
+                        requestManagerApproval();
+                    }
                 } else {
                     currentItem.quantity += change;
                     updateCartDisplay();
                     calculateTotals();
-                    showToast(`${currentItem.product.name} quantity updated.`, 'info');
                 }
             }
         }
@@ -1471,18 +1586,21 @@
             const itemToRemove = cart.find(item => item.product.id === productId);
             if (!itemToRemove) return;
 
-            pendingApprovalAction = () => {
+            const performRemoval = () => {
                 cart = cart.filter(item => item.product.id !== productId);
+                logAudit("Remove Line", `Removed ${itemToRemove.product.name}`);
                 updateCartDisplay();
                 calculateTotals();
                 showToast(`${itemToRemove.product.name} removed from cart.`, 'info');
             };
-            // Set details for logging
-            pendingApprovalActionDetails = { 
-                action: 'Remove Item', 
-                itemName: itemToRemove.product.name 
-            };
-            requestManagerApproval(); // Trigger manager approval
+
+            if (productId === lastItemAddedId) {
+                performRemoval();
+            } else {
+                pendingApprovalAction = performRemoval;
+                pendingApprovalActionDetails = { action: 'Remove Previous Item', itemName: itemToRemove.product.name };
+                requestManagerApproval();
+            }
         }
 
         function updateCartDisplay() {
@@ -1545,6 +1663,11 @@
 
         async function generateReceiptContent() { 
             const now = new Date();
+            const printedDate = now.toLocaleString();
+            const serialNumber = "SN-" + Math.random().toString(36).substring(2, 11).toUpperCase();
+            const cuInvoiceNumber = "CU-" + Math.random().toString(36).substring(2, 11).toUpperCase();
+            const cuDate = now.toLocaleDateString();
+
             // Generate the new per-cashier, daily sequential invoice number
             const transactionId = await generateInvoiceNumber();
             if (transactionId.startsWith('FAIL')) return null; // Stop if invoice generation failed
@@ -1554,10 +1677,20 @@
             const storeEmail = "info@princealexstore.com";
             const cashierName = currentCashier ? currentCashier.name : "Unknown";
             const tillNumber = currentCashier ? currentCashier.tillNumber : "N/A"; // Use the cashier's assigned till number
-            const serialNumber = "SN-POS-2024-001"; // Placeholder
-            const cuInvoiceNumber = "CUINV-2024-001"; // Placeholder
-            const cuDate = now.toLocaleDateString('en-GB'); // Placeholder date format
-            const printedDate = now.toLocaleString();
+
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            let loyaltyPointsEarned = 0;
+            let currentPoints = 0;
+            let isLoyaltyMember = false;
+
+            if (customerPhone) {
+                const q = query(collection(db, "customers"), where("phone", "==", customerPhone), limit(1));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    isLoyaltyMember = true;
+                    currentPoints = querySnapshot.docs[0].data().points || 0;
+                }
+            }
 
             let itemsTableRows = '';
             let grossSaleValue = 0; // Sum of price * qty (before VAT)
@@ -1608,6 +1741,11 @@
             const totalBeforeVat = parseFloat(totalBeforeVatSpan.textContent.replace('KSh ', ''));
             const vatAmount = parseFloat(vatAmountSpan.textContent.replace('KSh ', ''));
             const grandTotal = parseFloat(grandTotalSpan.textContent.replace('KSh ', ''));
+
+            if (isLoyaltyMember) {
+                loyaltyPointsEarned = Math.floor(grandTotal / 100);
+            }
+
             let cashReceived = parseFloat(cashReceivedInput.value) || 0;
             let balance = parseFloat(balanceAmountSpan.textContent.replace('KSh ', ''));
 
@@ -1630,6 +1768,9 @@
                 tillNumber: tillNumber,
                 cartItems: salesCartItems, // Store the simplified cart items
                 paymentMethod: selectedPaymentMethod,
+                customerPhone: customerPhone,
+                pointsEarned: loyaltyPointsEarned,
+                pointsRedeemed: pointsToRedeem,
                 grossSaleValue: grossSaleValue, // This is the Net Amount before VAT
                 totalBeforeVat: totalBeforeVat, // This should be the same as grossSaleValue now
                 vatAmount: vatAmount,
@@ -1643,10 +1784,12 @@
                 printedDate: printedDate
             };
             
-            // Save the completed sale to Firestore
-            await saveSaleToFirestore(saleData); 
-            // Update stock in Firestore (no change needed here)
-            await updateStockAfterSale(saleData.cartItems);
+            try {
+                // Atomically update stock and record the sale in a single transaction to prevent race conditions
+                await finalizeSaleTransaction(saleData);
+            } catch (error) {
+                throw error; // Re-throw to be handled by the UI catch block
+            }
 
             return `
                 <div class="text-center mb-4">
@@ -1689,6 +1832,11 @@
                         <span>Net Amount (Before VAT):</span>
                         <span>${formatCurrency(totalBeforeVat)}</span>
                     </div>
+                    ${pointsToRedeem > 0 ? `
+                    <div class="flex justify-between mb-1 text-red-600">
+                        <span>Points Redeemed (${pointsToRedeem}):</span>
+                        <span>-${formatCurrency(redemptionValue)}</span>
+                    </div>` : ''}
                     <div class="flex justify-between mb-1">
                         <span>VAT (${vatRate * 100}%):</span>
                         <span>${formatCurrency(vatAmount)}</span>
@@ -1697,6 +1845,7 @@
                         <span>Grand Total:</span>
                         <span>${formatCurrency(grandTotal)}</span>
                     </div>
+                    <hr>
                     <div class="flex justify-between mb-1 mt-2">
                         <span>Payment:</span>
                         <span>${paymentDetails}</span>
@@ -1705,10 +1854,23 @@
                         <span>Change:</span>
                         <span>${balanceDisplay}</span>
                     </div>
-                    <div class="flex justify-between text-lg font-bold mt-2">
-                        <span>Total Savings:</span>
-                        <span>${formatCurrency(totalSavings)}</span>
+                    ${(loyaltyPointsEarned > 0 || pointsToRedeem > 0) ? `
+                    ${loyaltyPointsEarned > 0 ? `
+                    <div class="flex justify-between mb-1 text-blue-600 font-bold">
+                        <span>Points Earned:</span>
+                        <span>+${loyaltyPointsEarned}</span>
+                    </div>` : ''}
+                    <div class="flex justify-between mb-1 text-blue-800 font-bold">
+                        <span>Total Points Balance:</span>
+                        <span>${currentPoints - pointsToRedeem + loyaltyPointsEarned}</span>
                     </div>
+                    ` : ''}
+                    ${totalSavings > 0 ? `
+                    <div class="mt-4 p-2 bg-green-50 border border-green-200 rounded-lg text-center">
+                        <p class="text-green-800 font-bold text-lg mb-0">TOTAL SAVINGS: ${formatCurrency(totalSavings)}</p>
+                        <p class="text-green-600 text-[10px] uppercase font-bold">You saved with our special offers!</p>
+                    </div>
+                    ` : ''}
                 </div>
                 <hr>
                 <div class="my-4 text-gray-800 text-sm">
@@ -1994,6 +2156,10 @@
                     toggleModal(managerApprovalModal, false);
                     showToast(`Approved by ${approvedUser.name}`, "success");
 
+                    // Log to strict audit trail
+                    logAudit(`Manager Override: ${pendingApprovalActionDetails.action}`, 
+                             `Details: ${pendingApprovalActionDetails.itemName}`, approvedUser.name);
+
                     // Execute the pending action
                     if (pendingApprovalAction) {
                         pendingApprovalAction();
@@ -2018,6 +2184,20 @@
             } catch (error) {
                 console.error("Error during manager approval:", error);
                 showToast("An error occurred during approval. Please try again.", "error");
+            }
+        }
+
+        async function logAudit(action, details, managerName = null) {
+            try {
+                await addDoc(auditLogsCol, {
+                    user: currentCashier ? currentCashier.name : "Unknown",
+                    manager: managerName, // Will be null for self-voids of last item
+                    action: action,
+                    details: details,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error("Audit log failed:", e);
             }
         }
 
@@ -2065,20 +2245,6 @@
                     updateScannerModeDisplay();
                     
                     resetInactivityTimer(); // Start the inactivity timer
-
-                    // Setup real-time listener for products after successful login
-                    productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
-                        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        console.log("Products updated in real-time:", products);
-                        console.log("Sample product structure:", products[0]); // Log first product to see structure
-                        // console.log("Products updated in real-time:", products); // Removed for cleaner console
-                        // console.log("Sample product structure:", products[0]); // Removed for cleaner console
-                        updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
-                        calculateTotals();   // Re-calculate totals
-                    }, (error) => {
-                        console.error("Error listening to products collection:", error);
-                        showToast("Failed to get real-time product updates. Please check console.", "error");
-                    });
                 } else {
                     loginErrorMsg.classList.remove("hidden"); // Show error                    
                     loginErrorMsg.textContent = 'Invalid PIN or Inactive Account.';
@@ -2120,9 +2286,6 @@
             try {
                 // Use the name from the currentCashier object
                 saleData.cashierName = currentCashier ? currentCashier.name : "Unknown"; 
-                await addDoc(salesCol, saleData); 
-                // console.log("Sale saved to Firestore:", saleData);
-                saleData.cashierName = currentCashier ? currentCashier.name : "Unknown";
                 await addDoc(salesCol, saleData);
                 // console.log("Sale saved to Firestore:", saleData); // Removed for cleaner console
             } catch (error) {
@@ -2133,25 +2296,87 @@
 
         async function updateStockAfterSale(cartItems) {
             for (let item of cartItems) {
-                const productRef = doc(db, "products", item.id);
-                const productInDb = products.find(p => p.id === item.id); // Find the current product in our local 'products' array
-                if (productInDb) {
-                    const newStock = productInDb.stock - item.quantity;
+                try {
+                    const productRef = doc(db, "products", item.id);
+                    // Use atomic increment/decrement for reliable stock management
                     await updateDoc(productRef, {
-                        stock: newStock >= 0 ? newStock : 0 // Ensure stock doesn't go negative in DB
+                        stock: increment(-item.quantity)
                     });
-                    // Also update the local 'products' array to reflect new stock
-                    productInDb.stock = newStock >= 0 ? newStock : 0;
+                } catch (error) {
+                    console.error(`Failed to update stock for ${item.id}:`, error);
                 }
             }
-            // console.log("Stock updated in Firestore.");
-            // console.log("Stock updated in Firestore."); // Removed for cleaner console
+        }
+
+        /**
+         * Atomically records the sale and updates inventory using a Firestore transaction.
+         * This ensures that stock is only deducted if the sale record is successfully created.
+         */
+        async function finalizeSaleTransaction(saleData) {
+            // Pre-fetch customer reference if a phone number was provided
+            let customerRef = null;
+            if (saleData.customerPhone) {
+                const q = query(collection(db, "customers"), where("phone", "==", saleData.customerPhone), limit(1));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    customerRef = querySnapshot.docs[0].ref;
+                }
+            }
+
+            await runTransaction(db, async (transaction) => {
+                // 1. PERFORM ALL READS FIRST
+                const productSnapshots = [];
+                for (const item of saleData.cartItems) {
+                    const productRef = doc(db, "products", item.id);
+                    const productSnap = await transaction.get(productRef);
+                    if (!productSnap.exists()) {
+                        throw new Error(`Product ${item.name} no longer exists.`);
+                    }
+                    productSnapshots.push({ ref: productRef, snap: productSnap, item });
+                }
+
+                let customerSnap = null;
+                if (customerRef) {
+                    customerSnap = await transaction.get(customerRef);
+                }
+
+                // 2. PERFORM ALL WRITES AFTER READS
+                for (const { ref, snap, item } of productSnapshots) {
+                    const currentStock = snap.data().stock;
+                    if (currentStock < item.quantity) {
+                        throw new Error(`Insufficient stock for ${item.name}. Available: ${currentStock}`);
+                    }
+                    transaction.update(ref, { stock: currentStock - item.quantity });
+                }
+
+                const saleRef = doc(collection(db, "sales"));
+                transaction.set(saleRef, saleData);
+
+                if (customerSnap && customerSnap.exists()) {
+                    const currentData = customerSnap.data();
+                    const currentPoints = currentData.points || 0;
+                    const currentSpent = currentData.totalSpent || 0;
+
+                    transaction.update(customerRef, {
+                        points: currentPoints - (saleData.pointsRedeemed || 0) + (saleData.pointsEarned || 0),
+                        totalSpent: currentSpent + saleData.grandTotal
+                    });
+                }
+            });
         }
 
         function resetPOS() {
             cart = [];
             selectedPaymentMethod = null;
             paymentConfirmed = false; // Reset payment confirmation
+            pointsToRedeem = 0;
+            redemptionValue = 0;
+            availablePoints = 0;
+            redeemPointsMain.value = '';
+            redeemPreviewMain.textContent = '';
+            document.getElementById('availablePointsDisplay').textContent = '0';
+            document.getElementById('activeRedemptionSection').classList.add('hidden');
+            document.getElementById('redemptionLookupContainer').children[0].classList.remove('hidden');
             cashReceivedInput.value = '';
             balanceAmountSpan.textContent = formatCurrency(0);
             document.querySelectorAll('.payment-btn').forEach(btn => {
@@ -2161,6 +2386,7 @@
             digitalPaymentStatusDiv.classList.add('hidden'); // Hide digital payment status
             digitalPaymentMessage.textContent = '';
             digitalPaymentDetails.textContent = '';
+            document.getElementById('customerPhone').value = '';
             
             // Reset Complete Sale button to original state
             completeSaleBtn.disabled = false;
@@ -2175,6 +2401,7 @@
 
         function cancelCurrentSale() {
             cart = []; // Clear the cart
+            logAudit("Transaction Cancelled", "Cashier cancelled the entire cart");
             resetPOS(); // Reset the POS state
             showToast("Current sale cancelled.", "info");
         }
@@ -2246,28 +2473,46 @@
         function displayRefundSaleDetails(saleData, existingRefundRequest = null) {
             const saleDate = new Date(saleData.timestamp).toLocaleString();
             
-            // Determine refund status and styling
+            let statusNoticeHtml = '';
             let refundStatusHtml = '';
-            let refundStatusClass = '';
-            let refundStatusIcon = '';
-            let refundStatusText = '';
             
-            if (existingRefundRequest) {
+            if (!existingRefundRequest) {
+                // Default notice for new requests
+                statusNoticeHtml = `
+                    <div class="mt-4 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200">
+                      <div class="flex items-center space-x-3">
+                          <svg class="w-8 h-8 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          <div>
+                            <p class="font-semibold text-yellow-800">Review Time: 24 Hours</p>
+                            <p class="text-sm text-yellow-700">This refund request will be reviewed by management and approved within 24 hours.</p>
+                          </div>
+                      </div>
+                    </div>
+                `;
+            } else {
+                let refundStatusClass = '';
+                let refundStatusIcon = '';
+                let refundStatusText = '';
+                let noticeConfig = {};
+
                 switch (existingRefundRequest.status) {
                     case 'pending':
                         refundStatusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
                         refundStatusIcon = '⏳';
                         refundStatusText = 'Pending Review';
+                        noticeConfig = { bg: 'from-blue-50 to-indigo-50', border: 'border-blue-200', text: 'text-blue-700', title: 'Under Review', desc: 'Management is currently reviewing this request.', svg: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' };
                         break;
                     case 'approved':
                         refundStatusClass = 'bg-green-100 text-green-800 border-green-200';
                         refundStatusIcon = '✅';
                         refundStatusText = 'Approved';
+                        noticeConfig = { bg: 'from-green-50 to-emerald-50', border: 'border-green-200', text: 'text-green-700', title: 'Refund Approved', desc: 'This refund has been approved and inventory updated.', svg: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' };
                         break;
                     case 'rejected':
                         refundStatusClass = 'bg-red-100 text-red-800 border-red-200';
                         refundStatusIcon = '❌';
                         refundStatusText = 'Rejected';
+                        noticeConfig = { bg: 'from-red-50 to-rose-50', border: 'border-red-200', text: 'text-red-700', title: 'Refund Rejected', desc: 'This refund request was rejected by management.', svg: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' };
                         break;
                 }
                 
@@ -2297,6 +2542,18 @@
                                 '<span class="text-sm text-red-600 font-medium">❌ Refund Rejected</span>'
                             }
                         </div>
+                    </div>
+                `;
+
+                statusNoticeHtml = `
+                    <div class="mt-4 bg-gradient-to-r ${noticeConfig.bg} p-4 rounded-xl border ${noticeConfig.border}">
+                      <div class="flex items-center space-x-3">
+                          <svg class="w-8 h-8 ${noticeConfig.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${noticeConfig.svg}</svg>
+                          <div>
+                            <p class="font-semibold ${noticeConfig.text.replace('700', '800')}">${noticeConfig.title}</p>
+                            <p class="text-sm ${noticeConfig.text}">${noticeConfig.desc}</p>
+                          </div>
+                      </div>
                     </div>
                 `;
             }
@@ -2342,6 +2599,7 @@
                 </div>
                 
                 ${refundStatusHtml}
+                ${statusNoticeHtml}
             `;
             
             // Show/hide action buttons based on existing refund status
@@ -2415,6 +2673,7 @@
                 
                 // Save refund request to Firestore
                 await addDoc(refundRequestsCol, refundRequestData);
+                logAudit("Refund Requested", `Invoice: ${invoiceNo}`);
                 
                 // Show success message to cashier
                 refundSuccess.textContent = `Refund request submitted successfully! Invoice: ${invoiceNo}. This will be processed within 24 hours.`;
@@ -2591,32 +2850,76 @@
         // --- Event Listeners ---
 
         // Product Search Input
+        let searchTimeout;
         productSearchInput.addEventListener('input', (event) => {
-            const searchTerm = event.target.value.toLowerCase();
-            // console.log("Searching for:", searchTerm);
-            // console.log("Products available for search:", products.length);
-            // console.log("Searching for:", searchTerm); // Removed for cleaner console
-            // console.log("Products available for search:", products.length); // Removed for cleaner console
+            const searchTerm = event.target.value.trim();
+            clearTimeout(searchTimeout);
             
             if (searchTerm.length > 0) {
                 searchResultsDiv.classList.remove('hidden');
                 clearSearchBtn.style.display = 'block';
-                const filtered = products.filter(product => {
-                    const nameMatch = product.name.toLowerCase().includes(searchTerm);
-                    const barcodeMatch = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
-                    // console.log(`Product ${product.name}: nameMatch=${nameMatch}, barcodeMatch=${barcodeMatch}, barcode=${product.barcode}`);
-                    // console.log(`Product ${product.name}: nameMatch=${nameMatch}, barcodeMatch=${barcodeMatch}, barcode=${product.barcode}`); // Removed for cleaner console
-                    return nameMatch || barcodeMatch;
-                });
-                // console.log("Filtered products:", filtered.length);
-                // console.log("Filtered products:", filtered.length); // Removed for cleaner console
-                renderProducts(filtered);
+                
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        // Query by barcode first
+                        const qBarcode = query(productsCol, where("barcode", "==", searchTerm), limit(5));
+                        const snapBarcode = await getDocs(qBarcode);
+                        let results = snapBarcode.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                        // If fewer results, try name prefix search (case-sensitive)
+                        if (results.length < 5) {
+                            const qName = query(productsCol, 
+                                where("name", ">=", searchTerm), 
+                                where("name", "<=", searchTerm + '\uf8ff'),
+                                limit(10)
+                            );
+                            const snapName = await getDocs(qName);
+                            const nameResults = snapName.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            const resultIds = new Set(results.map(r => r.id));
+                            nameResults.forEach(nr => { if (!resultIds.has(nr.id)) results.push(nr); });
+                        }
+                        renderProducts(results.slice(0, 10));
+                    } catch (error) {
+                        console.error("Search error:", error);
+                    }
+                }, 300);
             } else {
                 searchResultsDiv.classList.add('hidden');
                 productResultsList.innerHTML = '';
                 clearSearchBtn.style.display = 'none';
             }
             resetInactivityTimer();
+        });
+
+        // Global function to open overlay from billing panel
+        window.openRedemptionOverlay = function() {
+            isRedemptionLookup = true;
+            loyaltyPhoneInput.value = "";
+            loyaltyCustomerDisplay.classList.add('hidden');
+            skipLoyaltyBtn.textContent = "Cancel";
+            confirmLoyaltyBtn.textContent = "Apply to Bill";
+            toggleModal(loyaltyModal, true);
+            loyaltyPhoneInput.focus();
+        };
+
+        // Redemption Input Logic
+        redeemPointsMain.addEventListener('input', function() {
+            let entered = parseInt(this.value) || 0;
+
+            if (entered > availablePoints) {
+                // If they have 500 points but bill is only 200, don't let them redeem 500
+                const grandTotalRaw = parseFloat(grandTotalSpan.textContent.replace('KSh ', '')) + redemptionValue;
+                const maxRedeemableForBill = Math.floor(grandTotalRaw / POINT_VALUE);
+                entered = Math.min(availablePoints, maxRedeemableForBill);
+                this.value = availablePoints;
+                showToast(`Cannot redeem more than available points (${availablePoints})`, 'warning');
+            }
+
+            pointsToRedeem = entered;
+            redemptionValue = pointsToRedeem * POINT_VALUE;
+
+            redeemPreviewMain.textContent = pointsToRedeem > 0 ? `KES ${redemptionValue.toFixed(2)} will be deducted` : '';
+            calculateTotals();
         });
 
         // Clear Search Button
@@ -2676,7 +2979,7 @@
         });
 
         // Complete Sale Button
-        completeSaleBtn.addEventListener('click', async () => { 
+        completeSaleBtn.addEventListener('click', () => { 
             resetInactivityTimer();
             if (cart.length === 0) {
                 showToast('Cart is empty. Please add items before completing the sale.', 'error');
@@ -2690,6 +2993,22 @@
                 showToast('Cash received is less than the Grand Total. Please enter sufficient amount.', 'error');
                 return;
             }
+
+            // Open Loyalty Overlay instead of finishing immediately
+            isRedemptionLookup = false;
+            skipLoyaltyBtn.textContent = "Skip";
+            confirmLoyaltyBtn.textContent = "Complete Sale";
+            loyaltyCustomerDisplay.classList.add('hidden');
+            toggleModal(loyaltyModal, true);
+            
+            if (loyaltyPhoneInput.value) {
+                loyaltyPhoneInput.dispatchEvent(new Event('input'));
+            }
+            loyaltyPhoneInput.focus();
+        });
+
+        async function executeFinalSale() {
+            resetInactivityTimer();
 
             try {
                 // Disable complete sale button during processing
@@ -2713,6 +3032,11 @@
                 // Display the receipt modal
                 receiptContentBody.innerHTML = receiptContent;
                 toggleModal(receiptModal, true);
+                
+                // Automatically kick the cash drawer for Cash sales in native mode
+                if (selectedPaymentMethod === 'Cash' && window.electronAPI && window.electronAPI.openCashDrawer) {
+                    window.electronAPI.openCashDrawer();
+                }
 
                 // Show success message
                 showToast(`Sale Completed!`, 'success');
@@ -2723,6 +3047,8 @@
             } catch (error) {
                 console.error('Error completing sale:', error);
                 showToast('Error completing sale. Please try again.', 'error');
+                const errorMsg = typeof error === 'string' ? error : (error.message || 'Error completing sale. Please try again.');
+                showToast(errorMsg, 'error');
                 
                 // Re-enable complete sale button
                 completeSaleBtn.disabled = false;
@@ -2730,6 +3056,71 @@
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="ml-2">Complete Sale</span>
                 `;
+            }
+        }
+
+        // Loyalty Modal Logic
+        loyaltyPhoneInput.addEventListener('input', async (e) => {
+            const phone = e.target.value.trim();
+            if (phone.length >= 10) {
+                try {
+                    const q = query(customersCol, where("phone", "==", phone), limit(1));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        const cust = snap.docs[0].data();
+                        loyaltyCustomerDisplay.classList.remove('hidden');
+                        loyaltyCustomerName.textContent = cust.name;
+                        loyaltyPointsBalance.textContent = `Balance: ${cust.points || 0} pts`;
+                        loyaltyModal.dataset.tempPoints = cust.points || 0; // Store points temporarily
+                    } else {
+                        loyaltyCustomerDisplay.classList.add('hidden');
+                        loyaltyModal.dataset.tempPoints = 0;
+                    }
+                } catch (err) {
+                    console.error("Loyalty lookup error:", err);
+                }
+            } else {
+                loyaltyCustomerDisplay.classList.add('hidden');
+            }
+        });
+
+        confirmLoyaltyBtn.addEventListener('click', () => {
+            const phone = loyaltyPhoneInput.value.trim();
+            if (isRedemptionLookup) {
+                if (!phone) {
+                    showToast("Please enter a phone number or cancel.", "warning");
+                    return;
+                }
+                // Transfer found data to main billing panel
+                availablePoints = parseInt(loyaltyModal.dataset.tempPoints) || 0;
+                document.getElementById('availablePointsDisplay').textContent = availablePoints;
+                document.getElementById('customerPhone').value = phone;
+                document.getElementById('identifiedCustomerName').textContent = loyaltyCustomerName.textContent;
+                
+                document.getElementById('activeRedemptionSection').classList.remove('hidden');
+                document.getElementById('redemptionLookupContainer').children[1].classList.add('hidden'); // Hide the lookup button
+                
+                toggleModal(loyaltyModal, false);
+                showToast("Customer applied for redemption.", "success");
+            } else {
+                // This is the post-sale final capture
+                document.getElementById('customerPhone').value = phone;
+                toggleModal(loyaltyModal, false);
+                executeFinalSale();
+            }
+        });
+
+        skipLoyaltyBtn.addEventListener('click', () => {
+            toggleModal(loyaltyModal, false);
+            if (!isRedemptionLookup) {
+                executeFinalSale();
+            }
+        });
+
+        loyaltyPhoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmLoyaltyBtn.click();
             }
         });
 
@@ -2989,18 +3380,6 @@
                 // Update scanner status after login
                 updateScannerStatus();
                 updateScannerModeDisplay();
-                
-                // Setup real-time listener for products after successful login
-                productsSnapshotUnsubscribe = onSnapshot(productsCol, (snapshot) => {
-                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
-                    // console.log("Products updated in real-time:", products.length);
-                    // console.log("Products updated in real-time:", products.length); // Removed for cleaner console
-                    updateCartDisplay(); // Re-render cart if products change (e.g., stock update)
-                    calculateTotals();   // Re-calculate totals
-                }, (error) => {
-                    console.error("Error listening to products collection:", error);
-                    showToast("Failed to get real-time product updates. Please check console.", "error");
-                });
             } else {
                 cashierLoginDiv.classList.remove("hidden"); // Show login screen
                 mainPosContent.classList.add("hidden"); // Hide main POS content
