@@ -677,6 +677,14 @@
                     </div>
                     <span class="font-medium">Products</span>
                 </a>
+                <a href="#" class="flex items-center space-x-4" data-section="customers">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <span class="font-medium">Customers</span>
+                </a>
                 <a href="#" class="flex items-center space-x-4" data-section="users">
                     <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -738,7 +746,7 @@
                     <h2 class="text-4xl font-bold text-gray-800 mb-2">Dashboard Overview</h2>
                     <p class="text-gray-600">Welcome back! Here's what's happening in your store today.</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="metric-card sales">
                         <div class="flex items-center justify-between mb-4">
                             <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
@@ -753,6 +761,21 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">Sales Today</h3>
                         <p id="salesToday" class="text-3xl font-bold text-gray-900">KSh 0.00</p>
+                    </div>
+                    <div class="metric-card customers">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Loyal Base</p>
+                                <p class="text-xs text-blue-600">Total Registered</p>
+                            </div>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Customers</h3>
+                        <p id="totalCustomers" class="text-3xl font-bold text-gray-900">0</p>
                     </div>
                     <div class="metric-card cashiers">
                         <div class="flex items-center justify-between mb-4">
@@ -876,6 +899,46 @@
                                     </div>
                                 </td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Customers Management Section -->
+            <section id="customers" class="main-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-4xl font-bold text-gray-800 mb-2">Customer Management</h2>
+                        <p class="text-gray-600">Manage loyalty points and customer profiles</p>
+                    </div>
+                    <button id="addCustomerBtn" class="btn-primary">
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add New Customer
+                        </span>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <input type="text" id="customerSearchInput" placeholder="Search by name or phone number..." class="modern-input">
+                </div>
+                
+                <div class="table-container modern-table">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Name</th>
+                                <th class="text-left">Phone Number</th>
+                                <th class="text-left">Points Balance</th>
+                                <th class="text-left">Total Spent</th>
+                                <th class="text-left">Registered</th>
+                                <th class="text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
@@ -1482,6 +1545,54 @@
         </div>
     </div>
 
+    <!-- Customer Modal -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl mr-4 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 id="customerModalTitle" class="text-2xl font-bold text-gray-800">Add Customer</h3>
+                    <p class="text-gray-600">Enter customer details for loyalty points</p>
+                </div>
+            </div>
+            <form id="customerForm">
+                <input type="hidden" id="customerId">
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="customerName" class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                        <input type="text" id="customerName" required class="modern-input" placeholder="e.g. John Doe">
+                    </div>
+                    <div>
+                        <label for="customerPhone" class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                        <input type="tel" id="customerPhone" required class="modern-input" placeholder="e.g. 0712345678">
+                    </div>
+                    <div id="editPointsContainer" class="hidden grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Points</label>
+                            <input type="number" id="customerPoints" class="modern-input" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Total Spent</label>
+                            <input type="number" id="customerTotalSpent" class="modern-input" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="closeModal('customerModal')" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary px-6 py-3">
+                        Save Customer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Sale Details Modal -->
     <div id="saleDetailsModal" class="modal">
         <div class="modal-content">
@@ -1523,7 +1634,7 @@
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, enableIndexedDbPersistence, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Firebase config (from index.html)
         const firebaseConfig = {
@@ -1539,12 +1650,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Enable Offline Persistence for zero-downtime resilience
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                // Multiple tabs open
+                console.warn("Offline persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+                // Browser not supported
+                console.warn("Offline persistence not supported.");
+            }
+        });
+
         // Firestore collection references
         const productsCol = collection(db, "products");
         const salesCol = collection(db, "sales");
         const usersCol = collection(db, "users");
         const managerLogsCol = collection(db, "managerLogs");
         const auditLogsCol = collection(db, "auditLogs"); // New Audit Logs collection
+        const customersCol = collection(db, "customers"); // New Customers collection
         const refundRequestsCol = collection(db, "refundRequests"); // New Refund Requests collection
 
         // --- Global Variables ---
@@ -1554,6 +1677,7 @@
         let managerLogs = [];
         let auditLogs = [];
         let refundRequests = [];
+        let customers = [];
         let currentAdmin = null;
 
         // --- DOM Elements ---
@@ -1569,6 +1693,7 @@
         const salesTodaySpan = document.getElementById('salesToday');
         const activeCashiersSpan = document.getElementById('activeCashiers');
         const lowStockAlertsSpan = document.getElementById('lowStockAlerts');
+        const totalCustomersSpan = document.getElementById('totalCustomers');
 
         // Products Management Elements
         const productsTableBody = document.getElementById('productsTableBody');
@@ -1596,6 +1721,18 @@
         const userCardIdInput = document.getElementById('userCardId');
         const userPinInput = document.getElementById('userPin');
         const userActiveInput = document.getElementById('userActive');
+
+        // Customers Management Elements
+        const customersTableBody = document.getElementById('customersTableBody');
+        const addCustomerBtn = document.getElementById('addCustomerBtn');
+        const customerModal = document.getElementById('customerModal');
+        const customerModalTitle = document.getElementById('customerModalTitle');
+        const customerForm = document.getElementById('customerForm');
+        const customerIdInput = document.getElementById('customerId');
+        const customerNameInput = document.getElementById('customerName');
+        const redemptionHistoryModal = document.getElementById('redemptionHistoryModal');
+        const customerPhoneInput = document.getElementById('customerPhone');
+        const customerSearchInput = document.getElementById('customerSearchInput');
 
         const userTillNumberInput = document.getElementById('userTillNumber');
 
@@ -1750,11 +1887,12 @@
             if (salesUnsubscribe) salesUnsubscribe();
             if (managerLogsUnsubscribe) managerLogsUnsubscribe();
             if (auditLogsUnsubscribe) auditLogsUnsubscribe();
+            if (customersUnsubscribe) customersUnsubscribe();
             if (refundRequestsUnsubscribe) refundRequestsUnsubscribe();
         }
         
         // Unsubscribe functions for real-time listeners
-        let productsUnsubscribe, usersUnsubscribe, salesUnsubscribe, managerLogsUnsubscribe, auditLogsUnsubscribe, refundRequestsUnsubscribe;
+        let productsUnsubscribe, usersUnsubscribe, salesUnsubscribe, managerLogsUnsubscribe, auditLogsUnsubscribe, customersUnsubscribe, refundRequestsUnsubscribe;
 
         // --- Data Fetching and Rendering ---
 
@@ -1783,6 +1921,10 @@
                 auditLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderAuditLogs();
             });
+            customersUnsubscribe = onSnapshot(customersCol, (snapshot) => {
+                customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCustomers();
+            });
             refundRequestsUnsubscribe = onSnapshot(refundRequestsCol, (snapshot) => {
                 refundRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderRefundRequests();
@@ -1807,6 +1949,9 @@
             // Low Stock Alerts
             const lowStockCount = products.filter(p => p.stock < 10).length;
             lowStockAlertsSpan.textContent = lowStockCount;
+
+            // Total Customers
+            totalCustomersSpan.textContent = customers.length;
         }
 
         // --- Products Management Functions ---
@@ -2094,6 +2239,155 @@
             }
         }
 
+        // --- Customers Management Functions ---
+        function renderCustomers() {
+            customersTableBody.innerHTML = '';
+            const searchTerm = customerSearchInput.value.toLowerCase();
+            
+            const filtered = customers.filter(c => 
+                (c.name && c.name.toLowerCase().includes(searchTerm)) || 
+                (c.phone && c.phone.includes(searchTerm))
+            );
+
+            filtered.forEach(customer => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-4 px-4 text-gray-800 font-medium">${customer.name}</td>
+                    <td class="py-4 px-4 text-gray-700">${customer.phone}</td>
+                    <td class="py-4 px-4 text-blue-600 font-bold">${customer.points || 0} pts</td>
+                    <td class="py-4 px-4 text-gray-700">${formatCurrency(customer.totalSpent || 0)}</td>
+                    <td class="py-4 px-4 text-gray-500 text-sm">${customer.createdAt ? new Date(customer.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                    <td class="py-4 px-4">
+                        <div class="flex space-x-2">
+                            <button onclick="viewRedemptionHistory('${customer.phone}')" class="text-green-600 hover:text-green-800 font-medium">History</button>
+                            <button onclick="editCustomer('${customer.id}')" class="text-blue-600 hover:text-blue-800">Edit</button>
+                            <button onclick="deleteCustomer('${customer.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </div>
+                    </td>
+                `;
+                customersTableBody.appendChild(row);
+            });
+        }
+
+        async function viewRedemptionHistory(phone) {
+            if (!phone) {
+                showToast("Customer has no phone number recorded.", "warning");
+                return;
+            }
+
+            const content = document.getElementById('redemptionHistoryContent');
+            content.innerHTML = '<div class="py-12 text-center"><div class="loading-spinner mb-2"></div><p class="text-gray-500">Loading history...</p></div>';
+            openModal('redemptionHistoryModal');
+
+            try {
+                // Query all sales for this customer phone
+                const q = query(salesCol, where("customerPhone", "==", phone));
+                const snap = await getDocs(q);
+                
+                // Filter for sales that actually had redemptions
+                const redemptions = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(data => (data.pointsRedeemed || 0) > 0)
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                if (redemptions.length === 0) {
+                    content.innerHTML = `
+                        <div class="text-center py-12">
+                            <p class="text-gray-500 font-medium">No redemption history found for this customer.</p>
+                        </div>`;
+                    return;
+                }
+
+                let html = `
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-gray-600 uppercase font-semibold">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Date</th>
+                                <th class="py-3 px-4 text-left">Invoice No</th>
+                                <th class="py-3 px-4 text-right">Points Spent</th>
+                                <th class="py-3 px-4 text-right">Value (KSh)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                `;
+
+                redemptions.forEach(data => {
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3 px-4 text-gray-600">${new Date(data.timestamp).toLocaleString()}</td>
+                            <td class="py-3 px-4 font-mono text-gray-800">${data.invoiceNo}</td>
+                            <td class="py-3 px-4 text-right text-red-600 font-bold">-${data.pointsRedeemed} pts</td>
+                            <td class="py-3 px-4 text-right text-gray-900 font-semibold">${formatCurrency(data.pointsRedeemed * 0.1)}</td>
+                        </tr>`;
+                });
+                content.innerHTML = html + '</tbody></table>';
+            } catch (err) {
+                content.innerHTML = `<p class="text-red-500 text-center py-8">Error loading history: ${err.message}</p>`;
+            }
+        }
+
+        async function saveCustomer() {
+            const id = customerIdInput.value.trim();
+            const name = customerNameInput.value.trim();
+            const phone = customerPhoneInput.value.trim();
+
+            if (!name || !phone) {
+                showToast("Please fill all fields.", "error");
+                return;
+            }
+
+            try {
+                if (!id) {
+                    // Check duplicates
+                    const q = query(customersCol, where("phone", "==", phone));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        showToast("A customer with this phone number already exists.", "error");
+                        return;
+                    }
+
+                    await addDoc(customersCol, {
+                        name, phone, points: 0, totalSpent: 0, createdAt: new Date()
+                    });
+                    showToast("Customer added!", "success");
+                } else {
+                    await updateDoc(doc(db, "customers", id), { name, phone });
+                    showToast("Customer updated!", "success");
+                }
+                closeModal('customerModal');
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to save customer.", "error");
+            }
+        }
+
+        function editCustomer(id) {
+            const c = customers.find(cust => cust.id === id);
+            if (c) {
+                customerModalTitle.textContent = "Edit Customer";
+                customerIdInput.value = c.id;
+                customerNameInput.value = c.name;
+                customerPhoneInput.value = c.phone;
+                document.getElementById('customerPoints').value = c.points || 0;
+                document.getElementById('customerTotalSpent').value = c.totalSpent || 0;
+                document.getElementById('editPointsContainer').classList.remove('hidden');
+                openModal('customerModal');
+            }
+        }
+
+        async function deleteCustomer(id) {
+            if (confirm("Delete this customer and all loyalty points?")) {
+                try {
+                    await deleteDoc(doc(db, "customers", id));
+                    showToast("Customer deleted.", "info");
+                } catch (e) {
+                    console.error(e);
+                    showToast("Delete failed.", "error");
+                }
+            }
+        }
+
 
         // --- Sales Reports Functions ---
         function renderSales(salesData) {
@@ -2305,6 +2599,12 @@
                             <p><strong>Request Date:</strong> ${request.requestedAt ? new Date(request.requestedAt.seconds * 1000).toLocaleString() : 'N/A'}</p>
                             <p><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-sm ${getStatusColor(request.status)}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span></p>
                             <p><strong>Refund Amount:</strong> ${formatCurrency(request.refundAmount)}</p>
+                            ${request.status !== 'pending' ? `
+                                <div class="mt-3 pt-3 border-t border-gray-200">
+                                    <p><strong>Processed By:</strong> ${request.processedBy || 'N/A'}</p>
+                                    <p><strong>Processed Date:</strong> ${request.processedAt ? (request.processedAt.seconds ? new Date(request.processedAt.seconds * 1000).toLocaleString() : new Date(request.processedAt).toLocaleString()) : 'N/A'}</p>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h4 class="font-semibold text-gray-700 mb-2">Original Sale</h4>
@@ -2358,6 +2658,17 @@
                     processedBy: currentAdmin.name,
                     processedAt: new Date()
                 });
+
+                // Return items to stock
+                if (request.saleData && request.saleData.cartItems) {
+                    for (const item of request.saleData.cartItems) {
+                        const productRef = doc(db, "products", item.id);
+                        // Use positive increment to return items to inventory
+                        await updateDoc(productRef, {
+                            stock: increment(item.quantity)
+                        });
+                    }
+                }
 
                 // Log the approval in manager logs
                 await addDoc(managerLogsCol, {
@@ -2537,6 +2848,10 @@
                                 <span class="font-semibold">${saleData.paymentMethod}</span>
                             </div>
                             <div class="flex justify-between">
+                                <span class="text-gray-600">Points Redeemed:</span>
+                                <span class="font-semibold text-red-600">-${formatCurrency(saleData.pointsRedeemed || 0)}</span>
+                            </div>
+                            <div class="flex justify-between">
                                 <span class="text-gray-600">Total Before VAT:</span>
                                 <span class="font-semibold">${formatCurrency(saleData.totalBeforeVat)}</span>
                             </div>
@@ -2671,6 +2986,12 @@
             if (event.target === userModal) {
                 closeModal('userModal');
             }
+            if (event.target === customerModal) {
+                closeModal('customerModal');
+            }
+            if (event.target === redemptionHistoryModal) {
+                closeModal('redemptionHistoryModal');
+            }
         };
 
         // Product Modal
@@ -2701,6 +3022,20 @@
         filterSalesBtn.addEventListener('click', filterSales);
         exportSalesBtn.addEventListener('click', exportSalesToCSV);
         
+        // Customers
+        addCustomerBtn.addEventListener('click', () => {
+            customerModalTitle.textContent = "Add New Customer";
+            customerForm.reset();
+            customerIdInput.value = '';
+            document.getElementById('editPointsContainer').classList.add('hidden');
+            openModal('customerModal');
+        });
+        customerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveCustomer();
+        });
+        customerSearchInput.addEventListener('input', renderCustomers);
+
         // Refund Requests
         filterRefundsBtn.addEventListener('click', filterRefundRequests);
         refreshRefundsBtn.addEventListener('click', () => {
@@ -2731,9 +3066,12 @@
         window.closeModal = closeModal;
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
+        window.editCustomer = editCustomer;
+        window.deleteCustomer = deleteCustomer;
         window.editUser = editUser;
         window.deleteUser = deleteUser;
         window.toggleUserStatus = toggleUserStatus;
+        window.viewRedemptionHistory = viewRedemptionHistory;
         window.viewRefundDetails = viewRefundDetails;
         window.approveRefund = approveRefund;
         window.rejectRefund = rejectRefund;
