@@ -811,7 +811,7 @@ async function renderDashboard() {
             <div class="table-wrap" id="recentSalesWrap">
                 <table class="data-table">
                     <thead><tr>
-                        <th>Invoice</th><th>Items</th><th>Cashier</th><th>Method</th><th>Total</th><th>Time</th>
+                        <th>Invoice</th><th>Items</th><th>Cashier</th><th>Method</th><th>Total</th><th>Time</th><th>Actions</th>
                     </tr></thead>
                     <tbody id="recentSalesBody">
                         <tr><td colspan="6" class="text-center py-8 text-slate-400">Loading…</td></tr>
@@ -881,9 +881,14 @@ async function renderDashboard() {
                     <td class="font-mono font-semibold text-blue-600">${s.invoiceNo||'—'}</td>
                     <td>${s.items?.length||0} item${s.items?.length!==1?'s':''}</td>
                     <td>${s.cashierName||'—'}</td>
-                    <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':s.paymentMethod==='card'?'badge-blue':'badge-amber'}">${s.paymentMethod?.toUpperCase()||'—'}</span></td>
+                    <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':(s.paymentMethod==='card'||s.paystack)?'badge-blue':'badge-amber'}">${s.paystack ? 'PAYSTACK' : (s.paymentMethod?.toUpperCase()||'—')}</span></td>
                     <td class="font-mono font-bold">${fmt(s.grandTotal)}</td>
                     <td class="text-slate-400 text-xs">${dt}</td>
+                    <td class="text-right">
+                        <button onclick="viewRefundSale('${s.invoiceNo}')"
+                                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700
+                                       rounded-lg text-xs font-bold transition">View</button>
+                    </td>
                 </tr>`;
             }).join('') : '<tr><td colspan="6" class="text-center py-8 text-slate-400">No sales recorded yet</td></tr>';
         }, err => handleQueryError(err, "Recent sales table"));
@@ -1399,7 +1404,7 @@ function renderSales() {
             <table class="data-table">
                 <thead><tr>
                     <th>Invoice</th><th>Items</th><th>Cashier</th><th>Payment</th>
-                    <th>Cash Given</th><th>Total</th><th>Date</th>
+                    <th>Cash Given</th><th>Total</th><th>Date</th><th>Actions</th>
                 </tr></thead>
                 <tbody id="salesBody">
                     <tr><td colspan="7" class="text-center py-8 text-slate-400">Apply date filter above</td></tr>
@@ -1449,10 +1454,15 @@ async function fetchSales() {
                 <td class="font-mono font-semibold text-blue-600">${s.invoiceNo||'—'}</td>
                 <td>${s.items?.length||0}</td>
                 <td>${s.cashierName||'—'}</td>
-                <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':s.paymentMethod==='card'?'badge-blue':'badge-amber'}">${(s.paymentMethod||'').toUpperCase()}</span></td>
+                <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':s.paymentMethod==='card'?'badge-blue':'badge-amber'}">${s.paystack ? 'PAYSTACK' : (s.paymentMethod||'').toUpperCase()}</span></td>
                 <td class="font-mono text-slate-500">${s.paymentMethod==='cash' ? fmt(s.cashGiven) : '—'}</td>
                 <td class="font-mono font-bold">${fmt(s.grandTotal)}</td>
                 <td class="text-slate-400 text-xs">${dt}</td>
+                <td>
+                    <button onclick="viewRefundSale('${s.invoiceNo}')"
+                            class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700
+                                   rounded-lg text-xs font-bold transition">View</button>
+                </td>
             </tr>`;
         }).join('') : '<tr><td colspan="7" class="text-center py-8 text-slate-400">No sales in this period</td></tr>';
 
@@ -1815,11 +1825,30 @@ function renderSettings() {
                         <label class="form-label">Receipt Footer Message</label>
                         <textarea id="set_footer" class="form-input" rows="2">${storeData.receiptFooter||'Thank you for shopping with us!'}</textarea>
                     </div>
-                    <button onclick="saveSettings()" class="btn-primary">Save Settings</button>
+                    <div>
+                        <label class="form-label">Theme Color (Hex Code)</label>
+                        <input id="set_theme_color" type="color" class="form-input h-10 w-24 p-1" value="${storeData.themeColor || '#2563eb'}"/>
+                    </div>
+                    <button onclick="saveSettings()" class="btn-primary">Save Store Information</button>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl border border-slate-200 p-6">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+                <h3 class="font-bold text-slate-800 mb-4">Paystack Integration</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <input id="set_paystack_enabled" type="checkbox" class="w-4 h-4 accent-blue-600" ${storeData.paystack?.enabled ? 'checked' : ''}/>
+                        <label for="set_paystack_enabled" class="text-sm font-semibold text-blue-800">Enable Paystack Payments</label>
+                    </div>
+                    <div>
+                        <label class="form-label">Paystack Public Key</label>
+                        <input id="set_paystack_key" class="form-input font-mono text-xs" value="${storeData.paystack?.publicKey || ''}" placeholder="pk_live_xxxxxxxxxxxxxxxxxxxxxxxx"/>
+                    </div>
+                    <button onclick="savePaystackSettings()" class="btn-primary">Save Paystack Config</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 h-fit">
                 <h3 class="font-bold text-slate-800 mb-4">System Info</h3>
                 <div class="space-y-3 text-sm">
                     <div class="flex justify-between py-2 border-b border-slate-100">
@@ -1844,6 +1873,23 @@ function renderSettings() {
     `;
 }
 
+window.savePaystackSettings = async () => {
+    const enabled = document.getElementById('set_paystack_enabled').checked;
+    const publicKey = document.getElementById('set_paystack_key').value.trim();
+
+    const paystackData = {
+        enabled: enabled,
+        publicKey: publicKey
+    };
+
+    await db.collection('stores').doc(storeData.id).update({
+        paystack: paystackData,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    storeData.paystack = paystackData;
+    showToast('Paystack settings updated', 'success');
+};
+
 window.saveSettings = async () => {
     const data = {
         name:           document.getElementById('set_name').value.trim(),
@@ -1851,6 +1897,7 @@ window.saveSettings = async () => {
         phone:          document.getElementById('set_phone').value.trim(),
         vatNumber:      document.getElementById('set_vat').value.trim(),
         receiptFooter:  document.getElementById('set_footer').value.trim(),
+        themeColor:     document.getElementById('set_theme_color').value.trim(),
         updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
     };
     await db.collection('stores').doc(storeData.id).update(data);
@@ -2062,6 +2109,23 @@ window.viewRefundSale = async (invoiceNo) => {
                 <div class="max-h-60 overflow-y-auto px-1">
                     ${itemsHtml}
                 </div>
+
+                ${sale.paystack ? `
+                <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 space-y-1">
+                    <p class="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Paystack Payment Metadata</p>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-500">Transaction Ref:</span>
+                        <span class="font-mono font-bold text-slate-700">${sale.paystack.reference}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-500">Channel:</span>
+                        <span class="font-bold text-slate-700 uppercase">${sale.paystack.channel}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-500">Customer Email:</span>
+                        <span class="font-bold text-slate-700">${sale.paystack.email}</span>
+                    </div>
+                </div>` : ''}
 
                 <div class="bg-slate-900 p-5 rounded-2xl text-white shadow-lg">
                     <div class="space-y-2 text-sm opacity-80">
