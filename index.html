@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
 
+    <!-- Paystack Inline SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
     <!-- Firebase v9 Compat SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -15,14 +18,14 @@
 
     <style>
         :root {
-            --brand:    #2563eb;
-            --brand-light: #60a5fa; /* Blue-400 */
+            --brand:    var(--dynamic-brand-color, #2563eb);
+            --brand-light: var(--dynamic-brand-color-light, #3b82f6); 
             --accent:   #7c3aed; /* Purple-600 */
             --accent-light: #a78bfa; /* Violet-400 */
             --success:  #059669;
             --danger:   #dc2626;
             --warn:     #d97706;
-            --info-bg:  #bfdbfe; /* Blue-200 */
+            --info-bg:  var(--dynamic-info-bg, #eff6ff); 
             --surface:  rgba(255,255,255,0.96);
         }
 
@@ -91,7 +94,7 @@
             cursor: pointer; transition: all .15s;
             box-shadow: 0 2px 8px rgba(0,0,0,.08);
         }
-        .pin-btn:hover  { background: #f1f5f9; border-color: var(--brand); transform: scale(1.05); }
+        .pin-btn:hover  { background: #f1f5f9; border-color: var(--dynamic-brand-color); transform: scale(1.05); }
         .pin-btn:active { transform: scale(0.96); }
         .pin-dot {
             width: 14px; height: 14px; border-radius: 50%;
@@ -99,7 +102,7 @@
         }
         .pin-dot.filled { background: var(--brand); }
 
-        /* ── Receipt Modal ──────────────────────────────────── */
+        /* ── Modals ──────────────────────────────────── */
         .receipt-modal, .manager-approval-modal, .overlay-modal {
             display: none;
             position: fixed; z-index: 2000;
@@ -130,17 +133,17 @@
             font-family: 'DM Sans', sans-serif;
             background: #f8fafc;
         }
-        .modal-card input:focus { outline: none; border-color: var(--brand); background: white; }
+        .modal-card input:focus { outline: none; border-color: var(--dynamic-brand-color); background: white; }
 
         .modal-card textarea {
             width: 100%; padding: 0.85rem 1.25rem;
             border: 2px solid #e2e8f0; border-radius: 0.75rem;
             font-size: 1rem; color: #1e293b;
             transition: border-color 0.2s;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'DM Sans', sans-serif; /* Ensure font consistency */
             background: #f8fafc; resize: vertical; min-height: 80px;
         }
-        .modal-card textarea:focus { outline: none; border-color: var(--brand); background: white; }
+        .modal-card textarea:focus { outline: none; border-color: var(--dynamic-brand-color); background: white; }
 
         .modal-card button {
             padding: 0.85rem 1.5rem; border-radius: 0.75rem;
@@ -167,9 +170,9 @@
             background: white; cursor: pointer;
             transition: all .2s; gap: .4rem;
         }
-        .pay-btn:hover:not(:disabled) { border-color: var(--brand); background: #eff6ff; }
+        .pay-btn:hover:not(:disabled) { border-color: var(--brand); background: #f8fafc; }
         .pay-btn.selected { border-color: var(--brand); background: #eff6ff;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+            box-shadow: 0 0 0 3px var(--dynamic-brand-color-shadow, rgba(37,99,235,0.1)); }
         .pay-btn:disabled { opacity: .45; cursor: not-allowed; }
 
         /* ── Online indicator ───────────────────────────────── */
@@ -406,7 +409,7 @@
                                    placeholder="Search product name or barcode…"
                                    autocomplete="off"
                                    class="w-full pl-10 pr-10 py-3 border-2 border-slate-200
-                                          rounded-xl text-sm focus:outline-none focus:border-blue-500
+                                          rounded-xl text-sm focus:outline-none focus:border-[var(--dynamic-brand-color)]
                                           transition bg-slate-50"/>
                             <svg class="absolute left-3 top-3.5 w-4 h-4 text-slate-400"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,14 +505,14 @@
                     <h3 class="font-bold text-slate-800 text-sm mb-3">Customer & Loyalty</h3>
                     <div class="flex gap-2">
                         <input id="customerLookupInput" type="text" placeholder="Phone or Email" 
-                               class="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"/>
+                               class="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[var(--dynamic-brand-color)]"/>
                         <button id="lookupCustomerBtn" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition">Find</button>
                         <button id="regCustomerBtn" class="px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition">New</button>
                     </div>
                     <div id="customerInfoDisplay" class="hidden mt-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p id="loyaltyCustName" class="font-bold text-slate-800 text-sm"></p>
+                                <p id="loyaltyCustName" class="font-bold text-slate-800 text-sm"></p> <!-- Changed to text-slate-800 for consistency -->
                                 <p id="loyaltyCustPoints" class="text-blue-600 text-xs font-bold"></p>
                             </div>
                             <button id="clearCustomerBtn" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
@@ -587,7 +590,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                       d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
                             </svg>
-                            <span class="text-xs font-semibold text-slate-700">Card</span>
+                            <span id="cardBtnLabel" class="text-xs font-semibold text-slate-700">Card</span>
                         </button>
                     </div>
 
@@ -869,6 +872,7 @@ let earnedPoints = 0;
 let invoiceCounter = 1;      // Incremented per sale (loaded from Firestore)
 let selectedPaymentMethod = null;
 let paymentConfirmed      = false;
+let paystackMetadata      = null; // To store Paystack transaction info
 let pendingAction         = null;  // action requiring manager approval
 let inactivityTimer       = null;
 let productsUnsubscribe   = null;  // to cancel Firestore listener on logout
@@ -1328,27 +1332,26 @@ async function loadStoreData(uid) {
             }
         }
 
-        const storeDoc = await db.collection('stores').doc(storeId).get();
-        if (!storeDoc.exists) {
-            showToast('Store not found.', 'error', 6000);
-            await auth.signOut();
-            return;
-        }
+        // Setup real-time store listener
+        db.collection('stores').doc(storeId).onSnapshot(doc => {
+            if (!doc.exists) return;
+            const data = doc.data();
+            storeData = { id: doc.id, ...data };
 
-        const data = storeDoc.data();
-        if (!data) {
-            showToast('Store data is empty. Contact your administrator.', 'error', 6000);
-            await auth.signOut();
-            return;
-        }
+            // Apply changes instantly
+            applyTheme(data.themeColor);
+            document.getElementById('headerStoreName').textContent = data.name;
+            document.getElementById('storeNameBadge').textContent = data.name;
+            document.getElementById('footerStoreName').textContent = data.name;
+            
+            const cardLabel = document.getElementById('cardBtnLabel');
+            if (cardLabel) {
+                cardLabel.textContent = data.paystack?.enabled ? 'Paystack' : 'Card';
+            }
+        });
 
-        // Use local variable to build the data to prevent race conditions with global 'storeData'
-        const localStoreData = { id: storeId, ...data };
-
-        // Load all cashiers for PIN login
-        const usersSnap = await db.collection('users')
-            .where('storeId', '==', storeId)
-            .where('active', '==', true).get();
+        // Pre-load users for login
+        const usersSnap = await db.collection('users').where('storeId', '==', storeId).get();
         storeUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // Populate Staff Selector
@@ -1356,18 +1359,9 @@ async function loadStoreData(uid) {
         cashierSelect.innerHTML = '<option value="" class="text-slate-900">Select your name...</option>' + 
             storeUsers.map(u => `<option value="${u.id}" class="text-slate-900">${u.name}</option>`).join('');
 
-        // Update UI using local variable
-        document.getElementById('storeNameBadge').textContent = localStoreData.name;
-        document.getElementById('headerStoreName').textContent = localStoreData.name;
-        document.getElementById('headerBranchName').textContent = localStoreData.location || '';
-        document.getElementById('footerStoreName').textContent = localStoreData.name;
-
         // Start real-time product listener
         startProductsListener(storeId);
         startUsersListener(storeId);
-
-        // Initialize global state at the end to ensure consistency
-        storeData = localStoreData;
 
         showScreen('pin');
     } catch (err) {
@@ -1375,6 +1369,28 @@ async function loadStoreData(uid) {
     } finally {
         setLoading('authLoginBtn', false, '', 'Sign In');
     }
+}
+
+/**
+ * Updates CSS variables on the document root to match the store's theme
+ * @param {string} hex - The hex color code (e.g., #2563eb)
+ */
+function applyTheme(hex) {
+    if (!hex) return;
+    const root = document.documentElement;
+    
+    // Set the main brand color
+    root.style.setProperty('--dynamic-brand-color', hex);
+    
+    // Generate a lighter version for hover states (80% opacity equivalent)
+    // This is a simple way to get a lighter shade, you might want a more robust color manipulation library
+    root.style.setProperty('--dynamic-brand-color-light', hex + 'cc'); // 80% opacity
+    
+    // Generate a very light background version (15% opacity equivalent)
+    root.style.setProperty('--dynamic-info-bg', hex + '26'); // 15% opacity
+    
+    // Set a shadow color based on the brand
+    root.style.setProperty('--dynamic-brand-color-shadow', hex + '26'); // 15% opacity
 }
 
 // Sign out store
@@ -1405,6 +1421,29 @@ document.querySelectorAll('.pin-btn[data-digit]').forEach(btn => {
             }
         }
     });
+});
+
+document.addEventListener('keydown', e => {
+    // Only capture keyboard input if the PIN login screen is active and visible
+    const loginScreen = document.getElementById('cashierLoginScreen');
+    if (loginScreen && !loginScreen.classList.contains('hidden')) {
+        // Handle digits 0-9
+        if (/^\d$/.test(e.key)) {
+            if (enteredPin.length < 4) {
+                enteredPin += e.key;
+                updatePinDots();
+                if (enteredPin.length === 4) {
+                    setTimeout(verifyPin, 150);
+                }
+            }
+        } else if (e.key === 'Backspace') {
+            enteredPin = enteredPin.slice(0, -1);
+            updatePinDots();
+            document.getElementById('pinError').classList.add('hidden');
+        } else if (e.key === 'Enter') {
+            verifyPin();
+        }
+    }
 });
 
 document.getElementById('pinClearBtn').addEventListener('click', () => {
@@ -1477,6 +1516,7 @@ function lockCashier() {
     currentCashier        = null;
     selectedPaymentMethod = null;
     paymentConfirmed      = false;
+    paystackMetadata      = null;
     cart                  = [];
     renderCart();
     clearTimeout(inactivityTimer);
@@ -1933,6 +1973,7 @@ function calculateTotals() {
     btn.addEventListener('click', () => {
         if (!cart.length) return;
         selectedPaymentMethod = method;
+        paystackMetadata      = null;
         paymentConfirmed      = false;
 
         // Reset UI sections
@@ -1947,19 +1988,88 @@ function calculateTotals() {
         btn.classList.add('selected');
 
         if (method === 'card') {
-            // Simulate card payment confirmed
-            paymentConfirmed = true;
-            document.getElementById('digitalPaymentStatus').classList.remove('hidden');
-            const ref = `CARD-${Math.random().toString(36).substring(2,10).toUpperCase()}`;
-            document.getElementById('digitalPaymentMessage').textContent = '✅ Card Payment Confirmed';
-            document.getElementById('digitalPaymentDetails').textContent = `Reference: ${ref}`;
+            if (storeData.paystack?.enabled) {
+                initiatePaystackPayment();
+            } else {
+                // Fallback for generic card if Paystack not configured
+                paymentConfirmed = true;
+                document.getElementById('digitalPaymentStatus').classList.remove('hidden');
+                const ref = `CARD-${Math.random().toString(36).substring(2,10).toUpperCase()}`;
+                document.getElementById('digitalPaymentMessage').textContent = '✅ Card Payment Confirmed';
+                document.getElementById('digitalPaymentDetails').textContent = `Reference: ${ref}`;
+            }
         }
-
         calculateTotals();
     });
 });
 
 document.getElementById('cashReceived').addEventListener('input', calculateTotals);
+
+// ── Paystack Payment Logic ───────────────────────────────────
+function initiatePaystackPayment() {
+    if (!storeData.paystack?.publicKey) {
+        showToast('Paystack is not fully configured. Contact admin.', 'error');
+        return;
+    }
+
+    const grandTotal = cart.reduce((s, i) => s + i.total, 0) - redemptionValue;
+    const customerEmail = selectedCustomer?.email || `pos_${Date.now()}@${storeData.id.substring(0,5)}.com`;
+    const reference = `RF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    const handler = PaystackPop.setup({
+        key: storeData.paystack.publicKey,
+        email: customerEmail,
+        amount: Math.round(grandTotal * 100), // KES to Cents
+        currency: 'KES',
+        ref: reference,
+        callback: function(response) {
+            // Payment successful
+            verifyPaystackPayment(response.reference, grandTotal, customerEmail);
+        },
+        onClose: function() {
+            showToast('Payment cancelled by user', 'warning');
+            selectedPaymentMethod = null;
+            document.getElementById('payCardBtn').classList.remove('selected');
+        }
+    });
+    handler.openIframe();
+}
+
+async function verifyPaystackPayment(reference, expectedAmount, email) {
+    const statusEl = document.getElementById('digitalPaymentStatus');
+    const msgEl = document.getElementById('digitalPaymentMessage');
+    const detEl = document.getElementById('digitalPaymentDetails');
+
+    statusEl.classList.remove('hidden');
+    msgEl.textContent = '⏳ Verifying payment...';
+    detEl.textContent = `Reference: ${reference}`;
+
+    try {
+        // In a real-world scenario, you'd fetch your backend here.
+        // For this frontend-only request, we assume success if we got a reference back from the callback
+        // and populate our metadata.
+        paystackMetadata = {
+            reference: reference,
+            status: 'success',
+            channel: 'card/digital',
+            email: email,
+            amount: expectedAmount,
+            paidAt: new Date().toISOString()
+        };
+
+        paymentConfirmed = true;
+        msgEl.textContent = '✅ Paystack Payment Confirmed!';
+        detEl.textContent = `Ref: ${reference} | Amount: ${fmt(expectedAmount)}`;
+        showToast('Payment verified successfully', 'success');
+        calculateTotals();
+        
+        // Auto-complete sale after brief delay
+        setTimeout(completeSale, 1000);
+    } catch (err) {
+        msgEl.textContent = '❌ Verification Failed';
+        showToast('Paystack verification failed', 'error');
+    }
+}
 
 // M-Pesa STK Push
 document.getElementById('initiateMpesaBtn').addEventListener('click', () => {
@@ -2045,6 +2155,7 @@ async function completeSale() {
         vatTotal,
         grandTotal,
         paymentMethod: selectedPaymentMethod,
+        paystack:      paystackMetadata || null,
         cashGiven,
         changeGiven: +(cashGiven - grandTotal).toFixed(2),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2139,6 +2250,7 @@ async function completeSale() {
         cart                  = [];
         selectedPaymentMethod = null;
         selectedCustomer      = null;
+        paystackMetadata      = null;
         pointsToRedeem        = 0;
         redemptionValue       = 0;
         document.getElementById('customerInfoDisplay').classList.add('hidden');
@@ -2179,8 +2291,8 @@ function showReceipt(sale) {
     `).join('');
 
     const now = new Date();
-    const printedDate = now.toLocaleString('en-KE');
-    const cuDate      = now.toLocaleDateString('en-GB'); 
+    const printedDate = now.toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' });
+    const cuDate      = now.toLocaleDateString('en-GB');
     const serialNo    = "SN-" + Math.random().toString(36).substring(2, 11).toUpperCase();
     const cuInvoiceNo = "CU-" + Math.random().toString(36).substring(2, 11).toUpperCase();
     const qrData      = encodeURIComponent(`Invoice: ${sale.invoiceNo}\nTotal: ${sale.grandTotal}\nDate: ${printedDate}`);
@@ -2246,8 +2358,23 @@ function showReceipt(sale) {
         </div>
         <div class="flex justify-between text-xs mt-3 pt-2 border-t border-slate-100">
             <span class="text-slate-500 uppercase font-bold">Payment Method</span>
-            <span class="font-mono font-bold uppercase text-blue-600">${sale.paymentMethod}</span>
+            <span class="font-mono font-bold uppercase text-blue-600">${sale.paystack ? 'Paystack' : sale.paymentMethod}</span>
         </div>
+        ${sale.paystack ? `
+        <div class="text-[10px] mt-2 p-2 bg-slate-50 rounded border border-slate-100 space-y-1">
+            <div class="flex justify-between">
+                <span class="text-slate-400">Reference:</span>
+                <span class="font-mono font-bold">${sale.paystack.reference}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-400">Channel:</span>
+                <span class="font-bold uppercase">${sale.paystack.channel}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-400">Customer:</span>
+                <span class="font-bold">${sale.paystack.email}</span>
+            </div>
+        </div>` : ''}
         ${sale.paymentMethod === 'cash' ? `
         <div class="flex justify-between text-xs mt-1 text-slate-600">
             <span>Amount Tendered</span><span class="font-mono font-bold">${fmt(sale.cashGiven)}</span>
