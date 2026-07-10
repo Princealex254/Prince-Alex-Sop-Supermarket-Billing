@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RetailFlow Admin — Dashboard</title>
+    <title>Prince Alex Digital POS | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Firebase v9 Compat SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
     <style>
         :root {
@@ -178,63 +180,480 @@
         .toast.info    { background: var(--brand); }
         .toast.warning { background: #d97706; }
 
-        /* ── Login screen ────────────────────────────────────── */
+        /* ════════════════════════════════════════════════════════
+           PREMIUM LOGIN SCREEN
+           ════════════════════════════════════════════════════════ */
         #loginScreen {
             position: fixed; inset: 0; z-index: 5000;
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #312e81 100%);
+            background: #0b1121;
             display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            font-family: 'Inter', 'DM Sans', sans-serif;
         }
 
-        /* ── Responsive ──────────────────────────────────────── */
+        /* Animated gradient orb */
+        .login-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            pointer-events: none;
+            animation: orbFloat 12s ease-in-out infinite alternate;
+        }
+        .login-orb--1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, #2563eb, #1d4ed8, #1e40af);
+            top: -15%; left: -10%;
+            animation-delay: 0s;
+        }
+        .login-orb--2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #7c3aed, #6d28d9, #5b21b6);
+            bottom: -15%; right: -10%;
+            animation-delay: -4s;
+        }
+        .login-orb--3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #f59e0b, #d97706, #b45309);
+            top: 40%; left: 50%;
+            transform: translateX(-50%);
+            animation-delay: -8s;
+            opacity: 0.15;
+        }
+
+        @keyframes orbFloat {
+            0%   { transform: translate(0, 0) scale(1); }
+            33%  { transform: translate(40px, -30px) scale(1.1); }
+            66%  { transform: translate(-20px, 40px) scale(0.9); }
+            100% { transform: translate(30px, -20px) scale(1.05); }
+        }
+
+        .login-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .login-particles {
+            position: absolute; inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            animation: particleFloat 20s infinite linear;
+        }
+        .particle:nth-child(1)  { left: 10%; top: 20%; animation-duration: 22s; animation-delay: 0s; width: 4px; height: 4px; }
+        .particle:nth-child(2)  { left: 30%; top: 60%; animation-duration: 18s; animation-delay: -3s; }
+        .particle:nth-child(3)  { left: 50%; top: 10%; animation-duration: 25s; animation-delay: -7s; width: 2px; height: 2px; }
+        .particle:nth-child(4)  { left: 70%; top: 40%; animation-duration: 20s; animation-delay: -11s; width: 5px; height: 5px; opacity: 0.4; }
+        .particle:nth-child(5)  { left: 85%; top: 70%; animation-duration: 16s; animation-delay: -2s; }
+        .particle:nth-child(6)  { left: 20%; top: 80%; animation-duration: 24s; animation-delay: -5s; }
+        .particle:nth-child(7)  { left: 60%; top: 85%; animation-duration: 19s; animation-delay: -9s; }
+        .particle:nth-child(8)  { left: 90%; top: 25%; animation-duration: 21s; animation-delay: -15s; width: 4px; height: 4px; opacity: 0.3; }
+        .particle:nth-child(9)  { left: 40%; top: 30%; animation-duration: 17s; animation-delay: -1s; width: 2px; height: 2px; }
+        .particle:nth-child(10) { left: 5%; top: 50%; animation-duration: 23s; animation-delay: -13s; }
+
+        @keyframes particleFloat {
+            0%   { transform: translateY(0) translateX(0); opacity: 0.25; }
+            25%  { transform: translateY(-120px) translateX(40px); opacity: 0.6; }
+            50%  { transform: translateY(-60px) translateX(-20px); opacity: 0.3; }
+            75%  { transform: translateY(-180px) translateX(60px); opacity: 0.5; }
+            100% { transform: translateY(0) translateX(0); opacity: 0.25; }
+        }
+
+        @keyframes cardAppear {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes borderGlow {
+            0%   { opacity: 0.6; }
+            50%  { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-6px); }
+            30% { transform: translateX(6px); }
+            45% { transform: translateX(-4px); }
+            60% { transform: translateX(4px); }
+            75% { transform: translateX(-2px); }
+            90% { transform: translateX(2px); }
+        }
+
+        .login-card {
+            position: relative;
+            width: 100%; max-width: 440px;
+            padding: 3rem 2.5rem;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(32px) saturate(1.4);
+            -webkit-backdrop-filter: blur(32px) saturate(1.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2rem;
+            box-shadow:
+                0 32px 64px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                0 0 120px rgba(37, 99, 235, 0.08);
+            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px) scale(0.97);
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 2rem;
+            padding: 1px;
+            background: linear-gradient(
+                135deg,
+                rgba(37, 99, 235, 0.5),
+                rgba(124, 58, 237, 0.3),
+                rgba(245, 158, 11, 0.2),
+                rgba(37, 99, 235, 0.5)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: borderGlow 6s ease-in-out infinite alternate;
+        }
+
+        .login-logo-wrap {
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.75rem;
+        }
+        .login-logo {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 800;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+            position: relative;
+        }
+        .login-logo::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: calc(1rem + 2px);
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent, rgba(255,255,255,0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.15rem;
+        }
+        .login-subtitle {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.875rem;
+            text-align: center;
+            font-weight: 400;
+        }
+        .login-greeting {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 2.75rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.875rem;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: 'Inter', 'DM Sans', sans-serif;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+        }
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+        .input-group input:focus {
+            border-color: rgba(37, 99, 235, 0.6);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), 0 0 30px rgba(37, 99, 235, 0.05);
+        }
+        .input-group input:focus + .input-icon {
+            color: #2563eb;
+        }
+        .input-group input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.95) inset !important;
+            -webkit-text-fill-color: #fff !important;
+            caret-color: #fff;
+        }
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.25);
+            transition: color 0.3s;
+            pointer-events: none;
+        }
+        .input-icon svg { width: 18px; height: 18px; }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            padding: 0.25rem;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-toggle:hover { color: rgba(255, 255, 255, 0.55); }
+        .password-toggle svg { width: 18px; height: 18px; }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 0.875rem;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Inter', 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            letter-spacing: 0.01em;
+            margin-top: 0.5rem;
+        }
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #2563eb, #7c3aed, #1d4ed8);
+            background-size: 200% 200%;
+            opacity: 0;
+            transition: opacity 0.4s;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+        .login-btn:hover::before { opacity: 1; }
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+        }
+        .login-btn:active { transform: translateY(1px) scale(0.98); }
+        .login-btn span, .login-btn svg { position: relative; z-index: 1; }
+
+        .login-btn .btn-spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .login-btn.loading .btn-spinner { display: block; }
+        .login-btn.loading .btn-text { display: none; }
+        .login-btn.loading svg { display: none; }
+
+        .login-error {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #fca5a5;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            text-align: center;
+            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        .login-error.show { display: block; }
+
+        .login-footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: center;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.25);
+            line-height: 1.8;
+        }
+        .login-footer strong { color: rgba(255, 255, 255, 0.4); font-weight: 600; }
+        .login-footer .footer-brand {
+            color: rgba(37, 99, 235, 0.6);
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .login-card > * {
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .login-logo-wrap  { animation-delay: 0.1s; }
+        .login-title      { animation-delay: 0.2s; }
+        .login-subtitle   { animation-delay: 0.25s; }
+        .login-greeting   { animation-delay: 0.3s; }
+        .input-group--1   { animation-delay: 0.35s; }
+        .input-group--2   { animation-delay: 0.4s; }
+        .login-btn        { animation-delay: 0.45s; }
+        .login-footer     { animation-delay: 0.55s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 768px) {
             .sidebar { width: 100%; min-width: 0; min-height: auto; }
             .app-layout { flex-direction: column; }
+            .login-card { padding: 2rem 1.5rem; margin: 0 1rem; }
+            .login-title { font-size: 1.25rem; }
+            .login-orb--1 { width: 300px; height: 300px; }
+            .login-orb--2 { width: 250px; height: 250px; }
+            .login-orb--3 { width: 200px; height: 200px; }
+        }
+        @media (max-width: 480px) {
+            .login-card { padding: 1.75rem 1.25rem; border-radius: 1.5rem; }
+            .login-logo { width: 50px; height: 50px; font-size: 1.25rem; }
         }
     </style>
 </head>
 <body>
 
 <!-- ════════════════════════════════════════════════════════════
-     LOGIN SCREEN
+     PREMIUM LOGIN SCREEN
      ════════════════════════════════════════════════════════════ -->
 <div id="loginScreen">
-    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl
-                p-10 w-full max-w-md text-center text-white shadow-2xl">
-        <div class="mb-8">
-            <div class="w-16 h-16 mx-auto bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-                <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-            </div>
-            <h1 class="text-3xl font-bold">RetailFlow Admin</h1>
-            <p class="text-white/50 text-sm mt-1">Management Dashboard</p>
+    <!-- Animated orbs -->
+    <div class="login-orb login-orb--1"></div>
+    <div class="login-orb login-orb--2"></div>
+    <div class="login-orb login-orb--3"></div>
+
+    <!-- Grid overlay -->
+    <div class="login-grid"></div>
+
+    <!-- Floating particles -->
+    <div class="login-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo-wrap">
+            <div class="login-logo">PA</div>
         </div>
 
-        <div class="space-y-4 text-left">
-            <div>
-                <label class="text-white/70 text-sm font-medium block mb-1.5">Email</label>
-                <input id="loginEmail" type="email" placeholder="admin@store.com"
-                       class="w-full px-4 py-3 rounded-xl bg-white/15 border border-white/30
-                              text-white placeholder-white/40 focus:outline-none focus:border-white/70 transition"/>
+        <!-- Title -->
+        <h1 class="login-title">Prince Alex Digital POS</h1>
+        <p class="login-subtitle">Smart Business. Simplified.</p>
+
+        <!-- Greeting -->
+        <p class="login-greeting">Securely sign in to your dashboard</p>
+
+        <!-- Form -->
+        <form id="loginForm" novalidate>
+            <!-- Email -->
+            <div class="input-group input-group--1">
+                <span class="input-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email" required/>
             </div>
-            <div>
-                <label class="text-white/70 text-sm font-medium block mb-1.5">Password</label>
-                <input id="loginPassword" type="password" placeholder="••••••••"
-                       class="w-full px-4 py-3 rounded-xl bg-white/15 border border-white/30
-                              text-white placeholder-white/40 focus:outline-none focus:border-white/70 transition"/>
+
+            <!-- Password -->
+            <div class="input-group input-group--2">
+                <span class="input-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </span>
+                <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required/>
+                <button type="button" class="password-toggle" onclick="togglePassword()" tabindex="-1" id="passToggle">
+                    <svg id="eyeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                </button>
             </div>
-            <button id="loginBtn"
-                    class="w-full py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white
-                           font-bold text-lg transition shadow-lg mt-2">
-                Sign In
+
+            <!-- Error -->
+            <div id="loginError" class="login-error"></div>
+
+            <!-- Submit -->
+            <button id="loginBtn" type="button" class="login-btn">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                </svg>
+                <span class="btn-text">Sign In</span>
+                <div class="btn-spinner"></div>
             </button>
-            <p id="loginError" class="text-red-400 text-sm text-center hidden"></p>
+        </form>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <div class="footer-brand">Powered by Prince Alex Digital</div>
+            <div>www.princealex.digital</div>
+            <div>info@princealex.digital &bull; +254 717 384 875</div>
         </div>
-        <p class="mt-5 text-xs text-white/30">RetailFlow POS v2.0 — Admin Panel</p>
     </div>
 </div>
-
 
 <!-- ════════════════════════════════════════════════════════════
      MAIN ADMIN LAYOUT
@@ -245,16 +664,15 @@
     <aside class="sidebar flex flex-col">
         <!-- Logo -->
         <div class="px-6 py-5 border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                    PA
                 </div>
                 <div>
-                    <p class="font-bold text-white text-sm leading-tight">RetailFlow</p>
-                    <p class="text-white/40 text-xs" id="sidebarStoreName">Admin</p>
+                    <p class="font-bold text-white text-sm leading-tight">Prince Alex Digital POS</p>
+                    <p class="text-white/40 text-xs" id="sidebarStoreName">
+                        <span id="storeNameDisplay">Admin</span> • v1.0.0
+                    </p>
                 </div>
             </div>
         </div>
@@ -345,7 +763,7 @@
         </nav>
 
         <!-- User info + logout -->
-        <div class="px-4 py-4 border-t border-white/10">
+        <div class="px-4 py-4 mt-auto border-t border-white/10">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center
                             text-white font-bold text-sm" id="adminAvatar">A</div>
@@ -353,18 +771,13 @@
                     <p class="text-white text-sm font-semibold leading-tight" id="adminName">Admin</p>
                     <p class="text-white/40 text-xs" id="adminRole">—</p>
                 </div>
-            </div>
-            <div class="flex gap-2">
-                <a href="index.html"
-                   class="flex-1 py-2 text-center text-white/60 hover:text-white border border-white/20
-                          hover:border-white/40 rounded-xl text-xs font-semibold transition">
-                    POS Terminal ↗
-                </a>
-                <button id="logoutBtn"
-                        class="flex-1 py-2 text-center text-red-400 hover:text-red-300 border border-white/20
-                               hover:border-red-400/40 rounded-xl text-xs font-semibold transition">
-                    Sign Out
+                <button id="logoutBtn" class="ml-auto text-red-400 hover:text-red-300 transition" title="Sign Out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
+            </div>
+            <div class="text-center text-[10px] text-white/30 mt-4">
+                <p class="font-bold">Powered by Prince Alex Digital</p>
+                <p>www.princealex.digital</p>
             </div>
         </div>
     </aside>
@@ -443,14 +856,19 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db   = firebase.firestore();
+const storage = firebase.storage();
 
 // Secondary app instance to create staff without logging out the admin
 const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, "SecondaryApp");
 const secondaryAuth = secondaryApp.auth();
 secondaryAuth.setPersistence(firebase.auth.Auth.Persistence.NONE); // Don't persist secondary sessions
-
-db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-
+ 
+// Enable standard offline persistence without multi-tab sync to avoid conflicts
+// with the main POS terminal tab.
+db.enablePersistence().catch((err) => {
+    if (err.code == 'failed-precondition') console.warn('Admin persistence failed: multiple tabs open.');
+    else if (err.code == 'unimplemented') console.warn('Admin persistence not available in this browser.');
+});
 
 // ── State ────────────────────────────────────────────────────
 let currentUser  = null;
@@ -458,6 +876,27 @@ let currentAdmin = null;  // Firestore user document
 let storeData    = null;  // Active store (could be selected by super admin)
 let activeSection = 'dashboard';
 let listeners    = [];    // Active Firestore listeners
+
+// ── Password toggle ──────────────────────────────────────────
+function togglePassword() {
+    const pw = document.getElementById('loginPassword');
+    const icon = document.getElementById('eyeIcon');
+    if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+        `;
+    } else {
+        pw.type = 'password';
+        icon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        `;
+    }
+}
 
 // ── Toast system ─────────────────────────────────────────────
 function getFriendlyError(err) {
@@ -505,6 +944,18 @@ function showToast(msg, type = 'info', duration = 4500) {
 
 function fmt(n) { return `KSh ${parseFloat(n || 0).toFixed(2)}`; }
 
+// ── Role permissions ─────────────────────────────────────────
+const DEFAULT_ROLES = {
+    superadmin: { label: 'Super Admin', permissions: ['all'] },
+    admin:      { label: 'Admin',       permissions: ['manage_staff', 'manage_products', 'manage_settings', 'view_reports', 'manage_refunds'] },
+    manager:    { label: 'Manager',     permissions: ['manage_products', 'view_reports', 'manage_refunds'] },
+    cashier:    { label: 'Cashier',     permissions: ['process_sales', 'process_refunds'] }
+};
+
+function getRolePermissions(role) {
+    const roleConfig = DEFAULT_ROLES[role];
+    return roleConfig ? roleConfig.permissions : [];
+}
 
 // ── Modal helpers ────────────────────────────────────────────
 const modal     = document.getElementById('genericModal');
@@ -657,8 +1108,8 @@ async function initAdminApp(user) {
 
             storeData = { id: storeDoc.id, ...storeDoc.data() };
 
-            document.getElementById('sidebarStoreName').textContent =
-                storeData.name;
+            document.getElementById('storeNameDisplay').textContent =
+                storeData.name || 'Admin';
         }
 
         document.getElementById('loginScreen').style.display = 'none';
@@ -684,7 +1135,7 @@ async function loadAllStores() {
 
     if (stores.length > 0) {
         storeData = stores[0];
-        document.getElementById('sidebarStoreName').textContent = storeData.name;
+        document.getElementById('storeNameDisplay').textContent = storeData.name;
     }
 
     sel.addEventListener('change', async () => {
@@ -878,9 +1329,9 @@ async function renderDashboard() {
                 const s = d.data();
                 const dt = s.createdAt?.toDate?.() ? new Date(s.createdAt.toDate()).toLocaleString('en-KE') : '—';
                 return `<tr>
-                    <td class="font-mono font-semibold text-blue-600">${s.invoiceNo||'—'}</td>
+                <td class="font-mono font-semibold text-blue-600">${s.invoiceNo || '—'}</td>
                     <td>${s.items?.length||0} item${s.items?.length!==1?'s':''}</td>
-                    <td>${s.cashierName||'—'}</td>
+                <td>${s.cashierName || getCashierName(s.cashierId)}</td>
                     <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':(s.paymentMethod==='card'||s.paystack)?'badge-blue':'badge-amber'}">${s.paystack ? 'PAYSTACK' : (s.paymentMethod?.toUpperCase()||'—')}</span></td>
                     <td class="font-mono font-bold">${fmt(s.grandTotal)}</td>
                     <td class="text-slate-400 text-xs">${dt}</td>
@@ -893,6 +1344,20 @@ async function renderDashboard() {
             }).join('') : '<tr><td colspan="6" class="text-center py-8 text-slate-400">No sales recorded yet</td></tr>';
         }, err => handleQueryError(err, "Recent sales table"));
     listeners.push(unsubRecent);
+
+    // Pre-cache users for cashier name lookup
+    db.collection('users').where('storeId', '==', storeData.id).get().then(snap => {
+        const userMap = {};
+        snap.forEach(doc => {
+            userMap[doc.id] = doc.data().name;
+        });
+        window.storeUserMap = userMap;
+    });
+}
+
+function getCashierName(id) {
+    if (!id) return '—';
+    return window.storeUserMap?.[id] || 'Unknown';
 }
 
 function renderRevenueChart(labels, data) {
@@ -956,11 +1421,11 @@ function renderProducts() {
         </div>
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr>
-                    <th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Category</th><th>Status</th><th>Actions</th>
+                <thead><tr class="whitespace-nowrap">
+                    <th>Image</th><th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Category</th><th>Status</th><th>Actions</th>
                 </tr></thead>
                 <tbody id="productsBody">
-                    <tr><td colspan="7" class="text-center py-8 text-slate-400">Loading…</td></tr>
+                    <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading…</td></tr>
                 </tbody>
             </table>
         </div>
@@ -995,6 +1460,9 @@ function renderProductRows(products) {
 
     tbody.innerHTML = products.length ? products.map(p => `
         <tr>
+            <td>
+                <img src="${p.imageUrl || 'https://via.placeholder.com/40x40/f1f5f9/94a3b8?text=N/A'}" alt="${p.name}" class="w-10 h-10 rounded-lg object-cover"/>
+            </td>
             <td>
                 <p class="font-semibold text-slate-800">${p.name}</p>
                 <p class="text-xs text-slate-400">${p.category || 'Uncategorised'}</p>
@@ -1032,13 +1500,20 @@ function renderProductRows(products) {
                 </div>
             </td>
         </tr>
-    `).join('') : '<tr><td colspan="7" class="text-center py-10 text-slate-400">No products found</td></tr>';
+    `).join('') : '<tr><td colspan="8" class="text-center py-10 text-slate-400">No products found</td></tr>';
 }
 
 function productFormHtml(p = {}) {
+    const imagePreview = p.imageUrl ? `<img src="${p.imageUrl}" class="w-24 h-24 rounded-lg object-cover border border-slate-200 mb-2"/>` : '';
     return `
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="form-label">Product Image</label>
+                    ${imagePreview}
+                    <input id="mf_image" type="file" accept="image/*" class="form-input text-xs p-2"/>
+                    <p class="text-[10px] text-slate-400 mt-1">Upload a new image to replace the current one.</p>
+                </div>
                 <div class="col-span-2">
                     <label class="form-label">Product Name *</label>
                     <input id="mf_name" class="form-input" value="${p.name||''}" placeholder="e.g. Unga Soko 2kg"/>
@@ -1133,15 +1608,35 @@ window.saveProduct = async (id) => {
     const lowAt    = parseInt(document.getElementById('mf_lowstock').value || 10);
     const active   = document.getElementById('mf_active').checked;
 
+    const imageFile = document.getElementById('mf_image').files[0];
+
     if (!name || isNaN(price) || isNaN(stock)) {
         showToast('Please fill Name, Price and Stock', 'error');
         return;
     }
 
-    const data = { name, price, offerPrice, costPrice: cost, stock, barcode, category, lowStockAt: lowAt,
+    let data = { name, price, offerPrice, costPrice: cost, stock, barcode, category, lowStockAt: lowAt,
                    active, storeId: storeData.id, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
 
     try {
+        // Handle image upload if a new file is selected
+        if (imageFile) {
+            showToast('Uploading image...', 'info', 2000);
+            const imageRef = storage.ref(`product_images/${storeData.id}/${Date.now()}_${imageFile.name}`);
+            const uploadTask = await imageRef.put(imageFile);
+            const imageUrl = await uploadTask.ref.getDownloadURL();
+            data.imageUrl = imageUrl;
+
+            // If editing, delete the old image to save space
+            if (id) {
+                const doc = await db.collection('products').doc(id).get();
+                const oldImageUrl = doc.data()?.imageUrl;
+                if (oldImageUrl) {
+                    try { storage.refFromURL(oldImageUrl).delete(); } catch (e) { console.warn("Old image deletion failed:", e); }
+                }
+            }
+        }
+
         if (id) {
             await db.collection('products').doc(id).update(data);
             showToast('Product updated', 'success');
@@ -1314,18 +1809,23 @@ window.editUser = async (id) => {
 };
 
 window.saveUser = async (id) => {
-    const name = document.getElementById('uf_name').value.trim(); // Ensure name is always present
+    const name = document.getElementById('uf_name').value.trim();
     const pin  = document.getElementById('uf_pin').value.trim();
     const role = document.getElementById('uf_role').value;
 
     if (!name || !pin) { showToast('Full Name and PIN are required', 'error'); return; }
     if (!/^\d{4}$/.test(pin)) { showToast('PIN must be exactly 4 digits', 'error'); return; }
 
+    const permissions = getRolePermissions(role);
+
     try {
+        let uid;
         if (id) {
+            uid = id;
             // Update existing Firestore profile
             await db.collection('users').doc(id).update({
-                name, pin, role, 
+                name, pin, role, permissions,
+                storeId: storeData.id,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             showToast('User updated', 'success');
@@ -1338,10 +1838,11 @@ window.saveUser = async (id) => {
 
             // Create Auth user via secondary app (prevents admin logout)
             const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
-            const uid = cred.user.uid;
+            uid = cred.user.uid;
 
+            // Use set() for new user to create the document
             await db.collection('users').doc(uid).set({
-                name, email, pin, role,
+                name, email, pin, role, permissions,
                 storeId: storeData.id,
                 active: true,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1351,6 +1852,12 @@ window.saveUser = async (id) => {
             await secondaryAuth.signOut();
             showToast('Staff account and profile created successfully', 'success');
         }
+        // Update existing Firestore profile (also includes new users)
+        await db.collection('users').doc(uid).update({
+            name, pin, role, permissions,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast(`User ${id ? 'updated' : 'created'}`, 'success');
         closeModal();
     } catch (err) {
         showToast('Error: ' + err.message, 'error');
@@ -1451,9 +1958,9 @@ async function fetchSales() {
         tbody2.innerHTML = sales.length ? sales.map(s => {
             const dt = s.createdAt?.toDate?.() ? new Date(s.createdAt.toDate()).toLocaleString('en-KE') : '—';
             return `<tr>
-                <td class="font-mono font-semibold text-blue-600">${s.invoiceNo||'—'}</td>
+                    <td class="font-mono font-semibold text-blue-600">${s.invoiceNo || '—'}</td>
                 <td>${s.items?.length||0}</td>
-                <td>${s.cashierName||'—'}</td>
+                    <td>${s.cashierName || getCashierName(s.cashierId)}</td>
                 <td><span class="badge ${s.paymentMethod==='mpesa'?'badge-green':s.paymentMethod==='card'?'badge-blue':'badge-amber'}">${s.paystack ? 'PAYSTACK' : (s.paymentMethod||'').toUpperCase()}</span></td>
                 <td class="font-mono text-slate-500">${s.paymentMethod==='cash' ? fmt(s.cashGiven) : '—'}</td>
                 <td class="font-mono font-bold">${fmt(s.grandTotal)}</td>
@@ -1536,6 +2043,20 @@ function renderRefunds() {
     listeners.push(unsub);
 }
 
+async function logAdminActivity(action, details) {
+    if (!currentAdmin || !storeData) return;
+    try {
+        await db.collection('logs').add({
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            storeId: storeData.id,
+            user: currentAdmin.name,
+            userId: currentAdmin.id,
+            action,
+            details
+        });
+    } catch (e) { console.error("Failed to log activity:", e); }
+}
+
 window.approveRefund = async (id) => {
     const batch = db.batch();
     batch.update(db.collection('refunds').doc(id), {
@@ -1560,7 +2081,7 @@ window.approveRefund = async (id) => {
 
     await batch.commit();
     
-    await logAdminActivity('refund_approved', `Approved refund for invoice: ${refData.invoiceNo}`);
+    await logAdminActivity('refund_approved', `Approved refund for invoice: ${refData?.invoiceNo || id}`);
     
     showToast('Refund approved & stock restored', 'success');
 };
@@ -1799,79 +2320,232 @@ window.saveStore = async (id) => {
 //  SETTINGS
 // ════════════════════════════════════════════════════════════
 function renderSettings() {
-    if (!storeData) return;
+    if (!storeData) {
+        document.getElementById('contentArea').innerHTML = '<p class="text-slate-500">Loading store data...</p>';
+        return;
+    }
+
+    // Default payment methods for stores that don't have them configured yet
+    if (!storeData.paymentMethods) {
+        storeData.paymentMethods = [
+            { name: 'Cash', type: 'cash', active: true },
+            { name: 'M-Pesa', type: 'mpesa', active: true },
+            { name: 'Card / Paystack', type: 'card', active: true }
+        ];
+    }
+    // Default roles for stores that don't have them configured yet
+    if (!storeData.roles) {
+        storeData.roles = DEFAULT_ROLES;
+    }
+
+    const isSuper = currentAdmin?.role === 'superadmin';
+
     document.getElementById('contentArea').innerHTML = `
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-2xl border border-slate-200 p-6">
-                <h3 class="font-bold text-slate-800 mb-4">Store Information</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="form-label">Store Name</label>
-                        <input id="set_name" class="form-input" value="${storeData.name||''}"/>
-                    </div>
-                    <div>
-                        <label class="form-label">Location / Address</label>
-                        <input id="set_location" class="form-input" value="${storeData.location||''}"/>
-                    </div>
-                    <div>
-                        <label class="form-label">Phone</label>
-                        <input id="set_phone" class="form-input" value="${storeData.phone||''}"/>
-                    </div>
-                    <div>
-                        <label class="form-label">KRA VAT PIN</label>
-                        <input id="set_vat" class="form-input" value="${storeData.vatNumber||''}"/>
-                    </div>
-                    <div>
-                        <label class="form-label">Receipt Footer Message</label>
-                        <textarea id="set_footer" class="form-input" rows="2">${storeData.receiptFooter||'Thank you for shopping with us!'}</textarea>
-                    </div>
-                    <div>
-                        <label class="form-label">Theme Color (Hex Code)</label>
-                        <input id="set_theme_color" type="color" class="form-input h-10 w-24 p-1" value="${storeData.themeColor || '#2563eb'}"/>
-                    </div>
-                    <button onclick="saveSettings()" class="btn-primary">Save Store Information</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Store Information -->
+            <div class="metric-card cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" onclick="openSettingsModal('store')">
+                <div class="icon-wrap bg-blue-50 mb-3">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-slate-800">Store Information</h3>
+                <p class="text-xs text-slate-500 mt-1">Name, location, phone, VAT, receipt footer & theme</p>
+                <div class="mt-3 text-xs text-blue-600 font-semibold">Click to edit →</div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="metric-card cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all" onclick="openSettingsModal('payments')">
+                <div class="icon-wrap bg-emerald-50 mb-3">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-slate-800">Payment Methods</h3>
+                <p class="text-xs text-slate-500 mt-1">Manage cash, M-Pesa, card & other payment options</p>
+                <div class="mt-3 text-xs text-emerald-600 font-semibold">Click to manage →</div>
+            </div>
+
+            <!-- Paystack Integration -->
+            <div class="metric-card cursor-pointer hover:shadow-md hover:border-blue-300 transition-all" onclick="openSettingsModal('paystack')">
+                <div class="icon-wrap bg-blue-50 mb-3">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-slate-800">Paystack Integration</h3>
+                <p class="text-xs text-slate-500 mt-1">Configure online card payments via Paystack</p>
+                <div class="mt-3 text-xs text-blue-600 font-semibold">Click to configure →</div>
+            </div>
+
+            <!-- Role Permissions (Super Admin only) -->
+            <div class="metric-card cursor-pointer hover:shadow-md hover:border-purple-300 transition-all ${isSuper ? '' : 'hidden'}" onclick="openSettingsModal('roles')">
+                <div class="icon-wrap bg-purple-50 mb-3">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-slate-800">Role Permissions</h3>
+                <p class="text-xs text-slate-500 mt-1">Manage permissions for Admin, Manager & Cashier roles</p>
+                <div class="mt-3 flex items-center gap-2">
+                    <span class="badge badge-purple text-[10px]">Super Admin Only</span>
+                    <span class="text-xs text-purple-600 font-semibold">Click to manage →</span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
-                <h3 class="font-bold text-slate-800 mb-4">Paystack Integration</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                        <input id="set_paystack_enabled" type="checkbox" class="w-4 h-4 accent-blue-600" ${storeData.paystack?.enabled ? 'checked' : ''}/>
-                        <label for="set_paystack_enabled" class="text-sm font-semibold text-blue-800">Enable Paystack Payments</label>
-                    </div>
-                    <div>
-                        <label class="form-label">Paystack Public Key</label>
-                        <input id="set_paystack_key" class="form-input font-mono text-xs" value="${storeData.paystack?.publicKey || ''}" placeholder="pk_live_xxxxxxxxxxxxxxxxxxxxxxxx"/>
-                    </div>
-                    <button onclick="savePaystackSettings()" class="btn-primary">Save Paystack Config</button>
+            <!-- System Info (read-only) -->
+            <div class="metric-card">
+                <div class="icon-wrap bg-slate-50 mb-3">
+                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 h-fit">
-                <h3 class="font-bold text-slate-800 mb-4">System Info</h3>
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between py-2 border-b border-slate-100">
-                        <span class="text-slate-500">Store ID</span>
-                        <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">${storeData.id}</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-slate-100">
-                        <span class="text-slate-500">Admin UID</span>
-                        <span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">${currentUser?.uid||'—'}</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-slate-100">
-                        <span class="text-slate-500">POS Version</span>
-                        <span class="font-semibold">v2.0.0</span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-slate-500">Firebase Project</span>
-                        <span class="font-mono text-xs">${FIREBASE_CONFIG.projectId}</span>
-                    </div>
+                <h3 class="font-bold text-slate-800">System Info</h3>
+                <div class="mt-3 space-y-2 text-xs">
+                    <div class="flex justify-between"><span class="text-slate-500">Store ID</span><span class="font-mono bg-slate-100 px-2 py-0.5 rounded">${storeData.id}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Admin UID</span><span class="font-mono bg-slate-100 px-2 py-0.5 rounded">${currentUser?.uid?.slice(0,12)||'—'}…</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Project</span><span class="font-mono">${FIREBASE_CONFIG.projectId}</span></div>
                 </div>
             </div>
         </div>
     `;
 }
+
+// ── Settings Modal Opener ────────────────────────────────────
+window.openSettingsModal = (type) => {
+    if (!storeData) return;
+
+    if (type === 'store') {
+        openModal('Store Information', `
+            <div class="space-y-4">
+                <div><label class="form-label">Store Name</label><input id="set_name" class="form-input" value="${storeData.name||''}"/></div>
+                <div><label class="form-label">Location / Address</label><input id="set_location" class="form-input" value="${storeData.location||''}"/></div>
+                <div><label class="form-label">Phone</label><input id="set_phone" class="form-input" value="${storeData.phone||''}"/></div>
+                <div><label class="form-label">KRA VAT PIN</label><input id="set_vat" class="form-input" value="${storeData.vatNumber||''}"/></div>
+                <div><label class="form-label">Receipt Footer Message</label><textarea id="set_footer" class="form-input" rows="2">${storeData.receiptFooter||'Thank you for shopping with us!'}</textarea></div>
+                <div><label class="form-label">Theme Color</label><input id="set_theme_color" type="color" class="form-input h-10 w-24 p-1" value="${storeData.themeColor || '#2563eb'}"/></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="saveSettings()" class="btn-primary flex-1">Save Changes</button>
+                    <button onclick="closeModal()" class="btn-ghost">Cancel</button>
+                </div>
+            </div>
+        `);
+    } else if (type === 'payments') {
+        const paymentMethodsHtml = storeData.paymentMethods.map((method, index) => `
+            <div class="flex items-center justify-between p-3 rounded-lg ${method.active ? 'bg-green-50' : 'bg-slate-50'}">
+                <div>
+                    <p class="font-semibold text-sm ${method.active ? 'text-green-800' : 'text-slate-600'}">${method.name}</p>
+                    <p class="text-xs text-slate-400 font-mono">${method.type}</p>
+                </div>
+                <button onclick="togglePaymentMethod(${index})" 
+                        class="px-3 py-1 text-xs font-bold rounded-full ${method.active ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
+                    ${method.active ? 'Deactivate' : 'Activate'}
+                </button>
+            </div>
+        `).join('');
+
+        openModal('Payment Methods', `
+            <div class="space-y-3 mb-6">${paymentMethodsHtml}</div>
+            <div class="pt-4 border-t border-slate-200">
+                <h4 class="font-semibold text-slate-700 text-sm mb-3">Add New Method</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="pm_name" placeholder="Display Name" class="form-input text-sm col-span-2"/>
+                    <select id="pm_type" class="form-select text-sm">
+                        <option value="cash">Cash</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="card">Card/Digital</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <button onclick="addPaymentMethod()" class="btn-primary text-sm">Add</button>
+                </div>
+            </div>
+            <div class="mt-4"><button onclick="closeModal()" class="btn-ghost w-full">Close</button></div>
+        `);
+    } else if (type === 'paystack') {
+        openModal('Paystack Integration', `
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                    <input id="set_paystack_enabled" type="checkbox" class="w-4 h-4 accent-blue-600" ${storeData.paystack?.enabled ? 'checked' : ''}/>
+                    <label for="set_paystack_enabled" class="text-sm font-semibold text-blue-800">Enable Paystack Payments</label>
+                </div>
+                <div><label class="form-label">Paystack Public Key</label><input id="set_paystack_key" class="form-input font-mono text-xs" value="${storeData.paystack?.publicKey || ''}" placeholder="pk_live_..."/></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="savePaystackSettings()" class="btn-primary flex-1">Save Config</button>
+                    <button onclick="closeModal()" class="btn-ghost">Cancel</button>
+                </div>
+            </div>
+        `);
+    } else if (type === 'roles') {
+        const roles = storeData.roles || {};
+        const ALL_PERMISSIONS = [
+            { id: 'manage_staff', label: 'Manage Staff' },
+            { id: 'manage_products', label: 'Manage Products' },
+            { id: 'manage_settings', label: 'Manage Settings' },
+            { id: 'view_reports', label: 'View Reports' },
+            { id: 'manage_refunds', label: 'Manage Refunds' },
+            { id: 'process_sales', label: 'Process Sales' },
+            { id: 'process_refunds', label: 'Process Refunds' }
+        ];
+        const roleKeys = ['admin', 'manager', 'cashier'];
+        const rolesHtml = roleKeys.map(roleKey => {
+            const role = roles[roleKey] || { label: roleKey, permissions: [] };
+            const perms = role.permissions || [];
+            return `
+                <div class="mb-4 p-4 rounded-xl border ${roleKey === 'admin' ? 'border-purple-200 bg-purple-50/50' : roleKey === 'manager' ? 'border-blue-200 bg-blue-50/50' : 'border-green-200 bg-green-50/50'}">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-sm capitalize">${role.label || roleKey}</h4>
+                        <span class="text-xs text-slate-400 font-mono">${roleKey}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        ${ALL_PERMISSIONS.map(p => `
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/60 cursor-pointer text-xs">
+                                <input type="checkbox" class="role-perm" data-role="${roleKey}" data-perm="${p.id}"
+                                       ${perms.includes(p.id) ? 'checked' : ''}
+                                       ${roleKey === 'admin' ? 'onchange="syncAdminPermissions()"' : ''}/>
+                                <span>${p.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        openModal('Role Permissions', `
+            <p class="text-xs text-slate-500 mb-4">Toggle permissions for each role. Changes affect POS terminal access.</p>
+            ${rolesHtml}
+            <div class="flex gap-3 pt-2">
+                <button onclick="saveRolePermissions()" class="btn-primary flex-1">Save Permissions</button>
+                <button onclick="closeModal()" class="btn-ghost">Cancel</button>
+            </div>
+        `);
+        // Run sync after modal opens to lock admin required permissions
+        setTimeout(() => window.syncAdminPermissions?.(), 50);
+    }
+};
+
+window.addPaymentMethod = async () => {
+    const name = document.getElementById('pm_name').value.trim();
+    const type = document.getElementById('pm_type').value;
+    if (!name) return showToast('Please enter a display name for the payment method.', 'warning');
+
+    const newMethod = { name, type, active: true };
+    const updatedMethods = [...storeData.paymentMethods, newMethod];
+
+    await db.collection('stores').doc(storeData.id).update({ paymentMethods: updatedMethods });
+    storeData.paymentMethods = updatedMethods;
+    showToast('Payment method added.', 'success');
+    renderSettings(); // Re-render the settings page
+};
+
+window.togglePaymentMethod = async (index) => {
+    const updatedMethods = [...storeData.paymentMethods];
+    updatedMethods[index].active = !updatedMethods[index].active;
+
+    await db.collection('stores').doc(storeData.id).update({ paymentMethods: updatedMethods });
+    storeData.paymentMethods = updatedMethods;
+    showToast('Payment method status updated.', 'success');
+    renderSettings(); // Re-render
+};
 
 window.savePaystackSettings = async () => {
     const enabled = document.getElementById('set_paystack_enabled').checked;
@@ -1906,19 +2580,68 @@ window.saveSettings = async () => {
     showToast('Settings saved', 'success');
 };
 
+// ── Role Permissions saving ──────────────────────────────────
+window.syncAdminPermissions = () => {
+    // When admin role permissions change, ensure manage_staff and manage_settings remain checked
+    const adminPerms = document.querySelectorAll('.role-perm[data-role="admin"]');
+    adminPerms.forEach(cb => {
+        if (cb.dataset.perm === 'manage_staff' || cb.dataset.perm === 'manage_settings') {
+            cb.checked = true;
+            cb.disabled = true;
+        } else {
+            cb.disabled = false;
+        }
+    });
+};
+
+window.saveRolePermissions = async () => {
+    const roleKeys = ['admin', 'manager', 'cashier'];
+    const roles = {};
+    
+    roleKeys.forEach(roleKey => {
+        const checkboxes = document.querySelectorAll(`.role-perm[data-role="${roleKey}"]`);
+        const permissions = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) permissions.push(cb.dataset.perm);
+        });
+        const label = roleKey.charAt(0).toUpperCase() + roleKey.slice(1);
+        roles[roleKey] = { label, permissions };
+    });
+
+    try {
+        await db.collection('stores').doc(storeData.id).update({
+            roles: roles,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        storeData.roles = roles;
+        showToast('Role permissions saved successfully', 'success');
+    } catch (err) {
+        showToast('Error saving permissions: ' + err.message, 'error');
+    }
+};
+
 // ════════════════════════════════════════════════════════════
 //  LOYALTY MANAGEMENT
 // ════════════════════════════════════════════════════════════
 function renderLoyalty() {
     if (!storeData) return;
+    if (!storeData) {
+        document.getElementById('contentArea').innerHTML = '<p class="text-slate-500">Please select a store to manage loyalty settings.</p>';
+        return;
+    }
     document.getElementById('contentArea').innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Store Rules -->
             <div class="bg-white rounded-2xl border border-slate-200 p-6">
-                <h3 class="font-bold text-slate-800 mb-4">Redemption Rules</h3>
+                <h3 class="font-bold text-slate-800 mb-4">Loyalty Program Settings</h3>
                 <div class="space-y-4">
+                    <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <input id="l_enabled" type="checkbox" class="w-4 h-4 accent-blue-600" ${storeData.loyaltyEnabled !== false ? 'checked' : ''}/>
+                        <label for="l_enabled" class="text-sm font-semibold text-blue-800">Enable Loyalty Program</label>
+                    </div>
+                    <hr class="border-slate-100"/>
                     <div>
-                        <label class="form-label">Points Earned per KSh 1.00 Spent</label>
+                        <label class="form-label">Points Earned per KSh Spent</label>
                         <input id="l_earn" type="number" step="0.001" class="form-input" value="${storeData.loyaltyPointsPerKES || 0.05}"/>
                         <p class="text-[10px] text-slate-400 mt-1">e.g. 0.05 means 5 points for every KSh 100</p>
                     </div>
@@ -1968,6 +2691,7 @@ function renderLoyalty() {
 
 async function saveLoyaltySettings() {
     const data = {
+        loyaltyEnabled: document.getElementById('l_enabled').checked,
         loyaltyPointsPerKES: parseFloat(document.getElementById('l_earn').value),
         loyaltyKESPerPoint: parseFloat(document.getElementById('l_value').value),
         loyaltyMinPoints: parseInt(document.getElementById('l_min').value),
@@ -1982,10 +2706,21 @@ let foundCustId = null;
 async function searchLoyaltyCustomer() {
     const q = document.getElementById('cust_search').value.trim();
     if (!q) return;
-    
-    const snap = await db.collection('customers')
-        .where('storeId', '==', storeData.id)
-        .where('phone', '==', q).get();
+    // Determine if the query is likely an email or a phone number
+    const isEmail = q.includes('@');
+    let snap;
+
+    if (isEmail) {
+        snap = await db.collection('customers')
+            .where('storeId', '==', storeData.id)
+            .where('email', '==', q)
+            .limit(1).get();
+    } else {
+        snap = await db.collection('customers')
+            .where('storeId', '==', storeData.id)
+            .where('phone', '==', q)
+            .limit(1).get();
+    }
         
     if (snap.empty) {
         showToast('Customer not found', 'warning');
@@ -1996,9 +2731,9 @@ async function searchLoyaltyCustomer() {
     const doc = snap.docs[0];
     const data = doc.data();
     foundCustId = doc.id;
-    const points = data.points !== undefined ? data.points : (data.loyaltyPoints || 0);
+    const points = data.points || 0;
     
-    document.getElementById('res_name').textContent = data.fullName || data.name || 'Anonymous';
+    document.getElementById('res_name').textContent = data.name || 'Anonymous';
     document.getElementById('res_id').textContent = doc.id;
     document.getElementById('res_points').textContent = points;
     document.getElementById('cust_result').classList.remove('hidden');
@@ -2091,18 +2826,28 @@ window.viewRefundSale = async (invoiceNo) => {
             </div>
         `).join('');
 
+        const paymentsHtml = (sale.payments && sale.payments.length > 1) 
+            ? sale.payments.map(p => `
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500">${p.method.toUpperCase()}</span>
+                    <span class="font-mono font-bold text-slate-700">${fmt(p.amount)}</span>
+                </div>
+            `).join('')
+            : `
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500">Method</span>
+                    <span class="font-bold text-slate-700 uppercase">
+                        ${sale.paymentMethod || (sale.payments && sale.payments[0] ? sale.payments[0].method : 'N/A')}
+                    </span>
+                </div>
+            `;
+
         const html = `
             <div class="space-y-5">
                 <div class="flex justify-between items-start bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice Number</p>
                         <p class="text-lg font-mono font-bold text-blue-600">${sale.invoiceNo}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Method</p>
-                        <span class="badge ${sale.paymentMethod==='mpesa'?'badge-green':sale.paymentMethod==='card'?'badge-blue':'badge-amber'}">
-                            ${sale.paymentMethod?.toUpperCase()}
-                        </span>
                     </div>
                 </div>
 
@@ -2126,6 +2871,11 @@ window.viewRefundSale = async (invoiceNo) => {
                         <span class="font-bold text-slate-700">${sale.paystack.email}</span>
                     </div>
                 </div>` : ''}
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                    <p class="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-1">Payment Details</p>
+                    ${paymentsHtml}
+                </div>
 
                 <div class="bg-slate-900 p-5 rounded-2xl text-white shadow-lg">
                     <div class="space-y-2 text-sm opacity-80">
