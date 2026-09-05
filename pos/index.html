@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RetailFlow POS — Smart POS &amp; Business Management</title>
+  <meta name="description" content="RetailFlow Smart POS — fast, secure point of sale for retail shops, supermarkets, restaurants, bars and more. Powered by Prince Alex Digital.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- RetailFlow POS stylesheet -->
+  <link rel="stylesheet" href="css/pos.css">
+  <!-- PWA manifest (enables install banner + offline app-shell) -->
+  <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+
+  <!-- ================= LOADING ================= -->
+  <div id="appLoading" class="boot-screen" role="status" aria-live="polite">
+    <div class="boot-logo"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></div>
+    <h1>RetailFlow</h1>
+    <p>Smart POS &amp; Business Management</p>
+    <div class="boot-spinner" aria-hidden="true"></div>
+    <span class="boot-msg">Starting your terminal…</span>
+  </div>
+
+  <!-- ================= ACCESS DENIED ================= -->
+  <div id="deniedScreen" class="denied-screen" hidden>
+    <div class="denied-card">
+      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+      <h1>Access restricted</h1>
+      <p id="deniedMessage">This account does not have permission to use the POS terminal.</p>
+      <button type="button" id="deniedSignOut" class="btn btn-primary">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ================= APP SHELL ================= -->
+  <div id="appShell" class="app-shell" hidden>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button type="button" id="menuBtn" class="icon-btn" aria-label="Open menu">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+      <div class="brand">
+        <span class="brand-mark"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></span>
+        <span class="brand-text">
+          <strong>RetailFlow</strong>
+          <small>Smart POS</small>
+        </span>
+      </div>
+      <div class="biz-chip" id="bizChip" title="Business / Branch">
+        <i class="fa-solid fa-store" aria-hidden="true"></i>
+        <span class="biz-chip-text">
+          <strong id="bizChipText">—</strong>
+          <span class="branch-pick">
+            <select id="branchSelect" aria-label="Branch"></select>
+            <span id="branchStatic" hidden>—</span>
+          </span>
+        </span>
+      </div>
+      <div class="top-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="text" id="globalSearch" placeholder="Search products or scan barcode…" autocomplete="off" aria-label="Search products or scan barcode">
+      </div>
+        <div class="top-right">
+          <span class="net-status online" id="offlineBadge" title="Connection status"><span class="net-dot"></span><span class="net-label">Online</span></span>
+          <span class="clock" id="clock" aria-label="Current time">—</span>
+          <div class="top-user">
+            <span class="avatar" id="userAvatar">?</span>
+            <span class="top-user-meta">
+              <strong id="userName">—</strong>
+              <small id="userRole">—</small>
+            </span>
+          </div>
+          <a href="/owner/index.html" id="adminLink" class="icon-btn" hidden title="Admin Console" aria-label="Admin Console">
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          </a>
+          <button type="button" id="logoutBtn" class="icon-btn" aria-label="Sign out" title="Sign out">
+            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+          </button>
+        </div>
+    </header>
+
+    <div class="app-body">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar" aria-label="POS navigation">
+        <div class="sidebar-head">
+          <span class="side-brand">RetailFlow <small>POS</small></span>
+          <button type="button" id="sideClose" class="icon-btn" aria-label="Close menu">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+        <nav class="side-nav" id="sideNav" aria-label="POS sections"></nav>
+        <div class="sidebar-foot">
+          <a href="/owner/index.html" id="adminConsoleLink" class="side-admin" hidden>
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i> Admin Console
+          </a>
+          <p class="foot-line">Powered by<br><strong>Prince Alex Digital</strong></p>
+        </div>
+      </aside>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+      <!-- ================= POS REGISTER ================= -->
+      <section class="view view-pos" id="view-pos" data-view="pos">
+        <div class="catalog">
+          <div class="catalog-head">
+            <div class="scan-wrap">
+              <i class="fa-solid fa-barcode scan-icon" aria-hidden="true"></i>
+              <input type="text" id="productSearch" placeholder="Search products or scan barcode…" autocomplete="off" aria-label="Search products or scan barcode">
+              <span class="scanner-status" id="scannerStatus" title="Barcode scanner ready">
+                <i class="fa-solid fa-wifi" aria-hidden="true"></i>
+              </span>
+              <button type="button" class="scan-clear" id="searchClear" hidden aria-label="Clear search"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <div class="cats" id="categoryBar" role="tablist" aria-label="Product categories"></div>
+          </div>
+          <div class="product-grid" id="productGrid" aria-live="polite"></div>
+        </div>
+
+        <aside class="cart-panel" id="cartPanel" aria-label="Current sale">
+          <div class="cart-head">
+            <h2>Current Sale</h2>
+            <button type="button" class="ghost-btn" id="clearCartBtn"><i class="fa-solid fa-eraser" aria-hidden="true"></i> Clear</button>
+          </div>
+
+          <button type="button" class="customer-row" id="customerBtn">
+            <span class="cust-avatar"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+            <span class="cust-meta">
+              <small>Customer</small>
+              <strong id="customerName">Walk-in Customer</strong>
+            </span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+
+          <div class="cart-items" id="cartItems"></div>
+
+          <div class="cart-foot">
+            <div class="discount-row" id="discountRow" hidden>
+              <label for="discountInput">Discount</label>
+              <div class="discount-controls">
+                <button type="button" class="disc-type" id="discountTypeBtn" title="Toggle percent / fixed amount">%</button>
+                <input type="number" id="discountInput" min="0" step="0.01" placeholder="0" aria-label="Discount">
+              </div>
+            </div>
+            <div class="totals">
+              <div class="t-row"><span>Subtotal</span><strong id="subtotalVal">—</strong></div>
+              <div class="t-row" id="discountValRow" hidden><span>Discount</span><strong id="discountVal">—</strong></div>
+              <div class="t-row" id="taxValRow" hidden><span id="taxLabel">Tax</span><strong id="taxVal">—</strong></div>
+              <div class="t-row grand"><span>Total</span><strong id="totalVal">—</strong></div>
+            </div>
+            <button type="button" class="pay-btn" id="payBtn" disabled>
+              <i class="fa-solid fa-credit-card" aria-hidden="true"></i> PAY NOW
+            </button>
+          </div>
+        </aside>
+
+        <button type="button" class="cart-fab" id="cartFab" hidden aria-label="Open cart">
+          <i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
+          <span class="fab-badge" id="fabCount">0</span>
+        </button>
+      </section>
+
+      <!-- ================= SALES HISTORY ================= -->
+      <section class="view view-list" id="view-sales" data-view="sales" hidden>
+        <div class="view-head">
+          <h2>Sales</h2>
+          <span class="view-sub" id="salesCount"></span>
+          <label class="check-inline" id="mySalesWrap" hidden>
+            <input type="checkbox" id="mySalesOnly"> My sales only
+          </label>
+          <button type="button" class="ghost-btn" id="salesRefresh"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
+        </div>
+        <div class="table-wrap" id="salesTableWrap"></div>
+      </section>
+
+      <!-- ================= PRODUCTS ================= -->
+      <section class="view view-list" id="view-products" data-view="products" hidden>
+        <div class="view-head">
+          <h2>Products</h2>
+          <span class="view-sub" id="productsCount"></span>
+        </div>
+        <div class="table-wrap" id="productsTableWrap"></div>
+      </section>
+
+      <!-- ================= CUSTOMERS ================= -->
+      <section class="view view-list" id="view-customers" data-view="customers" hidden>
+        <div class="view-head">
+          <h2>Customers</h2>
+          <button type="button" class="btn btn-primary btn-sm" id="addCustomerBtn">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> Add Customer
+          </button>
+        </div>
+        <div class="table-wrap" id="customersTableWrap"></div>
+      </section>
+  </div>
+
+  <!-- Modals -->
+  <div id="modalRoot"></div>
+
+  <!-- Printable receipt -->
+  <div id="receiptRoot" aria-hidden="true"></div>
+
+  <!-- Toasts -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <!-- RetailFlow POS application -->
+  <script type="module" src="js/pos.js"></script>
+</body>
+</html>
