@@ -1,0 +1,90 @@
+# ==================================================================
+#   RetailFlow — Cloudflare Worker Configuration
+#   ==================================================================
+name = "retailflow-api"
+main = "worker/index.js"
+compatibility_date = "2025-01-01"
+
+# ---- Environment ----
+[vars]
+FIREBASE_PROJECT_ID = "retailflow-pos-11726"
+
+# ---- D1 Database Binding ----
+# Create the database first:
+#   npx wrangler d1 create retailflow-pos-dev
+#   npx wrangler d1 create retailflow-pos-prod
+#
+# Then add the database ID below. Each environment gets its own binding.
+# The binding name "DB" is referenced as env.DB in the worker code.
+
+[env.dev]
+# wrangler.toml for dev environment
+# (uncomment and set ID after creating the database)
+# D1 Databases = [{ binding = "DB", database_name = "retailflow-pos-dev", database_id = "YOUR_DEV_DB_ID" }]
+
+[env.prod]
+# D1 Databases = [{ binding = "DB", database_name = "retailflow-pos-prod", database_id = "YOUR_PROD_DB_ID" }]
+
+# ---- D1 Bindings (configure per environment) ----
+# Uncomment and set your database_id after running:
+#   npx wrangler d1 create retailflow-pos-dev
+[[d1_databases]]
+binding = "DB"
+database_name = "retailflow-pos-dev"
+# database_id = ""  # <-- set after running `wrangler d1 create`
+
+# ---- R2 Object Storage (product images) ----
+# Create the bucket first:
+#   npx wrangler r2 bucket create retailflow-uploads
+# The binding name "BUCKET" is referenced as env.BUCKET in the worker code.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "retailflow-uploads"
+
+# ---- Rate Limiting ----
+# Basic rate limiting to prevent abuse
+# (requires a Workers KV or Workers KV-based rate limiting)
+# This is optional and can be configured later
+
+# ---- Routes ----
+# Deploy to: https://retailflow-api.princealexdigital.workers.dev
+routes = [
+  { pattern = "retailflow-api.princealexdigital.workers.dev/*", script = "retailflow-api" }
+]
+
+# ---- M-Pesa Daraja integration ----
+# Before using M-Pesa, set the master encryption key as a Worker secret:
+#   npx wrangler secret put RETAILFLOW_ENCRYPTION_KEY
+# Then apply the database migration:
+#   npx wrangler d1 execute retailflow-pos-dev --remote --file=db/migrations/002_mpesa_daraja.sql
+# (fresh installs get the tables from db/schema.sql)
+#
+# RETAILFLOW_ENCRYPTION_KEY must be at least 32 characters. It is used to
+# AES-256-GCM-encrypt the business's Daraja credentials (Consumer Key,
+# Consumer Secret, Passkey) before storage in D1. The key is NEVER stored
+# in D1 and NEVER exposed to the frontend — only the Worker decrypts it.
+
+# ==================================================================
+#   QUICK START:
+#
+#   1. Install Wrangler:
+#      npm install -g wrangler
+#
+#   2. Login to Cloudflare:
+#      wrangler login
+#
+#   3. Create the D1 database:
+#      wrangler d1 create retailflow-pos-dev
+#
+#   4. Update [[d1_databases]] database_id above
+#
+#   5. Apply the schema:
+#      wrangler d1 execute retailflow-pos-dev --file=db/schema.sql --local  (local testing)
+#      wrangler d1 execute retailflow-pos-dev --file=db/schema.sql          (remote)
+#
+#   6. Deploy:
+#      wrangler deploy
+#
+#   7. Seed the DB (optional):
+#      wrangler d1 execute retailflow-pos-dev --file=db/seed.sql
+#   ==================================================================

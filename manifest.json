@@ -1,0 +1,29 @@
+{
+    "description":  "Fast, smart point of sale for retail shops, restaurants, bars and more. Works offline.",
+    "short_name":  "RetailFlow POS",
+    "icons":  [
+                  {
+                      "purpose":  "any",
+                      "type":  "image/svg+xml",
+                      "sizes":  "any",
+                      "src":  "/favicon.svg"
+                  },
+                  {
+                      "purpose":  "maskable",
+                      "type":  "image/svg+xml",
+                      "sizes":  "any",
+                      "src":  "/favicon.svg"
+                  }
+              ],
+    "prefer_related_applications":  false,
+    "theme_color":  "#0a0f0d",
+    "display_override":  [
+                             "standalone",
+                             "minimal-ui"
+                         ],
+    "display":  "standalone",
+    "name":  "RetailFlow POS — Smart Point of Sale",
+    "background_color":  "#0a0f0d",
+    "start_url":  "/pos/index.html",
+    "orientation":  "portrait"
+}
