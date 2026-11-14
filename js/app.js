@@ -32,19 +32,19 @@ import {
 /* ------------------------------------------------ */
 const CONFIG = {
   routes: {
-    home: "/index.html",
-    login: "/login/index.html",
-    register: "/register.html",
+    home: "/",
+    login: "/login/",
+    register: "/register/",
     /******************************************************************
      * AFTER LOGIN, USERS GO TO THE ADMIN SYSTEM (owner/index.html).
      * owner.js performs the role check and keeps only authorized
      * roles (owner | admin | store_manager) inside the application.
      * A future Cloudflare Worker will enforce the same rule server-side.
      ******************************************************************/
-    afterLogin: "/owner/index.html",
-    pos: "/pos/index.html",           // POS terminal (cashier, sales staff, …)
-    dashboard: "/dashboard.html",     // future: business POS dashboard
-    onboarding: "/onboarding.html"    // future: post-register business setup
+    afterLogin: "/owner/",
+    pos: "/pos/",                     // POS terminal (cashier, sales staff, …)
+    dashboard: "/dashboard/",         // future: business POS dashboard
+    onboarding: "/onboarding/"        // future: post-register business setup
   },
   storageKeys: {
     rememberEmail: "retailflow.rememberedEmail"

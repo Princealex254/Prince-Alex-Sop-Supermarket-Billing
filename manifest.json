@@ -24,6 +24,6 @@
     "display":  "standalone",
     "name":  "RetailFlow POS — Smart Point of Sale",
     "background_color":  "#0a0f0d",
-    "start_url":  "/pos/index.html",
+    "start_url":  "/pos/",
     "orientation":  "portrait"
 }

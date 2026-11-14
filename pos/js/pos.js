@@ -556,7 +556,7 @@ async function apiRequest(path, options = {}) {
 
   if (res.status === 401) {
     try { await signOut(auth); } catch (e) { /* ignore */ }
-    window.location.assign("/login/index.html");
+    window.location.assign("/login/");
     throw new Error("Session expired");
   }
 
@@ -709,12 +709,12 @@ function hideLoading() {
 }
 
 function redirectToLogin() {
-  window.location.assign("/login/index.html");
+  window.location.assign("/login/");
 }
 
 async function doSignOut() {
   try { await signOut(auth); } catch (e) { /* ignore */ }
-  window.location.assign("/login/index.html");
+  window.location.assign("/login/");
 }
 
 /* The Worker's /auth/profile returns the D1 user (camelCase).
