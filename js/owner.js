@@ -861,12 +861,12 @@ function showDenied() {
 function redirectToLogin() {
   if (state.redirecting) return;
   state.redirecting = true;
-  window.location.assign("/login/index.html");
+  window.location.assign("/login/");
 }
 
 function signOutUser() {
   signOut(auth)
-    .then(() => { window.location.assign("/login/index.html"); })
+    .then(() => { window.location.assign("/login/"); })
     .catch((err) => {
       console.warn("[RetailFlow] sign out failed:", err.code);
       showToast("error", "Error", "Could not sign you out. Please try again.");

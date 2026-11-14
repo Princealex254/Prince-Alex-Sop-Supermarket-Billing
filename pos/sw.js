@@ -11,12 +11,12 @@
    Scope: /pos/  (only the POS terminal is affected).
    ================================================================== */
 
-const CACHE_NAME = "retailflow-pos-v1";
+const CACHE_NAME = "retailflow-pos-v2";
 const SW_SCOPE = "/pos/";
 
 /* App-shell entries relative to the SW scope root (/). */
 const APP_SHELL = [
-  SW_SCOPE + "index.html",
+  SW_SCOPE,
   SW_SCOPE + "css/pos.css",
   SW_SCOPE + "js/pos.js",
   SW_SCOPE + "js/offline-store.js",
@@ -90,7 +90,7 @@ self.addEventListener("fetch", (e) => {
           return resp;
         }).catch(() => {
           /* Offline and not cached — best-effort fall back to the app shell. */
-          if (url.origin === location.origin) return caches.match(SW_SCOPE + "index.html");
+          if (url.origin === location.origin) return caches.match(SW_SCOPE);
           return Response.error();
         });
       })
